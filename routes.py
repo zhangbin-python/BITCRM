@@ -466,9 +466,17 @@ def index():
     # Build query
     query = SalesLead.query
     
-    # Sales can only see their own leads (unless admin/marketing)
+    # Sales can see their own leads + leads owned by marketing
     if not current_user.can_view_all_leads():
-        query = query.filter(SalesLead.owner_id == current_user.id)
+        from models import User
+        marketing_user_ids = db.session.query(User.id).filter(User.role == 'marketing').all()
+        marketing_ids = [u[0] for u in marketing_user_ids]
+        query = query.filter(
+            db.or_(
+                SalesLead.owner_id == current_user.id,
+                SalesLead.owner_id.in_(marketing_ids)
+            )
+        )
     
     # Filter by unqualified status
     if not show_unqualified:
@@ -793,9 +801,17 @@ def export():
     # Get filtered leads
     query = SalesLead.query
     
-    # Sales can only see their own leads (unless admin/marketing)
+    # Sales can see their own leads + leads owned by marketing
     if not current_user.can_view_all_leads():
-        query = query.filter(SalesLead.owner_id == current_user.id)
+        from models import User
+        marketing_user_ids = db.session.query(User.id).filter(User.role == 'marketing').all()
+        marketing_ids = [u[0] for u in marketing_user_ids]
+        query = query.filter(
+            db.or_(
+                SalesLead.owner_id == current_user.id,
+                SalesLead.owner_id.in_(marketing_ids)
+            )
+        )
     
     # Apply current filters
     show_unqualified = request.args.get('show_unqualified', 'false') == 'true'
