@@ -468,7 +468,7 @@ def index():
     
     # Sales can only see their own leads + leads owned by marketing
     if not current_user.can_view_all_leads():
-        marketing_users = User.query.filter(User.role == 'marketing').all()
+        marketing_users = User.query.filter(User.role.ilike('marketing')).all()
         marketing_ids = [u.id for u in marketing_users]
         query = query.filter(
             db.or_(
@@ -802,7 +802,7 @@ def export():
     
     # Sales can only see their own leads + leads owned by marketing
     if not current_user.can_view_all_leads():
-        marketing_users = User.query.filter(User.role == 'marketing').all()
+        marketing_users = User.query.filter(User.role.ilike('marketing')).all()
         marketing_ids = [u.id for u in marketing_users]
         query = query.filter(
             db.or_(
