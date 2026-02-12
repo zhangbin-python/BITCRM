@@ -896,13 +896,21 @@ def refresh_weekly_metrics_for_user(user_id, db_session):
 # SQLALCHEMY EVENT LISTENERS FOR AUTO-UPDATE
 # ============================================================================
 
+# Flag to temporarily disable event listeners during bulk operations
+_disable_metrics_events = False
+
+
 @event.listens_for(SalesLead, 'after_insert')
 @event.listens_for(SalesLead, 'after_update')
 @event.listens_for(SalesLead, 'after_delete')
 def on_lead_change(mapper, connection, target):
     """Auto-refresh WeeklyMetrics when a Lead is changed."""
-    if target.owner_id:
-        refresh_weekly_metrics_for_user(target.owner_id, db.session)
+    global _disable_metrics_events
+    if target.owner_id and not _disable_metrics_events:
+        try:
+            refresh_weekly_metrics_for_user(target.owner_id, db.session)
+        except Exception:
+            pass  # Ignore errors (e.g., concurrent updates)
 
 
 @event.listens_for(Pipeline, 'after_insert')
@@ -910,5 +918,19 @@ def on_lead_change(mapper, connection, target):
 @event.listens_for(Pipeline, 'after_delete')
 def on_pipeline_change(mapper, connection, target):
     """Auto-refresh WeeklyMetrics when a Pipeline is changed."""
-    if target.owner_id:
-        refresh_weekly_metrics_for_user(target.owner_id, db.session)
+    global _disable_metrics_events
+    if target.owner_id and not _disable_metrics_events:
+        try:
+            refresh_weekly_metrics_for_user(target.owner_id, db.session)
+        except Exception:
+            pass  # Ignore errors (e.g., concurrent updates)
+
+
+def disable_metrics_events():
+    """Context manager to temporarily disable metrics events."""
+    global _disable_metrics_events
+    _disable_metrics_events = True
+    try:
+        yield
+    finally:
+        _disable_metrics_events = False

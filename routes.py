@@ -15,7 +15,7 @@ import pandas as pd
 import os
 
 from extensions import db, cache
-from models import User, SalesLead, Pipeline, Task, ActivityLog
+from models import User, SalesLead, Pipeline, Task, ActivityLog, disable_metrics_events
 from utils import (
     allowed_file, validate_date, validate_numeric,
     create_excel_template, export_to_excel, import_from_excel,
@@ -942,36 +942,37 @@ def import_data():
         
         # Import valid rows
         imported_count = 0
-        for row in valid_rows:
-            try:
-                # Find owner by username
-                owner = None
-                if row.get('owner'):
-                    owner = User.query.filter_by(username=row.get('owner')).first()
-                
-                lead = SalesLead(
-                    name=row.get('name') or None,
-                    company=row.get('company') or None,
-                    industry=row.get('industry') or None,
-                    position=row.get('position') or None,
-                    email=row.get('email') or None,
-                    mobile_number=row.get('mobile_number') or None,
-                    requirements=row.get('requirements') or None,
-                    leads_status=row.get('leads_status', 'Waiting to be Contacted'),
-                    source=row.get('source') or None,
-                    event=row.get('event') or None,
-                    date_added=row.get('date_added') or date.today(),
-                    owner_id=owner.id if owner else current_user.id,
-                    note=row.get('note') or None
-                )
-                
-                db.session.add(lead)
-                imported_count += 1
-                
-            except Exception as e:
-                flash(f"Error importing row: {str(e)}", 'danger')
-        
-        db.session.commit()
+        with disable_metrics_events():
+            for row in valid_rows:
+                try:
+                    # Find owner by username
+                    owner = None
+                    if row.get('owner'):
+                        owner = User.query.filter_by(username=row.get('owner')).first()
+                    
+                    lead = SalesLead(
+                        name=row.get('name') or None,
+                        company=row.get('company') or None,
+                        industry=row.get('industry') or None,
+                        position=row.get('position') or None,
+                        email=row.get('email') or None,
+                        mobile_number=row.get('mobile_number') or None,
+                        requirements=row.get('requirements') or None,
+                        leads_status=row.get('leads_status', 'Waiting to be Contacted'),
+                        source=row.get('source') or None,
+                        event=row.get('event') or None,
+                        date_added=row.get('date_added') or date.today(),
+                        owner_id=owner.id if owner else current_user.id,
+                        note=row.get('note') or None
+                    )
+                    
+                    db.session.add(lead)
+                    imported_count += 1
+                    
+                except Exception as e:
+                    flash(f"Error importing row: {str(e)}", 'danger')
+            
+            db.session.commit()
         
         # Log the import activity
         if imported_count > 0:
