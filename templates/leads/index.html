@@ -352,7 +352,7 @@ function startEdit(cell, leadId, fieldName) {
     let inputHtml = '';
     const container = document.getElementById('editInputContainer');
     
-    if (fieldName === 'owner') {
+    if (fieldName === 'owner' || fieldName === 'owner_id') {
         inputHtml = '<select class="form-control" id="editInput">' +
             USERS_DATA.map(user => '<option value="' + user.id + '"' + (user.username === value ? ' selected' : '') + '>' + user.username + '</option>').join('') +
             '</select>';
