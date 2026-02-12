@@ -500,10 +500,8 @@ def index():
     per_page = request.args.get('per_page', 100, type=int)
     leads = query.paginate(page=page, per_page=per_page, error_out=False)
     
-    # Get users who have leads for owner dropdown (only show users with leads)
-    users = db.session.query(User).join(SalesLead).filter(
-        User.is_active == True
-    ).distinct().order_by(User.username).all()
+    # Get all active users for owner dropdown
+    users = User.query.filter_by(is_active=True).order_by(User.username).all()
     
     # Get column preferences
     prefs = current_user.get_column_preferences('leads')
