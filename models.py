@@ -68,12 +68,7 @@ class User(UserMixin, db.Model):
     
     def can_access_leads(self):
         """Check if user can access sales leads."""
-        # admin and marketing can access all leads, sales can access their own
-        return self.role in ['admin', 'marketing', 'sales']
-    
-    def can_view_all_leads(self):
-        """Check if user can view all leads (not just own)."""
-        return self.role in ['admin', 'marketing']
+        return self.is_admin() or self.is_marketing()
     
     def can_access_pipeline(self, pipeline):
         """Check if user can access a specific pipeline."""
