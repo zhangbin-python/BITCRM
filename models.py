@@ -765,11 +765,12 @@ def refresh_weekly_metrics_for_user(user_id, db_session):
     pipeline_vs_last_month = pipeline_count - (last_month_metrics.pipeline_count if last_month_metrics else 0)
     tcv_vs_last_month = tcv - (last_month_metrics.tcv if last_month_metrics else 0)
     
-    # Upsert user metrics
-    user_metrics = WeeklyMetrics.query.filter_by(
-        owner_id=user_id,
-        week_start=this_monday
-    ).first()
+    # Upsert user metrics - use no_autoflush to avoid premature INSERT
+    with db_session.no_autoflush:
+        user_metrics = WeeklyMetrics.query.filter_by(
+            owner_id=user_id,
+            week_start=this_monday
+        ).first()
     
     if user_metrics:
         user_metrics.leads_count = leads_count
@@ -846,10 +847,12 @@ def refresh_weekly_metrics_for_user(user_id, db_session):
     company_pipeline_vs_last_month = company_pipeline_count - (company_last_month.pipeline_count if company_last_month else 0)
     company_tcv_vs_last_month = company_tcv - (company_last_month.tcv if company_last_month else 0)
     
-    company_metrics = WeeklyMetrics.query.filter_by(
-        owner_id=None,
-        week_start=this_monday
-    ).first()
+    # Upsert company metrics - use no_autoflush to avoid premature INSERT
+    with db_session.no_autoflush:
+        company_metrics = WeeklyMetrics.query.filter_by(
+            owner_id=None,
+            week_start=this_monday
+        ).first()
     
     if company_metrics:
         company_metrics.leads_count = company_leads_count
