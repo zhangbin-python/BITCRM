@@ -102,11 +102,11 @@
                 </a>
                 
                 <!-- Show Unqualified Switch - inside form -->
-                <div class="form-check form-switch ms-3">
+                <div class="d-flex flex-column ms-3" style="width: 120px;">
                     <input class="form-check-input" type="checkbox" id="showUnqualified" name="show_unqualified" value="true"
                            {% if show_unqualified %}checked{% endif %}
                            onchange="this.form.submit()">
-                    <label class="form-check-label" for="showUnqualified">
+                    <label class="form-check-label small mt-1" for="showUnqualified">
                         {{ _('Show Unqualified') }}
                     </label>
                 </div>
