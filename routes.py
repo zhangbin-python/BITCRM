@@ -252,12 +252,16 @@ def set_language(lang):
     if lang not in ['en', 'zh']:
         lang = 'en'
     
+    # Set cookie first
     response = make_response(redirect(request.referrer or url_for('main.dashboard')))
-    response.set_cookie('lang', lang, max_age=60*60*24*365)  # 1 year
+    response.set_cookie('lang', lang, max_age=60*60*24*365, path='/', samesite='Lax')
     
     # Log the activity (only for authenticated users)
-    if current_user.is_authenticated:
-        log_language_changed(current_user, lang, request.remote_addr)
+    try:
+        if current_user.is_authenticated:
+            log_language_changed(current_user, lang, request.remote_addr)
+    except:
+        pass
     
     return response
 
