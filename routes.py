@@ -72,9 +72,15 @@ def dashboard():
 
     # 根据权限过滤
     if not current_user.is_admin():
+        # Get the owner IDs of pipelines that current_user supports
+        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).distinct().subquery()
         base_query = base_query.filter(
-            or_(Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_([u.id for u in current_user.supported_pipelines]))
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.owner_id.in_(supported_owner_ids)
+            )
         )
 
     all_pipelines = base_query.all()
@@ -1033,9 +1039,15 @@ def index():
     
     # Filter by access permissions
     if not current_user.is_admin():
+        # Get the owner IDs of pipelines that current_user supports
+        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).distinct().subquery()
         query = query.filter(
-            or_(Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_([u.id for u in current_user.supported_pipelines]))
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.owner_id.in_(supported_owner_ids)
+            )
         )
     
     # Filter by lost status
@@ -1175,9 +1187,15 @@ def kanban_data():
     
     # Filter by access permissions
     if not current_user.is_admin():
+        # Get the owner IDs of pipelines that current_user supports
+        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).distinct().subquery()
         query = query.filter(
-            or_(Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_([u.id for u in current_user.supported_pipelines]))
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.owner_id.in_(supported_owner_ids)
+            )
         )
     
     # Apply owner filter
@@ -1560,9 +1578,15 @@ def export():
     query = Pipeline.query
     
     if not current_user.is_admin():
+        # Get the owner IDs of pipelines that current_user supports
+        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).distinct().subquery()
         query = query.filter(
-            or_(Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_([u.id for u in current_user.supported_pipelines]))
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.owner_id.in_(supported_owner_ids)
+            )
         )
     
     pipelines = query.order_by(Pipeline.date_added.desc()).all()
@@ -2713,9 +2737,15 @@ def get_pipeline_kanban_data():
     
     # Filter by access permissions
     if not current_user.is_admin():
+        # Get the owner IDs of pipelines that current_user supports
+        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).distinct().subquery()
         query = query.filter(
-            or_(Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_([u.id for u in current_user.supported_pipelines]))
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.owner_id.in_(supported_owner_ids)
+            )
         )
     
     # Filter by lost status
@@ -2781,9 +2811,15 @@ def get_owner_metrics_data():
     # Build base pipeline query
     base_pipeline_query = Pipeline.query
     if not current_user.is_admin():
+        # Get the owner IDs of pipelines that current_user supports
+        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).distinct().subquery()
         base_pipeline_query = base_pipeline_query.filter(
-            or_(Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_([u.id for u in current_user.supported_pipelines]))
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.owner_id.in_(supported_owner_ids)
+            )
         )
     
     # Get quarter dates
