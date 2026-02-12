@@ -973,51 +973,6 @@ def import_data():
         
         db.session.commit()
         
-        # Update WeeklyMetrics after import
-        from models import WeeklyMetrics
-        from datetime import date
-        from dateutil.relativedelta import relativedelta
-        
-        today = date.today()
-        this_monday = today - relativedelta(days=today.weekday())
-        
-        users = User.query.filter_by(is_active=True).all()
-        for user in users:
-            # Count leads
-            leads_count = SalesLead.query.filter(
-                SalesLead.owner_id == user.id,
-                SalesLead.leads_status != 'Unqualified'
-            ).count()
-            qualified_leads_count = SalesLead.query.filter(
-                SalesLead.owner_id == user.id,
-                SalesLead.leads_status == 'Qualified'
-            ).count()
-            
-            # Update or create metrics - use no_autoflush to avoid premature INSERT
-            with db.session.no_autoflush:
-                metrics = WeeklyMetrics.query.filter_by(
-                    owner_id=user.id,
-                    week_start=this_monday
-                ).first()
-            
-            if metrics:
-                metrics.leads_count = leads_count
-                metrics.qualified_leads_count = qualified_leads_count
-            else:
-                metrics = WeeklyMetrics(
-                    owner_id=user.id,
-                    week_start=this_monday,
-                    leads_count=leads_count,
-                    qualified_leads_count=qualified_leads_count,
-                    pipeline_count=0,
-                    tcv=0,
-                    current_qtr_revenue=0,
-                    next_qtr_revenue=0
-                )
-                db.session.add(metrics)
-        
-        db.session.commit()
-        
         # Log the import activity
         if imported_count > 0:
             log_lead_import(current_user, imported_count, request.remote_addr)
