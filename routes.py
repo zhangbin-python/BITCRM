@@ -993,11 +993,12 @@ def import_data():
                 SalesLead.leads_status == 'Qualified'
             ).count()
             
-            # Update or create metrics
-            metrics = WeeklyMetrics.query.filter_by(
-                owner_id=user.id,
-                week_start=this_monday
-            ).first()
+            # Update or create metrics - use no_autoflush to avoid premature INSERT
+            with db.session.no_autoflush:
+                metrics = WeeklyMetrics.query.filter_by(
+                    owner_id=user.id,
+                    week_start=this_monday
+                ).first()
             
             if metrics:
                 metrics.leads_count = leads_count
