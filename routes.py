@@ -72,14 +72,14 @@ def dashboard():
 
     # 根据权限过滤
     if not current_user.is_admin():
-        # Get the owner IDs of pipelines that current_user supports
-        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+        # Get the Pipeline IDs that current_user supports
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
-        ).distinct().subquery()
+        ).subquery()
         base_query = base_query.filter(
             or_(
                 Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_(supported_owner_ids)
+                Pipeline.id.in_(supported_pipeline_ids)
             )
         )
 
@@ -1039,14 +1039,14 @@ def index():
     
     # Filter by access permissions
     if not current_user.is_admin():
-        # Get the owner IDs of pipelines that current_user supports
-        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+        # Get the Pipeline IDs that current_user supports
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
-        ).distinct().subquery()
+        ).subquery()
         query = query.filter(
             or_(
                 Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_(supported_owner_ids)
+                Pipeline.id.in_(supported_pipeline_ids)
             )
         )
     
@@ -1187,14 +1187,14 @@ def kanban_data():
     
     # Filter by access permissions
     if not current_user.is_admin():
-        # Get the owner IDs of pipelines that current_user supports
-        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+        # Get the Pipeline IDs that current_user supports
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
-        ).distinct().subquery()
+        ).subquery()
         query = query.filter(
             or_(
                 Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_(supported_owner_ids)
+                Pipeline.id.in_(supported_pipeline_ids)
             )
         )
     
@@ -1578,14 +1578,14 @@ def export():
     query = Pipeline.query
     
     if not current_user.is_admin():
-        # Get the owner IDs of pipelines that current_user supports
-        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+        # Get the Pipeline IDs that current_user supports
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
-        ).distinct().subquery()
+        ).subquery()
         query = query.filter(
             or_(
                 Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_(supported_owner_ids)
+                Pipeline.id.in_(supported_pipeline_ids)
             )
         )
     
@@ -2737,14 +2737,14 @@ def get_pipeline_kanban_data():
     
     # Filter by access permissions
     if not current_user.is_admin():
-        # Get the owner IDs of pipelines that current_user supports
-        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+        # Get the Pipeline IDs that current_user supports
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
-        ).distinct().subquery()
+        ).subquery()
         query = query.filter(
             or_(
                 Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_(supported_owner_ids)
+                Pipeline.id.in_(supported_pipeline_ids)
             )
         )
     
@@ -2811,14 +2811,14 @@ def get_owner_metrics_data():
     # Build base pipeline query
     base_pipeline_query = Pipeline.query
     if not current_user.is_admin():
-        # Get the owner IDs of pipelines that current_user supports
-        supported_owner_ids = db.session.query(Pipeline.owner_id).filter(
+        # Get the Pipeline IDs that current_user supports
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
-        ).distinct().subquery()
+        ).subquery()
         base_pipeline_query = base_pipeline_query.filter(
             or_(
                 Pipeline.owner_id == current_user.id,
-                Pipeline.owner_id.in_(supported_owner_ids)
+                Pipeline.id.in_(supported_pipeline_ids)
             )
         )
     
