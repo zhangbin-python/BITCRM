@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import event
+from contextlib import contextmanager
 import calendar
 
 
@@ -911,6 +912,7 @@ def on_pipeline_change(mapper, connection, target):
             pass  # Ignore errors (e.g., concurrent updates)
 
 
+@contextmanager
 def disable_metrics_events():
     """Context manager to temporarily disable metrics events."""
     global _disable_metrics_events
