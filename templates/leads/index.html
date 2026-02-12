@@ -71,7 +71,7 @@
                 <label for="source" class="form-label">{{ _('Source') }}</label>
                 <select class="form-select" id="source" name="source">
                     <option value="">{{ _('All Sources') }}</option>
-                    {% for source in ['Website', 'Referral', 'Email Campaign', 'Social Media', 'Event', 'Trade Show', 'Advertisement', 'Partner', 'Direct Inquiry'] %}
+                    {% for source in ['Website', 'Referral', 'Email Campaign', 'Social Media', 'Event', 'Trade Show', 'Advertisement', 'Partner', 'Direct Inquiry', 'BFSI', 'Channel', 'Others'] %}
                     <option value="{{ source }}" {% if source_filter == source %}selected{% endif %}>
                         {{ _(source) }}
                     </option>
