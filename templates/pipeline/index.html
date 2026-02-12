@@ -118,18 +118,18 @@
                 <div class="col-md-3">
                     <label class="form-label small">{{ _('Est. Sign Date') }}</label>
                     <div class="input-group input-group-sm">
-                        <input type="month" name="est_sign_date_from" class="form-control" value="{{ est_sign_date_from or '' }}" min="2020-01" max="2027-12">
+                        <input type="month" name="est_sign_date_from" class="form-control" value="{{ est_sign_date_from or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
                         <span class="input-group-text">至</span>
-                        <input type="month" name="est_sign_date_to" class="form-control" value="{{ est_sign_date_to or '' }}" min="2020-01" max="2027-12">
+                        <input type="month" name="est_sign_date_to" class="form-control" value="{{ est_sign_date_to or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
                     </div>
                 </div>
                 <!-- Est. Activate Date Range -->
                 <div class="col-md-3">
                     <label class="form-label small">{{ _('Est. Activate Date') }}</label>
                     <div class="input-group input-group-sm">
-                        <input type="month" name="est_activate_date_from" class="form-control" value="{{ est_activate_date_from or '' }}" min="2020-01" max="2027-12">
+                        <input type="month" name="est_activate_date_from" class="form-control" value="{{ est_activate_date_from or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
                         <span class="input-group-text">至</span>
-                        <input type="month" name="est_activate_date_to" class="form-control" value="{{ est_activate_date_to or '' }}" min="2020-01" max="2027-12">
+                        <input type="month" name="est_activate_date_to" class="form-control" value="{{ est_activate_date_to or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
                     </div>
                 </div>
                 <!-- Stage -->
