@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BITCRM User Manual | BITCRM 操作手册</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #333; background: #f5f5f5; }
+        .lang-switcher { position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .lang-switcher button { padding: 8px 16px; margin: 0 3px; border: 2px solid #667eea; background: white; color: #667eea; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .lang-switcher button.active { background: #667eea; color: white; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        header { text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 40px; }
+        section { background: white; margin-bottom: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section-header { padding: 20px 30px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; }
+        .section-header h2 { color: #667eea; margin: 0; }
+        .section-content { padding: 30px; }
+        .interaction-box { background: #f0f7ff; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #667eea; }
+        .interaction-box h4 { color: #667eea; margin-bottom: 15px; }
+        .step { display: flex; margin-bottom: 12px; }
+        .step-num { background: #667eea; color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; margin-right: 12px; flex-shrink: 0; }
+        .step-content { flex: 1; }
+        .step-action { font-weight: 600; color: #667eea; }
+        .step-result { color: #28a745; font-size: 0.95em; }
+        .screenshot-placeholder { background: #e9ecef; border: 3px dashed #adb5bd; border-radius: 10px; padding: 60px 20px; text-align: center; margin: 30px 0; }
+        .screenshot-placeholder .icon { font-size: 48px; margin-bottom: 15px; }
+        .screenshot-placeholder h4 { color: #6c757d; margin-bottom: 10px; }
+        .screenshot-placeholder p { color: #adb5bd; font-size: 0.95em; }
+        .screenshot-placeholder .dimensions { display: inline-block; background: #6c757d; color: white; padding: 5px 15px; border-radius: 20px; margin-top: 15px; font-size: 0.85em; }
+        .info-box { padding: 15px 20px; border-radius: 5px; margin: 20px 0; }
+        .info-box.tip { background: #d4edda; border-left: 4px solid #28a745; }
+        .info-box.note { background: #cce5ff; border-left: 4px solid #007bff; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e9ecef; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .nav { position: fixed; left: 20px; top: 50%; transform: translateY(-50%); background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 999; }
+        .nav a { display: block; padding: 6px 12px; color: #333; text-decoration: none; border-radius: 4px; margin: 3px 0; }
+        .nav a:hover { background: #667eea; color: white; }
+        @media (max-width: 768px) { .nav { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="lang-switcher">
+        <button class="active" onclick="setLang('en')">English</button>
+        <button onclick="setLang('zh')">中文</button>
+    </div>
+    
+    <nav class="nav">
+        <a href="#login">Login</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#leads">Leads</a>
+        <a href="#pipeline">Pipeline</a>
+        <a href="#kanban">Kanban</a>
+        <a href="#tasks">Tasks</a>
+        <a href="#activities">Activities</a>
+        <a href="#users">Users</a>
+    </nav>
+    
+    <header>
+        <h1 data-en="BITCRM User Manual" data-zh="BITCRM 操作手册">BITCRM User Manual</h1>
+        <p data-en="Enterprise Customer Relationship Management System" data-zh="企业级客户关系管理系统">Enterprise Customer Relationship Management System</p>
+    </header>
+    
+    <div class="container">
+        
+        <!-- 1. Login -->
+        <section id="login">
+            <div class="section-header"><h2 data-en="1. Login" data-zh="1. 登录系统">1. Login</h2></div>
+            <div class="section-content">
+                <p data-en="Enter username and password to access the CRM system." data-zh="输入用户名和密码登录系统。">Enter username and password to access the CRM system.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Interaction Flow" data-zh="交互流程">Interaction Flow</h4>
+                    
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: Enter username" data-zh="动作：输入用户名">Action: Enter username</div><div class="step-result" data-en="Result: System validates format" data-zh="结果：系统验证格式">Result: System validates format</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Enter password" data-zh="动作：输入密码">Action: Enter password</div><div class="step-result" data-en="Result: Password masked with dots" data-zh="结果：密码用星号隐藏">Result: Password masked</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: Click Login button" data-zh="动作：点击Login按钮">Action: Click Login</div><div class="step-result" data-en="Result: Redirects to Dashboard" data-zh="结果：跳转到仪表盘">Result: Redirects to Dashboard</div></div></div>
+                </div>
+                
+                <div class="info-box tip">
+                    <strong data-en="Purpose:" data-zh="目的：">Purpose:</strong>
+                    <span data-en="Authenticate users and provide access based on role permissions." data-zh="验证用户身份，根据角色权限提供访问。">Authenticate users.</span>
+                </div>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Login Page" data-zh="截图：登录页面">Screenshot: Login Page</h4><p data-en="Show: Username field, password field, Login button" data-zh="显示：用户名输入框、密码输入框、Login按钮">Show: Login form</p><div class="dimensions">1200 × 800px</div></div>
+            </div>
+        </section>
+        
+        <!-- 2. Dashboard -->
+        <section id="dashboard">
+            <div class="section-header"><h2 data-en="2. Dashboard" data-zh="2. 仪表盘">2. Dashboard</h2></div>
+            <div class="section-content">
+                <p data-en="Centralized view of key business metrics with filtering capabilities." data-zh="集中展示关键业务指标，支持筛选。">Centralized view.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Interaction Flow" data-zh="交互流程">Interaction Flow</h4>
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: View 6 metric cards" data-zh="动作：查看6个指标卡片">Action: View cards</div><div class="step-result" data-en="Result: See metrics with vs last week %" data-zh="结果：查看指标及Vs上周百分比">Result: View metrics</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Click Owner filter dropdown" data-zh="动作：点击负责人筛选下拉框">Action: Click filter</div><div class="step-result" data-en="Result: Shows all owners with checkboxes" data-zh="结果：显示所有负责人及复选框">Result: Show owners</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: Uncheck owners to hide them" data-zh="动作：取消勾选负责人以隐藏">Action: Uncheck owners</div><div class="step-result" data-en="Result: Rows disappear, saved to server" data-zh="结果：行消失，选择保存到服务器">Result: Hide owners</div></div></div>
+                    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-action" data-en="Action: Scroll to Per-Owner table" data-zh="动作：滚动到按负责人表格">Action: Scroll down</div><div class="step-result" data-en="Result: See detailed metrics per owner" data-zh="结果：查看每位负责人的详细指标">Result: View details</div></div></div>
+                </div>
+                
+                <h3 data-en="Core Metric Cards" data-zh="核心指标卡片" style="margin: 20px 0;">Core Metric Cards</h3>
+                <table>
+                    <thead><tr><th data-en="Card" data-zh="卡片">Card</th><th data-en="Click" data-zh="点击">Click</th><th data-en="Purpose" data-zh="目的">Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td data-en="Total Leads" data-zh="总线索数">Total Leads</td><td data-en="Display only" data-zh="仅展示">Display only</td><td data-en="Overview of valid leads" data-zh="有效线索概览">Overview</td></tr>
+                        <tr><td data-en="Qualified Leads" data-zh="合格线索">Qualified Leads</td><td data-en="Display only" data-zh="仅展示">Display only</td><td data-en="Track qualified count" data-zh="跟踪合格数量">Track qualified</td></tr>
+                        <tr><td data-en="Pipeline #" data-zh="管道数量">Pipeline #</td><td data-en="Display only" data-zh="仅展示">Display only</td><td data-en="Monitor active deals" data-zh="监控活跃交易">Monitor deals</td></tr>
+                        <tr><td data-en="Current QTR Revenue" data-zh="本季度收入">Current QTR Revenue</td><td data-en="Display only" data-zh="仅展示">Display only</td><td data-en="Track revenue" data-zh="跟踪收入">Track revenue</td></tr>
+                        <tr><td data-en="Next QTR Revenue" data-zh="下季度收入">Next QTR Revenue</td><td data-en="Display only" data-zh="仅展示">Display only</td><td data-en="Forecast next quarter" data-zh="预测下季度">Forecast</td></tr>
+                    </tbody>
+                </table>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Dashboard" data-zh="截图：仪表盘">Screenshot: Dashboard</h4><p data-en="Show: 6 cards, vs indicators, Per-Owner table" data-zh="显示：6个卡片、Vs指标、按负责人表格">Show: Dashboard</p><div class="dimensions">1600 × 1000px</div></div>
+            </div>
+        </section>
+        
+        <!-- 3. Leads -->
+        <section id="leads">
+            <div class="section-header"><h2 data-en="3. Sales Leads Management" data-zh="3. 销售线索管理">3. Sales Leads Management</h2></div>
+            <div class="section-content">
+                <p data-en="Manage sales leads: add, edit, update status, delete." data-zh="管理销售线索：添加、编辑、更新状态、删除。">Manage leads.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Main Interactions" data-zh="主要交互">Main Interactions</h4>
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: Click Add Lead button" data-zh="动作：点击Add Lead按钮">Action: Add Lead</div><div class="step-result" data-en="Result: Opens empty form" data-zh="结果：打开空白表单">Result: Open form</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Click pencil icon" data-zh="动作：点击铅笔图标">Action: Edit</div><div class="step-result" data-en="Result: Opens pre-filled form" data-zh="结果：打开预填表单">Result: Edit form</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: Click trash icon" data-zh="动作：点击垃圾桶图标">Action: Delete</div><div class="step-result" data-en="Result: Confirms then deletes" data-zh="结果：确认后删除">Result: Delete</div></div></div>
+                    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-action" data-en="Action: Click status badge" data-zh="动作：点击状态徽章">Action: Change status</div><div class="step-result" data-en="Result: Quick edit dropdown" data-zh="结果：快速编辑下拉框">Result: Quick edit</div></div></div>
+                </div>
+                
+                <h3 data-en="Lead Status" data-zh="线索状态" style="margin: 20px 0;">Lead Status</h3>
+                <table>
+                    <thead><tr><th data-en="Status" data-zh="状态">Status</th><th data-en="Trigger" data-zh="触发">Trigger</th><th data-en="Result" data-zh="结果">Result</th></tr></thead>
+                    <tbody>
+                        <tr><td data-en="Waiting to be Contacted" data-zh="待联系">Waiting</td><td data-en="New lead default" data-zh="新线索默认">Default</td><td data-en="Awaiting contact" data-zh="等待联系">Await</td></tr>
+                        <tr><td data-en="Qualified" data-zh="合格">Qualified</td><td data-en="User updates" data-zh="用户更新">User</td><td data-en="Auto-creates Pipeline" data-zh="自动创建Pipeline">Auto-create</td></tr>
+                        <tr><td data-en="Unqualified" data-zh="不合格">Unqualified</td><td data-en="User updates" data-zh="用户更新">User</td><td data-en="Excluded from counts" data-zh="排除在统计外">Exclude</td></tr>
+                    </tbody>
+                </table>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Leads List" data-zh="截图：线索列表">Screenshot: Leads List</h4><p data-en="Show: Table, Add button, badges, icons" data-zh="显示：表格、Add按钮、徽章、图标">Show: Leads table</p><div class="dimensions">1600 × 900px</div></div>
+            </div>
+        </section>
+        
+        <!-- 4. Pipeline -->
+        <section id="pipeline">
+            <div class="section-header"><h2 data-en="4. Sales Pipeline" data-zh="4. 销售管道">4. Sales Pipeline</h2></div>
+            <div class="section-content">
+                <p data-en="Track deals through 8 stages. Update stage to progress deals." data-zh="通过8个阶段跟踪交易。更新阶段推进交易。">Track deals.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Main Interactions" data-zh="主要交互">Main Interactions</h4>
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: Click Add Pipeline" data-zh="动作：点击Add Pipeline">Action: Add</div><div class="step-result" data-en="Result: Opens new deal form" data-zh="结果：打开新交易表单">Result: Create deal</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Click stage dropdown" data-zh="动作：点击阶段下拉框">Action: Change stage</div><div class="step-result" data-en="Result: Move deal to new stage" data-zh="结果：将交易移动到新阶段">Result: Move deal</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: Click Follow-up" data-zh="动作：点击跟进">Action: Follow-up</div><div class="step-result" data-en="Result: Opens notes modal" data-zh="结果：打开备注弹窗">Result: Add notes</div></div></div>
+                </div>
+                
+                <h3 data-en="8 Pipeline Stages" data-zh="8个管道阶段" style="margin: 20px 0;">8 Pipeline Stages</h3>
+                <table>
+                    <thead><tr><th data-en="Stage" data-zh="阶段">Stage</th><th data-en="Description" data-zh="说明">Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>1) Prospecting</td><td data-en="Start tracking" data-zh="开始跟踪">Start</td></tr>
+                        <tr><td>2) Lead Qualified</td><td data-en="Move to active selling" data-zh="转入主动销售">Qualify</td></tr>
+                        <tr><td>3) Demo/Meeting</td><td data-en="Present solution" data-zh="展示方案">Demo</td></tr>
+                        <tr><td>4) Proposal Submitted</td><td data-en="Sent proposal" data-zh="已提交方案">Proposal</td></tr>
+                        <tr><td>5) Negotiation</td><td data-en="Final discussions" data-zh="最终讨论">Negotiate</td></tr>
+                        <tr><td>6a) Deal Won</td><td data-en="Deal closed" data-zh="交易成交">Won</td></tr>
+                        <tr><td>6b) Deal Lost</td><td data-en="Deal lost" data-zh="交易丢失">Lost</td></tr>
+                        <tr><td>7) Activated</td><td data-en="Service started" data-zh="服务已启动">Activated</td></tr>
+                    </tbody>
+                </table>
+                
+                <div class="info-box note"><strong data-en="Key Fields:" data-zh="关键字段：">Key Fields:</strong> <span data-en="TCV = MRC × 12 × Years + OTC | MRC = Monthly Recurring | Win Rate = Probability" data-zh="TCV = MRC×12×年数+OTC | MRC=月度经常收入 | Win Rate=概率">TCV, MRC, Win Rate</span></div>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Pipeline" data-zh="截图：管道">Screenshot: Pipeline</h4><p data-en="Show: Pipeline table, stage dropdowns" data-zh="显示：管道表格、阶段下拉框">Show: Pipeline</p><div class="dimensions">1600 × 900px</div></div>
+            </div>
+        </section>
+        
+        <!-- 5. Kanban -->
+        <section id="kanban">
+            <div class="section-header"><h2 data-en="5. Pipeline Kanban Board" data-zh="5. 管道看板">5. Pipeline Kanban Board</h2></div>
+            <div class="section-content">
+                <p data-en="Visual kanban board with 8 stage columns." data-zh="8列可视化工看板。">Visual kanban.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Interactions" data-zh="交互">Interactions</h4>
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: Scroll horizontally" data-zh="动作：水平滚动">Action: Scroll</div><div class="step-result" data-en="Result: View all 8 columns" data-zh="结果：查看全部8列">Result: View all</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Click deal card" data-zh="动作：点击交易卡片">Action: Click card</div><div class="step-result" data-en="Result: Shows deal details" data-zh="结果：显示交易详情">Result: View details</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: View column header" data-zh="动作：查看列标题">Action: View header</div><div class="step-result" data-en="Result: Shows count + TCV" data-zh="结果：显示数量+TCV">Result: See stats</div></div></div>
+                </div>
+                
+                <div class="info-box note"><strong data-en="Features:" data-zh="特性：">Features:</strong> <span data-en="Each column: Name, Count, TCV | Cards: Company, Owner, Win%, TCV, MRC, Date | Deal Lost: half-width, gray" data-zh="每列：名称、数量、TCV | 卡片：公司、负责人、赢率%、TCV、MRC、日期 | Deal Lost：半宽、灰色">Columns and cards</span></div>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Kanban" data-zh="截图：看板">Screenshot: Kanban</h4><p data-en="Show: 8 colored columns with cards" data-zh="显示：8列彩色标题及卡片">Show: Kanban</p><div class="dimensions">2000 × 800px</div></div>
+            </div>
+        </section>
+        
+        <!-- 6. Tasks -->
+        <section id="tasks">
+            <div class="section-header"><h2 data-en="6. Task Management" data-zh="6. 任务管理">6. Task Management</h2></div>
+            <div class="section-content">
+                <p data-en="Manage tasks with due dates and status tracking." data-zh="管理任务，截止日期和状态跟踪。">Manage tasks.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Interactions" data-zh="交互">Interactions</h4>
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: Click Add Task" data-zh="动作：点击Add Task">Action: Add</div><div class="step-result" data-en="Result: Opens task form" data-zh="结果：打开任务表单">Result: Create</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Click status to toggle" data-zh="动作：点击状态切换">Action: Toggle</div><div class="step-result" data-en="Result: In Progress ↔ Completed" data-zh="结果：进行中 ↔ 完成">Result: Toggle</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: Click delete" data-zh="动作：点击删除">Action: Delete</div><div class="step-result" data-en="Result: Deletes task" data-zh="结果：删除任务">Result: Delete</div></div></div>
+                </div>
+                
+                <h3 data-en="Task Status" data-zh="任务状态" style="margin: 20px 0;">Task Status</h3>
+                <table>
+                    <thead><tr><th data-en="Status" data-zh="状态">Status</th><th data-en="Description" data-zh="说明">Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>In Progress</td><td data-en="Being worked on" data-zh="进行中">In Progress</td></tr>
+                        <tr><td>Completed</td><td data-en="Task finished" data-zh="已完成">Completed</td></tr>
+                        <tr><td>Overdue</td><td data-en="Past due (red highlight)" data-zh="已过期（红色高亮）">Overdue</td></tr>
+                    </tbody>
+                </table>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Tasks" data-zh="截图：任务">Screenshot: Tasks</h4><p data-en="Show: 3 tables (In Progress, Completed, Overdue)" data-zh="显示：3个表格（进行中、已完成、过期）">Show: Tasks</p><div class="dimensions">1400 × 900px</div></div>
+            </div>
+        </section>
+        
+        <!-- 7. Activities -->
+        <section id="activities">
+            <div class="section-header"><h2 data-en="7. Activity Logs" data-zh="7. 活动日志">7. Activity Logs</h2></div>
+            <div class="section-content">
+                <p data-en="Records all system operations." data-zh="记录所有系统操作。">Activity logs.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Interactions" data-zh="交互">Interactions</h4>
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: View activity table" data-zh="动作：查看活动表格">Action: View</div><div class="step-result" data-en="Result: See all activities" data-zh="结果：查看所有活动">Result: View all</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Use filters" data-zh="动作：使用筛选器">Action: Filter</div><div class="step-result" data-en="Result: Filter by user/action type" data-zh="结果：按用户/操作类型筛选">Result: Filter</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: Search keyword" data-zh="动作：搜索关键词">Action: Search</div><div class="step-result" data-en="Result: Filters by keyword" data-zh="结果：按关键词筛选">Result: Search</div></div></div>
+                </div>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Activities" data-zh="截图：活动">Screenshot: Activities</h4><p data-en="Show: Activity table, filters, search" data-zh="显示：活动表格、筛选器、搜索">Show: Activities</p><div class="dimensions">1400 × 800px</div></div>
+            </div>
+        </section>
+        
+        <!-- 8. Users -->
+        <section id="users">
+            <div class="section-header"><h2 data-en="8. User Management" data-zh="8. 用户管理">8. User Management</h2></div>
+            <div class="section-content">
+                <p data-en="Admin manages users, roles, and account status." data-zh="管理员管理用户、角色和账户状态。">Manage users.</p>
+                
+                <div class="interaction-box">
+                    <h4 data-en="Interactions" data-zh="交互">Interactions</h4>
+                    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-action" data-en="Action: Click Add User" data-zh="动作：点击Add User">Action: Add</div><div class="step-result" data-en="Result: Opens user form" data-zh="结果：打开用户表单">Result: Create</div></div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-action" data-en="Action: Click toggle" data-zh="动作：点击切换">Action: Toggle</div><div class="step-result" data-en="Result: Enable/disable account" data-zh="结果：启用/禁用账户">Result: Toggle</div></div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-action" data-en="Action: Reset password" data-zh="动作：重置密码">Action: Reset</div><div class="step-result" data-en="Result: Password reset to default" data-zh="结果：密码重置为默认值">Result: Reset</div></div></div>
+                </div>
+                
+                <h3 data-en="User Roles" data-zh="用户角色" style="margin: 20px 0;">User Roles</h3>
+                <table>
+                    <thead><tr><th data-en="Role" data-zh="角色">Role</th><th data-en="Permissions" data-zh="权限">Permissions</th></tr></thead>
+                    <tbody>
+                        <tr><td>Admin</td><td data-en="Full access" data-zh="完全访问">Full</td></tr>
+                        <tr><td>Sales</td><td data-en="Own + team data" data-zh="自己+团队数据">Own + Team</td></tr>
+                        <tr><td>Marketing</td><td data-en="Lead data only" data-zh="仅线索数据">Leads only</td></tr>
+                    </tbody>
+                </table>
+                
+                <div class="screenshot-placeholder"><div class="icon">📸</div><h4 data-en="Screenshot: Users" data-zh="截图：用户">Screenshot: Users</h4><p data-en="Show: User table, role, actions" data-zh="显示：用户表格、角色、操作">Show: Users</p><div class="dimensions">1200 × 600px</div></div>
+            </div>
+        </section>
+        
+        <footer style="text-align: center; padding: 40px; color: #6c757d; border-top: 1px solid #e9ecef; margin-top: 40px;">
+            <p data-en="BITCRM v1.0 | Last Updated: February 2026" data-zh="BITCRM v1.0 | 最后更新：2026年2月">BITCRM v1.0 | February 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        function setLang(lang) {
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-en][data-zh]').forEach(function(el) {
+                el.textContent = lang === 'zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+            });
+            document.querySelectorAll('.lang-switcher button').forEach(function(btn) {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(lang));
+            });
+        }
+    </script>
+</body>
+</html>

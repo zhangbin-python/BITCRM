@@ -1,0 +1,794 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Activities') }} - BITCRM{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Mobile-friendly table styles */
+    .table-scroll-touch {
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+        max-height: 500px;
+        scrollbar-width: thin;
+        scrollbar-color: #adb5bd transparent;
+    }
+
+    .table-scroll-touch::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .table-scroll-touch::-webkit-scrollbar-track {
+        background: #f1f3f5;
+        border-radius: 4px;
+    }
+
+    .table-scroll-touch::-webkit-scrollbar-thumb {
+        background-color: #adb5bd;
+        border-radius: 4px;
+    }
+
+    /* Ensure table maintains width and doesn't compress */
+    .table-scroll-touch table {
+        min-width: 900px;
+        table-layout: fixed;
+    }
+
+    .table-scroll-touch table th,
+    .table-scroll-touch table td {
+        white-space: nowrap;
+        padding: 12px 16px;
+    }
+
+    /* Fixed first columns */
+    .table-scroll-touch table th:first-child,
+    .table-scroll-touch table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: inherit;
+        min-width: 120px;
+    }
+
+    .table-scroll-touch table thead th:first-child {
+        z-index: 3;
+        background: #f8f9fa;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 1.1rem;
+    }
+    
+    .activity-icon.success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .activity-icon.primary {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .activity-icon.danger {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .activity-item {
+        padding: 15px;
+        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .activity-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .activity-item.create {
+        border-left-color: #198754;
+    }
+    
+    .activity-item.update {
+        border-left-color: #0d6efd;
+    }
+    
+    .activity-item.delete {
+        border-left-color: #dc3545;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+    
+    .activity-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .activity-description {
+        font-size: 0.875rem;
+        color: #495057;
+        margin-top: 4px;
+    }
+    
+    .subject-link {
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    
+    .subject-link:hover {
+        text-decoration: underline;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    
+    .stat-card.green {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .stat-card.blue {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .stat-card.orange {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    /* Checkbox filter styles */
+    .checkbox-filter {
+        max-height: 150px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 8px;
+    }
+    
+    .checkbox-filter .form-check {
+        margin-bottom: 4px;
+        min-height: auto;
+    }
+    
+    .checkbox-filter .form-check-input {
+        margin-top: 0.3rem;
+    }
+    
+    .checkbox-filter .form-check-label {
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+    
+    /* Real-time indicator */
+    .live-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: #38ef7d;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .new-activity {
+        animation: highlight 2s ease-out;
+    }
+    
+    @keyframes highlight {
+        0% { background-color: #fff3cd; }
+        100% { background-color: transparent; }
+    }
+    
+    @media (max-width: 767.98px) {
+        .filter-card {
+            padding: 15px;
+        }
+        
+        .filter-card .col-md-3,
+        .filter-card .col-md-2 {
+            margin-bottom: 10px;
+        }
+        
+        .activity-item {
+            padding: 12px;
+        }
+        
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+        <i class="bi bi-clock-history me-2"></i>
+        {{ _('Activity Log') }}
+        <span class="live-indicator" id="liveIndicator" style="display: none;"></span>
+    </h4>
+    <div>
+        <button class="btn btn-outline-primary me-2" onclick="toggleRealTime()" id="realtimeToggle">
+            <i class="bi bi-broadcast me-1"></i>
+            <span id="realtimeText">Enable Live</span>
+        </button>
+        <button class="btn btn-outline-primary" onclick="exportActivities()">
+            <i class="bi bi-download me-1"></i>
+            {{ _('Export') }}
+        </button>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3 col-6 mb-3 mb-md-0">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small">{{ _('Total Activities') }}</div>
+                    <div class="h3 mb-0" id="stat-total">{{ stats.total }}</div>
+                </div>
+                <i class="bi bi-activity fs-1 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3 mb-md-0">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small">{{ _('Today') }}</div>
+                    <div class="h3 mb-0" id="stat-today">{{ stats.today }}</div>
+                </div>
+                <i class="bi bi-calendar-check fs-1 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3 mb-md-0">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small">{{ _('This Week') }}</div>
+                    <div class="h3 mb-0" id="stat-week">{{ stats.week }}</div>
+                </div>
+                <i class="bi bi-calendar-week fs-1 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small">{{ _('This Month') }}</div>
+                    <div class="h3 mb-0" id="stat-month">{{ stats.month }}</div>
+                </div>
+                <i class="bi bi-calendar-month fs-1 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-card">
+    <form id="filterForm" method="GET" action="{{ url_for('main.activities') }}" onsubmit="console.log('Form submitting:', new FormData(this)); return true;">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small text-muted">{{ _('Date Range') }}</label>
+                <input type="date" class="form-control" name="start_date" value="{{ filters.start_date or '' }}"
+                       placeholder="{{ _('Start Date') }}">
+                <input type="date" class="form-control mt-2" name="end_date" value="{{ filters.end_date or '' }}"
+                       placeholder="{{ _('End Date') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">{{ _('User') }}</label>
+                <div class="checkbox-filter">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="user_id" value="" id="user-all"
+                               {% if not filters.user_id %}checked{% endif %}>
+                        <label class="form-check-label" for="user-all">{{ _('All Users') }}</label>
+                    </div>
+                    {% for user in users %}
+                    <div class="form-check">
+                        <input class="form-check-input user-checkbox" type="checkbox" name="user_id" 
+                               value="{{ user.id }}" id="user-{{ user.id }}"
+                               {% if filters.user_id == user.id|string %}checked{% endif %}>
+                        <label class="form-check-label" for="user-{{ user.id }}">{{ user.username }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">{{ _('Action Type') }}</label>
+                <div class="checkbox-filter">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="action_type" value="" id="action-all"
+                               {% if not filters.action_type %}checked{% endif %}>
+                        <label class="form-check-label" for="action-all">{{ _('All Actions') }}</label>
+                    </div>
+                    {% for action in action_types %}
+                    <div class="form-check">
+                        <input class="form-check-input action-checkbox" type="checkbox" name="action_type" 
+                               value="{{ action }}" id="action-{{ loop.index }}"
+                               {% if filters.action_type == action %}checked{% endif %}>
+                        <label class="form-check-label" for="action-{{ loop.index }}">{{ _(action) }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">{{ _('Subject Type') }}</label>
+                <div class="checkbox-filter">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="subject_type" value="" id="subject-all"
+                               checked>
+                        <label class="form-check-label" for="subject-all">{{ _('All Subjects') }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input subject-checkbox" type="checkbox" name="subject_type" 
+                               value="lead" id="subject-lead">
+                        <label class="form-check-label" for="subject-lead">{{ _('Leads') }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input subject-checkbox" type="checkbox" name="subject_type" 
+                               value="pipeline" id="subject-pipeline">
+                        <label class="form-check-label" for="subject-pipeline">{{ _('Pipeline') }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input subject-checkbox" type="checkbox" name="subject_type" 
+                               value="task" id="subject-task">
+                        <label class="form-check-label" for="subject-task">{{ _('Tasks') }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input subject-checkbox" type="checkbox" name="subject_type" 
+                               value="account" id="subject-account">
+                        <label class="form-check-label" for="subject-account">{{ _('Account') }}</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100" onclick="console.log('Search button clicked');">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <a href="{{ url_for('main.activities') }}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <label class="form-label small text-muted">{{ _('Search') }}</label>
+                <input type="text" class="form-control" name="keyword" 
+                       placeholder="{{ _('Keyword...') }}" value="{{ filters.keyword or '' }}">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Activities List -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if activities.items %}
+        <div class="table-scroll-touch">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th class="bg-light" style="width: 120px;">{{ _('Time') }}</th>
+                        <th class="bg-light" style="width: 150px;">{{ _('User') }}</th>
+                        <th class="bg-light" style="width: 150px;">{{ _('Action') }}</th>
+                        <th class="bg-light" style="width: 200px;">{{ _('Subject') }}</th>
+                        <th class="bg-light" style="width: 250px;">{{ _('Description') }}</th>
+                        <th class="bg-light" style="width: 100px;">{{ _('IP Address') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="activities-tbody">
+                    {% for activity in activities.items %}
+                    <tr class="activity-item {{ 'create' if 'Created' in activity.action_type or 'Imported' in activity.action_type else ('update' if 'Changed' in activity.action_type else ('delete' if 'Deleted' in activity.action_type else '')) }}" data-id="{{ activity.id }}">
+                        <td>
+                            <div class="activity-time">
+                                {{ activity.created_at.strftime('%Y-%m-%d') }}
+                            </div>
+                            <div class="activity-time text-muted">
+                                {{ activity.created_at.strftime('%H:%M:%S') }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="activity-icon me-2" title="{{ activity.user_name }}">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <span>{{ activity.user_name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ activity.get_action_badge() }}">
+                                <i class="bi {{ activity.get_action_icon() }} me-1"></i>
+                                {{ _(activity.action_type) }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if activity.subject_id %}
+                            <a href="#" class="subject-link">
+                                {% if activity.subject_type == 'lead' %}
+                                <i class="bi bi-person me-1"></i>
+                                {% elif activity.subject_type == 'pipeline' %}
+                                <i class="bi bi-graph-up me-1"></i>
+                                {% elif activity.subject_type == 'task' %}
+                                <i class="bi bi-check-circle me-1"></i>
+                                {% else %}
+                                <i class="bi bi-folder me-1"></i>
+                                {% endif %}
+                                {{ activity.subject_name[:30] if activity.subject_name else _(activity.subject_type|capitalize) + ' #' + activity.subject_id|string }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted">
+                                {{ _(activity.subject_type|capitalize) if activity.subject_type else '-' }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="activity-description">
+                                {{ activity.description[:100] if activity.description else '-' }}
+                            </div>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ activity.ip_address or '-' }}</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if activities.pages > 1 %}
+        <div class="p-3">
+            <nav aria-label="Activity pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not activities.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.activities', page=activities.prev_num, start_date=filters.start_date, end_date=filters.end_date, user_id=filters.user_id, action_type=filters.action_type, subject_type=filters.subject_type, keyword=filters.keyword) }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    
+                    {% for page_num in activities.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                    {% if page_num == activities.page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.activities', page=page_num, start_date=filters.start_date, end_date=filters.end_date, user_id=filters.user_id, action_type=filters.action_type, subject_type=filters.subject_type, keyword=filters.keyword) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    <li class="page-item {% if not activities.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.activities', page=activities.next_num, start_date=filters.start_date, end_date=filters.end_date, user_id=filters.user_id, action_type=filters.action_type, subject_type=filters.subject_type, keyword=filters.keyword) }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="text-center mt-2">
+                <small class="text-muted">
+                    {{ _('Showing %(start)s to %(end)s of %(total)s activities', 
+                        start=activities.items[0].id if activities.items else 0,
+                        end=activities.items[-1].id if activities.items else 0,
+                        total=activities.total) }}
+                </small>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted"></i>
+            <p class="text-muted mt-3">{{ _('No activities found.') }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Real-time polling variables
+    let isRealTimeEnabled = false;
+    let pollInterval = null;
+    let lastActivityId = {{ activities.items[0].id if activities.items else 0 }};
+    const POLL_INTERVAL_MS = 5000; // 5 seconds
+
+    function exportActivities() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', 'csv');
+        window.location.href = '{{ url_for("main.activities") }}?' + params.toString();
+    }
+
+    // Toggle real-time updates
+    function toggleRealTime() {
+        isRealTimeEnabled = !isRealTimeEnabled;
+        const indicator = document.getElementById('liveIndicator');
+        const toggleBtn = document.getElementById('realtimeToggle');
+        const toggleText = document.getElementById('realtimeText');
+        
+        if (isRealTimeEnabled) {
+            indicator.style.display = 'inline-block';
+            toggleText.textContent = 'Disable Live';
+            toggleBtn.classList.remove('btn-outline-primary');
+            toggleBtn.classList.add('btn-primary');
+            startPolling();
+        } else {
+            indicator.style.display = 'none';
+            toggleText.textContent = 'Enable Live';
+            toggleBtn.classList.remove('btn-primary');
+            toggleBtn.classList.add('btn-outline-primary');
+            stopPolling();
+        }
+    }
+
+    function startPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+        }
+        pollInterval = setInterval(pollActivities, POLL_INTERVAL_MS);
+        // Poll immediately
+        pollActivities();
+    }
+
+    function stopPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+    }
+
+    function pollActivities() {
+        fetch('/api/activities/stream?after_id=' + lastActivityId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.items && data.items.length > 0) {
+                    // Add new activities to the table
+                    data.items.forEach(activity => {
+                        addActivityRow(activity);
+                        lastActivityId = Math.max(lastActivityId, activity.id);
+                    });
+                    
+                    // Update stats
+                    updateStats(data.stats);
+                }
+            })
+            .catch(error => {
+                console.error('Error polling activities:', error);
+            });
+    }
+
+    function addActivityRow(activity) {
+        const tbody = document.getElementById('activities-tbody');
+        if (!tbody) return;
+        
+        // Determine row class based on action type
+        let rowClass = '';
+        if (activity.action_type.includes('Created') || activity.action_type.includes('Imported')) {
+            rowClass = 'create';
+        } else if (activity.action_type.includes('Changed') || activity.action_type.includes('Updated') || activity.action_type.includes('Edited')) {
+            rowClass = 'update';
+        } else if (activity.action_type.includes('Deleted')) {
+            rowClass = 'delete';
+        }
+        
+        // Format date
+        const createdDate = new Date(activity.created_at);
+        const dateStr = createdDate.toISOString().split('T')[0];
+        const timeStr = createdDate.toTimeString().split(' ')[0].substring(0, 8);
+        
+        // Determine icon based on subject type
+        let subjectIcon = '<i class="bi bi-folder me-1"></i>';
+        if (activity.subject_type === 'lead') {
+            subjectIcon = '<i class="bi bi-person me-1"></i>';
+        } else if (activity.subject_type === 'pipeline') {
+            subjectIcon = '<i class="bi bi-graph-up me-1"></i>';
+        } else if (activity.subject_type === 'task') {
+            subjectIcon = '<i class="bi bi-check-circle me-1"></i>';
+        }
+        
+        // Build subject display
+        let subjectDisplay = '-';
+        if (activity.subject_id) {
+            const subjectName = activity.subject_name ? activity.subject_name.substring(0, 30) : activity.subject_type + ' #' + activity.subject_id;
+            subjectDisplay = `<a href="#" class="subject-link">${subjectIcon}${subjectName}</a>`;
+        } else if (activity.subject_type) {
+            subjectDisplay = `<span class="text-muted">${activity.subject_type.charAt(0).toUpperCase() + activity.subject_type.slice(1)}</span>`;
+        }
+        
+        // Build description
+        const description = activity.description ? activity.description.substring(0, 100) : '-';
+        
+        // IP address
+        const ipAddress = activity.ip_address || '-';
+        
+        const rowHtml = `
+            <tr class="activity-item ${rowClass} new-activity" data-id="${activity.id}">
+                <td>
+                    <div class="activity-time">${dateStr}</div>
+                    <div class="activity-time text-muted">${timeStr}</div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon me-2" title="${activity.user_name}">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <span>${activity.user_name}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-${activity.action_badge}">
+                        <i class="bi ${activity.action_icon} me-1"></i>
+                        ${activity.action_type}
+                    </span>
+                </td>
+                <td>${subjectDisplay}</td>
+                <td><div class="activity-description">${description}</div></td>
+                <td><small class="text-muted">${ipAddress}</small></td>
+            </tr>
+        `;
+        
+        // Insert at the beginning
+        tbody.insertAdjacentHTML('afterbegin', rowHtml);
+        
+        // Remove highlight after animation
+        setTimeout(() => {
+            const row = tbody.querySelector(`tr[data-id="${activity.id}"]`);
+            if (row) {
+                row.classList.remove('new-activity');
+            }
+        }, 2000);
+    }
+
+    function updateStats(stats) {
+        if (stats.total !== undefined) {
+            document.getElementById('stat-total').textContent = stats.total;
+        }
+        if (stats.today !== undefined) {
+            document.getElementById('stat-today').textContent = stats.today;
+        }
+        if (stats.week !== undefined) {
+            document.getElementById('stat-week').textContent = stats.week;
+        }
+        if (stats.month !== undefined) {
+            document.getElementById('stat-month').textContent = stats.month;
+        }
+    }
+
+    // Checkbox "all" functionality - wrapped in try-catch for debugging
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Activities page loaded, initializing checkboxes...');
+        try {
+        // User checkboxes
+        const userAll = document.getElementById('user-all');
+        const userCheckboxes = document.querySelectorAll('.user-checkbox');
+        
+        if (userAll) {
+            userAll.addEventListener('change', function() {
+                console.log('User All changed:', this.checked);
+                userCheckboxes.forEach(cb => cb.checked = false);
+            });
+            
+            userCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    console.log('User checkbox changed:', this.value, this.checked);
+                    if (this.checked) {
+                        userAll.checked = false;
+                    }
+                    // Check if all are unchecked
+                    const anyChecked = Array.from(userCheckboxes).some(cb => cb.checked);
+                    if (!anyChecked) {
+                        userAll.checked = true;
+                    }
+                });
+            });
+        }
+        
+        // Action type checkboxes
+        const actionAll = document.getElementById('action-all');
+        const actionCheckboxes = document.querySelectorAll('.action-checkbox');
+        
+        if (actionAll) {
+            actionAll.addEventListener('change', function() {
+                console.log('Action All changed:', this.checked);
+                actionCheckboxes.forEach(cb => cb.checked = false);
+            });
+            
+            actionCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    console.log('Action checkbox changed:', this.value, this.checked);
+                    if (this.checked) {
+                        actionAll.checked = false;
+                    }
+                    const anyChecked = Array.from(actionCheckboxes).some(cb => cb.checked);
+                    if (!anyChecked) {
+                        actionAll.checked = true;
+                    }
+                });
+            });
+        }
+        
+        // Subject type checkboxes
+        const subjectAll = document.getElementById('subject-all');
+        const subjectCheckboxes = document.querySelectorAll('.subject-checkbox');
+        
+        if (subjectAll) {
+            subjectAll.addEventListener('change', function() {
+                console.log('Subject All changed:', this.checked);
+                subjectCheckboxes.forEach(cb => cb.checked = false);
+            });
+            
+            subjectCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    console.log('Subject checkbox changed:', this.value, this.checked);
+                    if (this.checked) {
+                        subjectAll.checked = false;
+                    }
+                    const anyChecked = Array.from(subjectCheckboxes).some(cb => cb.checked);
+                    if (!anyChecked) {
+                        subjectAll.checked = true;
+                    }
+                });
+            });
+        }
+        console.log('Checkbox handlers initialized successfully');
+        } catch(e) {
+            console.error('Error initializing checkboxes:', e);
+        }
+    });
+
+    // Disable scroll hint after user interaction
+    document.querySelectorAll('.table-scroll-touch').forEach(function(table) {
+        let hintShown = false;
+
+        table.addEventListener('scroll', function() {
+            if (!hintShown) {
+                hintShown = true;
+                table.classList.add('scroll-hint-disabled');
+            }
+        }, { passive: true });
+
+        table.addEventListener('touchstart', function() {
+            if (!hintShown) {
+                hintShown = true;
+                table.classList.add('scroll-hint-disabled');
+            }
+        }, { passive: true });
+    });
+</script>
+{% endblock %}

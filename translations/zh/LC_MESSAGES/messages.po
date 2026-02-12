@@ -1,0 +1,1309 @@
+# Chinese translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-02-07 18:48+0800\n"
+"PO-Revision-Date: 2026-02-07 18:49+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh\n"
+"Language-Team: zh <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: templates/base.html:142 templates/login.html:12
+msgid "Customer Relationship Management"
+msgstr "客户关系管理"
+
+#: templates/base.html:150 templates/dashboard.html:3
+#: templates/dashboard.html:56
+msgid "Dashboard"
+msgstr "仪表板"
+
+#: templates/base.html:159 templates/leads/index.html:3
+msgid "Sales Leads"
+msgstr "销售线索"
+
+#: templates/base.html:168 templates/dashboard.html:294
+msgid "Pipeline"
+msgstr "销售管道"
+
+#: templates/base.html:176
+msgid "Tasks"
+msgstr "任务"
+
+#: templates/admin/users.html:108 templates/admin/users.html:148
+#: templates/base.html:185
+msgid "Admin"
+msgstr "管理"
+
+#: templates/base.html:242 templates/partials/logout_modal.html:5
+#: templates/partials/logout_modal.html:13
+msgid "Logout"
+msgstr "退出"
+
+#: templates/dashboard.html:62 templates/leads/index.html:23
+#: templates/pipeline/index.html:15
+msgid "Export"
+msgstr "导出"
+
+#: templates/dashboard.html:75
+msgid "Total Sales Leads (This Week)"
+msgstr "本周销售线索总数"
+
+#: templates/dashboard.html:87 templates/dashboard.html:110
+#: templates/dashboard.html:136 templates/dashboard.html:159
+msgid "View Details"
+msgstr "查看详情"
+
+#: templates/dashboard.html:98
+msgid "Qualified Leads (This Week)"
+msgstr "本周合格线索"
+
+#: templates/dashboard.html:124
+msgid "Pipeline Count (This Week)"
+msgstr "本周管道数量"
+
+#: templates/dashboard.html:147 templates/pipeline/index.html:43
+msgid "Total TCV"
+msgstr "总合同价值"
+
+#: templates/dashboard.html:156
+msgid "Total Contract Value"
+msgstr "总合同价值"
+
+#: templates/dashboard.html:168
+msgid "Current Qtr Revenue"
+msgstr "本季度收入"
+
+#: templates/dashboard.html:171
+msgid "MRC × 3 months"
+msgstr "月循环收入 × 3 个月"
+
+#: templates/dashboard.html:180
+msgid "Next Qtr Revenue"
+msgstr "下季度收入"
+
+#: templates/dashboard.html:183
+msgid "Projected"
+msgstr "预计"
+
+#: templates/dashboard.html:197
+msgid "Per-Owner Breakdown"
+msgstr "按负责人分解"
+
+#: templates/dashboard.html:206 templates/leads/form.html:87
+#: templates/leads/index.html:62 templates/leads/index.html:116
+#: templates/pipeline/form.html:62 templates/pipeline/index.html:95
+#: templates/pipeline/index.html:116
+msgid "Owner"
+msgstr "负责人"
+
+#: templates/dashboard.html:207
+msgid "Customers"
+msgstr "客户数"
+
+#: templates/dashboard.html:208 templates/pipeline/index.html:119
+msgid "TCV"
+msgstr "合同价值"
+
+#: templates/dashboard.html:209
+msgid "Current Qtr Rev"
+msgstr "本季度收入"
+
+#: templates/dashboard.html:210
+msgid "Next Qtr Rev"
+msgstr "下季度收入"
+
+#: templates/dashboard.html:231
+msgid "Details"
+msgstr "详情"
+
+#: templates/dashboard.html:242
+msgid "No pipeline data available"
+msgstr "暂无管道数据"
+
+#: templates/dashboard.html:257
+msgid "Weekly Trend"
+msgstr "每周趋势"
+
+#: templates/dashboard.html:273
+msgid "Pipeline Stage Distribution"
+msgstr "管道阶段分布"
+
+#: templates/dashboard.html:294
+msgid "Leads"
+msgstr "线索"
+
+#: templates/dashboard.html:294
+msgid "Qualified"
+msgstr "已合格"
+
+#: templates/dashboard.html:296
+msgid "This Week"
+msgstr "本周"
+
+#: templates/dashboard.html:300
+msgid "Last Week"
+msgstr "上周"
+
+#: templates/admin/users.html:53 templates/dashboard.html:326
+msgid "Active"
+msgstr "活跃"
+
+#: templates/dashboard.html:326
+msgid "Won"
+msgstr "已赢单"
+
+#: templates/dashboard.html:326
+msgid "Lost"
+msgstr "已输单"
+
+#: templates/login.html:3 templates/login.html:39
+msgid "Login"
+msgstr "登录"
+
+#: templates/admin/users.html:26 templates/admin/users.html:96
+#: templates/admin/users.html:138 templates/login.html:17
+msgid "Username"
+msgstr "用户名"
+
+#: templates/login.html:22
+msgid "Enter your username"
+msgstr "请输入用户名"
+
+#: templates/admin/users.html:112 templates/login.html:27
+msgid "Password"
+msgstr "密码"
+
+#: templates/login.html:32
+msgid "Enter your password"
+msgstr "请输入密码"
+
+#: templates/login.html:46
+msgid "Please contact your enterprise administrator to apply for an account or reset your password."
+msgstr "请向企业管理员申请账号或恢复初始密码。"
+
+#: templates/tasks.html:9
+msgid "Tasks Management"
+msgstr "任务管理"
+
+#: templates/tasks.html:10
+msgid "Track and manage your to-do items"
+msgstr "跟踪和管理待办事项"
+
+#: templates/tasks.html:14 templates/tasks.html:247
+msgid "Add Task"
+msgstr "添加任务"
+
+#: templates/tasks.html:29
+msgid "Overdue"
+msgstr "已过期"
+
+#: templates/tasks.html:44
+msgid "In Progress"
+msgstr "进行中"
+
+#: templates/tasks.html:59
+msgid "Completed"
+msgstr "已完成"
+
+#: templates/tasks.html:72
+msgid "Overdue Tasks"
+msgstr "过期任务"
+
+#: templates/admin/users.html:29 templates/leads/form.html:62
+#: templates/leads/index.html:38 templates/leads/index.html:114
+#: templates/tasks.html:79 templates/tasks.html:127 templates/tasks.html:180
+msgid "Status"
+msgstr "状态"
+
+#: templates/tasks.html:80 templates/tasks.html:128 templates/tasks.html:181
+msgid "Content"
+msgstr "内容"
+
+#: templates/leads/form.html:29 templates/leads/index.html:112
+#: templates/pipeline/form.html:25 templates/pipeline/index.html:114
+#: templates/tasks.html:81 templates/tasks.html:129 templates/tasks.html:182
+#: templates/tasks.html:237
+msgid "Company"
+msgstr "公司"
+
+#: templates/tasks.html:82 templates/tasks.html:130 templates/tasks.html:183
+#: templates/tasks.html:241
+msgid "Due Date"
+msgstr "截止日期"
+
+#: templates/admin/users.html:31 templates/leads/index.html:118
+#: templates/pipeline/index.html:123 templates/tasks.html:83
+#: templates/tasks.html:131 templates/tasks.html:184
+msgid "Actions"
+msgstr "操作"
+
+#: templates/tasks.html:97 templates/tasks.html:145
+msgid "Mark Complete"
+msgstr "标记完成"
+
+#: templates/leads/index.html:149 templates/leads/index.html:173
+#: templates/pipeline/index.html:160 templates/tasks.html:102
+#: templates/tasks.html:150 templates/tasks.html:203
+msgid "Delete"
+msgstr "删除"
+
+#: templates/pipeline/index.html:159 templates/tasks.html:102
+#: templates/tasks.html:150 templates/tasks.html:203
+msgid "Are you sure?"
+msgstr "确定吗？"
+
+#: templates/tasks.html:119
+msgid "In Progress Tasks"
+msgstr "进行中任务"
+
+#: templates/tasks.html:163
+msgid "No tasks in progress"
+msgstr "暂无进行中任务"
+
+#: templates/tasks.html:172
+msgid "Completed Tasks"
+msgstr "已完成任务"
+
+#: templates/tasks.html:198
+msgid "Reopen"
+msgstr "重新打开"
+
+#: templates/tasks.html:215
+msgid "No completed tasks"
+msgstr "暂无已完成任务"
+
+#: templates/tasks.html:227
+msgid "Add New Task"
+msgstr "添加新任务"
+
+#: templates/tasks.html:233
+msgid "Task Content"
+msgstr "任务内容"
+
+#: templates/admin/users.html:118 templates/admin/users.html:155
+#: templates/leads/form.html:137 templates/leads/index.html:169
+#: templates/leads/index.html:263 templates/partials/logout_modal.html:12
+#: templates/pipeline/follow_up_modal.html:42 templates/pipeline/form.html:208
+#: templates/pipeline/index.html:214 templates/tasks.html:246
+msgid "Cancel"
+msgstr "取消"
+
+#: templates/admin/users.html:3 templates/admin/users.html:9
+msgid "User Management"
+msgstr "用户管理"
+
+#: templates/admin/users.html:10
+msgid "Manage system users and their roles"
+msgstr "管理系统用户及其角色"
+
+#: templates/admin/users.html:14 templates/admin/users.html:119
+msgid "Add User"
+msgstr "添加用户"
+
+#: templates/admin/users.html:27 templates/admin/users.html:100
+#: templates/admin/users.html:142 templates/leads/form.html:41
+#: templates/pipeline/form.html:41
+msgid "Email"
+msgstr "邮箱"
+
+#: templates/admin/users.html:28 templates/admin/users.html:104
+#: templates/admin/users.html:146
+msgid "Role"
+msgstr "角色"
+
+#: templates/admin/users.html:30
+msgid "Created At"
+msgstr "创建时间"
+
+#: templates/admin/users.html:55
+msgid "Inactive"
+msgstr "未激活"
+
+#: templates/admin/users.html:65
+msgid "Toggle Status"
+msgstr "切换状态"
+
+#: templates/admin/users.html:70
+msgid "Reset Password"
+msgstr "重置密码"
+
+#: templates/admin/users.html:70
+msgid "Reset password to default?"
+msgstr "确定要重置为默认密码吗？"
+
+#: templates/admin/users.html:90
+msgid "Add New User"
+msgstr "添加新用户"
+
+#: templates/admin/users.html:106 templates/admin/users.html:149
+msgid "Sales"
+msgstr "销售"
+
+#: templates/admin/users.html:107 templates/admin/users.html:150
+msgid "Marketing"
+msgstr "市场"
+
+#: templates/admin/users.html:114
+msgid "Default password will be: bitcrm"
+msgstr "默认密码为: bitcrm"
+
+#: templates/admin/users.html:132
+msgid "Edit User"
+msgstr "编辑用户"
+
+#: templates/admin/users.html:156
+msgid "Save Changes"
+msgstr "保存更改"
+
+#: templates/leads/form.html:10
+msgid "Enter lead information to track potential customers"
+msgstr "输入线索信息以跟踪潜在客户"
+
+#: templates/leads/form.html:20 templates/pipeline/form.html:20
+msgid "Basic Information"
+msgstr "基本信息"
+
+#: templates/leads/form.html:25 templates/pipeline/form.html:29
+msgid "Contact Name"
+msgstr "联系人姓名"
+
+#: templates/leads/form.html:33 templates/leads/index.html:113
+#: templates/pipeline/form.html:33
+msgid "Industry"
+msgstr "行业"
+
+#: templates/leads/form.html:37 templates/pipeline/form.html:37
+msgid "Position/Title"
+msgstr "职位/头衔"
+
+#: templates/leads/form.html:45 templates/pipeline/form.html:45
+msgid "Mobile Number"
+msgstr "手机号码"
+
+#: templates/leads/form.html:57
+msgid "Lead Details"
+msgstr "线索详情"
+
+#: templates/leads/form.html:70 templates/leads/index.html:50
+#: templates/leads/index.html:115
+msgid "Source"
+msgstr "来源"
+
+#: templates/leads/form.html:72
+msgid "Select Source"
+msgstr "选择来源"
+
+#: templates/leads/form.html:79
+msgid "Event/Campaign"
+msgstr "活动/营销活动"
+
+#: templates/leads/form.html:80
+msgid "e.g., Trade Show 2024"
+msgstr "例如: 2024 展会"
+
+#: templates/leads/form.html:83 templates/leads/index.html:117
+msgid "Date Added"
+msgstr "添加日期"
+
+#: templates/leads/form.html:89 templates/pipeline/form.html:64
+msgid "Select Owner"
+msgstr "选择负责人"
+
+#: templates/leads/form.html:108
+msgid "Requirements"
+msgstr "需求"
+
+#: templates/leads/form.html:112
+msgid "Requirements/Details"
+msgstr "需求/详情"
+
+#: templates/leads/form.html:113
+msgid "Describe the prospect's requirements..."
+msgstr ""
+
+#: templates/leads/form.html:121
+msgid "Notes"
+msgstr "备注"
+
+#: templates/leads/form.html:125
+msgid "Additional Notes"
+msgstr "附加说明"
+
+#: templates/leads/form.html:126
+msgid "Any additional notes..."
+msgstr ""
+
+#: templates/leads/form.html:139 templates/pipeline/form.html:210
+msgid "Save & Continue Adding"
+msgstr "保存并继续添加"
+
+#: templates/leads/form.html:140
+msgid "Save Lead"
+msgstr "保存线索"
+
+#: templates/leads/index.html:9
+msgid "Sales Leads Management"
+msgstr "销售线索管理"
+
+#: templates/leads/index.html:15
+msgid "Download Template"
+msgstr "下载模板"
+
+#: templates/leads/index.html:19 templates/leads/index.html:267
+#: templates/pipeline/index.html:22 templates/pipeline/index.html:215
+msgid "Import"
+msgstr "导入"
+
+#: templates/leads/index.html:28
+msgid "Add Sales Lead"
+msgstr "添加销售线索"
+
+#: templates/leads/index.html:40
+msgid "All Statuses"
+msgstr "所有状态"
+
+#: templates/leads/index.html:52
+msgid "All Sources"
+msgstr "所有来源"
+
+#: templates/leads/index.html:64
+msgid "All Owners"
+msgstr "所有负责人"
+
+#: templates/leads/index.html:76
+msgid "Filter"
+msgstr "筛选"
+
+#: templates/leads/index.html:80
+msgid "Clear"
+msgstr "清除"
+
+#: templates/leads/index.html:91
+msgid "Show Unqualified Leads"
+msgstr "显示不合格线索"
+
+#: templates/leads/index.html:102
+#, python-format
+msgid "Filtered %(count)s Sales Leads"
+msgstr ""
+
+#: templates/leads/index.html:111
+msgid "Name"
+msgstr "姓名"
+
+#: templates/leads/index.html:143 templates/pipeline/index.html:153
+msgid "Edit"
+msgstr "编辑"
+
+#: templates/leads/index.html:159
+msgid "Confirm Delete"
+msgstr "确认删除"
+
+#: templates/leads/index.html:163
+msgid "Are you sure you want to delete this Sales Lead?"
+msgstr "确定要删除此销售线索吗？"
+
+#: templates/leads/index.html:165
+msgid "This action cannot be undone."
+msgstr "此操作无法撤销。"
+
+#: templates/leads/index.html:186
+msgid "No Sales Leads found"
+msgstr "未找到销售线索"
+
+#: templates/leads/index.html:189
+msgid "Add First Sales Lead"
+msgstr "添加第一个销售线索"
+
+#: templates/leads/index.html:204
+msgid "Previous"
+msgstr "上一页"
+
+#: templates/leads/index.html:222
+msgid "Next"
+msgstr "下一页"
+
+#: templates/leads/index.html:236
+msgid "Import Sales Leads"
+msgstr "导入销售线索"
+
+#: templates/leads/index.html:243
+msgid "Select Excel File"
+msgstr "选择 Excel 文件"
+
+#: templates/leads/index.html:247
+msgid "Supported formats: .xlsx, .xls"
+msgstr "支持格式: .xlsx, .xls"
+
+#: templates/leads/index.html:252
+msgid "Important:"
+msgstr "重要提示："
+
+#: templates/leads/index.html:254
+msgid "Download the template first and fill in your data"
+msgstr "请先下载模板并填写数据"
+
+#: templates/leads/index.html:255
+msgid "Date format: \"Jan 1, 2024\" or \"2024-01-01\""
+msgstr ""
+
+#: templates/leads/index.html:256
+msgid ""
+"Status must be one of: Qualified, Waiting for Response, Unqualified, "
+"Waiting to be Contacted"
+msgstr ""
+
+#: templates/leads/index.html:257
+msgid "Source must be one of the predefined options"
+msgstr "来源必须为预定义选项之一"
+
+#: templates/partials/language_selector.html:3
+msgid "Language"
+msgstr "语言"
+
+#: templates/partials/logout_modal.html:9
+msgid "Are you sure you want to logout?"
+msgstr "确定要退出登录吗？"
+
+#: templates/pipeline/follow_up_modal.html:5 templates/pipeline/index.html:156
+msgid "Add Follow-up"
+msgstr "添加跟进"
+
+#: templates/pipeline/follow_up_modal.html:13
+msgid "Follow-up History"
+msgstr "跟进历史"
+
+#: templates/pipeline/follow_up_modal.html:20
+msgid "Follow-up Notes"
+msgstr "跟进备注"
+
+#: templates/pipeline/follow_up_modal.html:21
+msgid "Describe what was discussed..."
+msgstr ""
+
+#: templates/pipeline/follow_up_modal.html:24
+msgid "Current Stuckpoint"
+msgstr "当前卡点"
+
+#: templates/pipeline/follow_up_modal.html:25
+msgid "What is blocking progress?"
+msgstr "是什么阻碍了进展？"
+
+#: templates/pipeline/follow_up_modal.html:28
+msgid "Next Steps / To-do"
+msgstr "下一步 / 待办事项"
+
+#: templates/pipeline/follow_up_modal.html:29
+msgid "What needs to be done next?"
+msgstr "下一步需要做什么？"
+
+#: templates/pipeline/follow_up_modal.html:32
+msgid "To-do Due Date"
+msgstr "待办截止日期"
+
+#: templates/pipeline/follow_up_modal.html:36 templates/pipeline/form.html:151
+msgid "Current Stage"
+msgstr "当前阶段"
+
+#: templates/pipeline/follow_up_modal.html:43
+msgid "Save Follow-up"
+msgstr "保存跟进"
+
+#: templates/pipeline/form.html:10
+msgid "Enter deal information and calculate metrics"
+msgstr "输入交易信息并计算指标"
+
+#: templates/pipeline/form.html:57
+msgid "Ownership"
+msgstr "所有权"
+
+#: templates/pipeline/form.html:73
+msgid "Support Team"
+msgstr "支持团队"
+
+#: templates/pipeline/form.html:81
+msgid "Hold Ctrl/Cmd to select multiple"
+msgstr "按住 Ctrl/Cmd 可多选"
+
+#: templates/pipeline/form.html:94
+msgid "Deal Information"
+msgstr "交易信息"
+
+#: templates/pipeline/form.html:99
+msgid "Product/Solution"
+msgstr "产品/解决方案"
+
+#: templates/pipeline/form.html:100
+msgid "e.g., Cloud Services, Software License, etc."
+msgstr ""
+
+#: templates/pipeline/form.html:103
+msgid "MRC (Monthly)"
+msgstr "月循环收入"
+
+#: templates/pipeline/form.html:110
+msgid "OTC (One-time)"
+msgstr "一次性费用"
+
+#: templates/pipeline/form.html:117
+msgid "Contract Term"
+msgstr "合同期限"
+
+#: templates/pipeline/form.html:120
+msgid "Years"
+msgstr "年"
+
+#: templates/pipeline/form.html:124
+msgid "GP Margin"
+msgstr "毛利率"
+
+#: templates/pipeline/form.html:131
+msgid "TCV (Auto-calculated)"
+msgstr "合同价值（自动计算）"
+
+#: templates/pipeline/form.html:135
+msgid "Gross Profit"
+msgstr "毛利"
+
+#: templates/pipeline/form.html:147
+msgid "Pipeline Stage"
+msgstr "管道阶段"
+
+#: templates/pipeline/form.html:159
+msgid "Deal Level"
+msgstr "交易级别"
+
+#: templates/pipeline/form.html:161 templates/pipeline/index.html:91
+msgid "Stretch"
+msgstr "努力争取"
+
+#: templates/pipeline/form.html:162 templates/pipeline/index.html:90
+msgid "Committed"
+msgstr "确定成交"
+
+#: templates/pipeline/form.html:166
+msgid "Win Probability"
+msgstr "赢单概率"
+
+#: templates/pipeline/form.html:178
+msgid "Important Dates"
+msgstr "重要日期"
+
+#: templates/pipeline/form.html:182
+msgid "Est. Signing Date"
+msgstr "预计签约日期"
+
+#: templates/pipeline/form.html:186
+msgid "Est. Activation Date"
+msgstr "预计激活日期"
+
+#: templates/pipeline/form.html:197
+msgid "Comments & Notes"
+msgstr "评论和备注"
+
+#: templates/pipeline/form.html:200
+msgid "Enter any additional notes or comments..."
+msgstr ""
+
+#: templates/pipeline/form.html:211
+msgid "Save Pipeline"
+msgstr "保存管道"
+
+#: templates/pipeline/index.html:3 templates/pipeline/index.html:9
+msgid "Pipeline Management"
+msgstr "管道管理"
+
+#: templates/pipeline/index.html:10
+msgid "Track and manage your sales opportunities"
+msgstr "跟踪和管理销售机会"
+
+#: templates/pipeline/index.html:18
+msgid "Template"
+msgstr "模板"
+
+#: templates/pipeline/index.html:25
+msgid "Add Pipeline"
+msgstr "添加管道"
+
+#: templates/pipeline/index.html:35
+msgid "Total Opportunities"
+msgstr "机会总数"
+
+#: templates/pipeline/index.html:51
+msgid "Active Deals"
+msgstr "活跃交易"
+
+#: templates/pipeline/index.html:59
+msgid "Won Deals"
+msgstr "赢单交易"
+
+#: templates/pipeline/index.html:71
+msgid "Show Lost"
+msgstr "显示输单"
+
+#: templates/pipeline/index.html:73
+msgid "No"
+msgstr "否"
+
+#: templates/pipeline/index.html:74
+msgid "Yes"
+msgstr "是"
+
+#: templates/pipeline/index.html:78 templates/pipeline/index.html:117
+msgid "Stage"
+msgstr "阶段"
+
+#: templates/pipeline/index.html:80
+msgid "All Stages"
+msgstr "所有阶段"
+
+#: templates/pipeline/index.html:87 templates/pipeline/index.html:118
+msgid "Level"
+msgstr "级别"
+
+#: templates/pipeline/index.html:89
+msgid "All Levels"
+msgstr "所有级别"
+
+#: templates/pipeline/index.html:97
+msgid "All Users"
+msgstr "所有用户"
+
+#: templates/pipeline/index.html:115
+msgid "Product"
+msgstr "产品"
+
+#: templates/pipeline/index.html:120
+msgid "MRC"
+msgstr "月循环收入"
+
+#: templates/pipeline/index.html:121
+msgid "Win Rate"
+msgstr "赢单率"
+
+#: templates/pipeline/index.html:122
+msgid "Est. Sign"
+msgstr "预计签约"
+
+#: templates/pipeline/index.html:202
+msgid "Import Pipeline from Excel"
+msgstr "从 Excel 导入管道"
+
+#: templates/pipeline/index.html:208
+msgid "Excel File"
+msgstr "Excel 文件"
+
+#: templates/pipeline/index.html:210
+msgid "Please download the template first to ensure correct format"
+msgstr "请先下载模板以确保格式正确"
+
+#: venv/Lib/site-packages/click/_termui_impl.py:613
+#, python-brace-format
+msgid "{editor}: Editing failed"
+msgstr ""
+
+#: venv/Lib/site-packages/click/_termui_impl.py:617
+#, python-brace-format
+msgid "{editor}: Editing failed: {e}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1114
+#: venv/Lib/site-packages/click/core.py:1151
+#, python-brace-format
+msgid "{text} {deprecated_message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1170
+msgid "Options"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1245
+#, python-brace-format
+msgid "Got unexpected extra argument ({args})"
+msgid_plural "Got unexpected extra arguments ({args})"
+msgstr[0] ""
+
+#: venv/Lib/site-packages/click/core.py:1264
+#, python-brace-format
+msgid "DeprecationWarning: The command {name!r} is deprecated.{extra_message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1448
+msgid "Aborted!"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1822
+msgid "Commands"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1853
+msgid "Missing command."
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1931
+#, python-brace-format
+msgid "No such command {name!r}."
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:2355
+msgid "Value must be an iterable."
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:2378
+#, python-brace-format
+msgid "Takes {nargs} values but 1 was given."
+msgid_plural "Takes {nargs} values but {len} were given."
+msgstr[0] ""
+
+#: venv/Lib/site-packages/click/core.py:2567
+#, python-brace-format
+msgid ""
+"DeprecationWarning: The {param_type} {name!r} is "
+"deprecated.{extra_message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:3015
+#, python-brace-format
+msgid "env var: {var}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:3018
+#, python-brace-format
+msgid "default: {default}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:3022
+msgid "required"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:3082
+msgid "(dynamic)"
+msgstr ""
+
+#: venv/Lib/site-packages/click/decorators.py:465
+#, python-format
+msgid "%(prog)s, version %(version)s"
+msgstr ""
+
+#: venv/Lib/site-packages/click/decorators.py:522
+msgid "Show the version and exit."
+msgstr ""
+
+#: venv/Lib/site-packages/click/decorators.py:548
+msgid "Show this message and exit."
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:50
+#: venv/Lib/site-packages/click/exceptions.py:89
+#, python-brace-format
+msgid "Error: {message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:81
+#, python-brace-format
+msgid "Try '{command} {option}' for help."
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:130
+#, python-brace-format
+msgid "Invalid value: {message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:132
+#, python-brace-format
+msgid "Invalid value for {param_hint}: {message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:190
+msgid "Missing argument"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:192
+msgid "Missing option"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:194
+msgid "Missing parameter"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:196
+#, python-brace-format
+msgid "Missing {param_type}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:203
+#, python-brace-format
+msgid "Missing parameter: {param_name}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:223
+#, python-brace-format
+msgid "No such option: {name}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:235
+#, python-brace-format
+msgid "Did you mean {possibility}?"
+msgid_plural "(Possible options: {possibilities})"
+msgstr[0] ""
+
+#: venv/Lib/site-packages/click/exceptions.py:282
+msgid "unknown error"
+msgstr ""
+
+#: venv/Lib/site-packages/click/exceptions.py:289
+#, python-brace-format
+msgid "Could not open file {filename!r}: {message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/formatting.py:156
+msgid "Usage:"
+msgstr ""
+
+#: venv/Lib/site-packages/click/parser.py:199
+#, python-brace-format
+msgid "Argument {name!r} takes {nargs} values."
+msgstr ""
+
+#: venv/Lib/site-packages/click/parser.py:381
+#, python-brace-format
+msgid "Option {name!r} does not take a value."
+msgstr ""
+
+#: venv/Lib/site-packages/click/parser.py:444
+#, python-brace-format
+msgid "Option {name!r} requires an argument."
+msgid_plural "Option {name!r} requires {nargs} arguments."
+msgstr[0] ""
+
+#: venv/Lib/site-packages/click/shell_completion.py:332
+msgid "Shell completion is not supported for Bash versions older than 4.4."
+msgstr ""
+
+#: venv/Lib/site-packages/click/shell_completion.py:339
+msgid "Couldn't detect Bash version, shell completion is not supported."
+msgstr ""
+
+#: venv/Lib/site-packages/click/termui.py:165
+msgid "Repeat for confirmation"
+msgstr ""
+
+#: venv/Lib/site-packages/click/termui.py:181
+msgid "Error: The value you entered was invalid."
+msgstr ""
+
+#: venv/Lib/site-packages/click/termui.py:183
+#, python-brace-format
+msgid "Error: {e.message}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/termui.py:194
+msgid "Error: The two entered values do not match."
+msgstr ""
+
+#: venv/Lib/site-packages/click/termui.py:253
+msgid "Error: invalid input"
+msgstr ""
+
+#: venv/Lib/site-packages/click/termui.py:872
+msgid "Press any key to continue..."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:332
+#, python-brace-format
+msgid ""
+"Choose from:\n"
+"\t{choices}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:369
+#, python-brace-format
+msgid "{value!r} is not {choice}."
+msgid_plural "{value!r} is not one of {choices}."
+msgstr[0] ""
+
+#: venv/Lib/site-packages/click/types.py:460
+#, python-brace-format
+msgid "{value!r} does not match the format {format}."
+msgid_plural "{value!r} does not match the formats {formats}."
+msgstr[0] ""
+
+#: venv/Lib/site-packages/click/types.py:482
+#, python-brace-format
+msgid "{value!r} is not a valid {number_type}."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:538
+#, python-brace-format
+msgid "{value} is not in the range {range}."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:719
+#, python-brace-format
+msgid "{value!r} is not a valid boolean. Recognized values: {states}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:747
+#, python-brace-format
+msgid "{value!r} is not a valid UUID."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:937
+msgid "file"
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:939
+msgid "directory"
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:941
+msgid "path"
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:988
+#, python-brace-format
+msgid "{name} {filename!r} does not exist."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:997
+#, python-brace-format
+msgid "{name} {filename!r} is a file."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:1005
+#, python-brace-format
+msgid "{name} {filename!r} is a directory."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:1014
+#, python-brace-format
+msgid "{name} {filename!r} is not readable."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:1023
+#, python-brace-format
+msgid "{name} {filename!r} is not writable."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:1032
+#, python-brace-format
+msgid "{name} {filename!r} is not executable."
+msgstr ""
+
+#: venv/Lib/site-packages/click/types.py:1099
+#, python-brace-format
+msgid "{len_type} values are required, but {len_value} was given."
+msgid_plural "{len_type} values are required, but {len_value} were given."
+msgstr[0] ""
+
+# Activities Module
+msgid "Activities"
+msgstr "活动日志"
+
+msgid "Activity Log"
+msgstr "操作日志"
+
+msgid "Activities Statistics"
+msgstr "活动统计"
+
+msgid "Total Activities"
+msgstr "总活动数"
+
+msgid "User"
+msgstr "用户"
+
+msgid "All Users"
+msgstr "所有用户"
+
+msgid "Action Type"
+msgstr "操作类型"
+
+msgid "All Actions"
+msgstr "所有操作"
+
+msgid "Search"
+msgstr "搜索"
+
+msgid "Clear Filters"
+msgstr "清除筛选"
+
+msgid "Time"
+msgstr "时间"
+
+msgid "Action"
+msgstr "操作"
+
+msgid "Subject"
+msgstr "主题"
+
+msgid "Description"
+msgstr "描述"
+
+msgid "IP Address"
+msgstr "IP地址"
+
+msgid "Today"
+msgstr "今天"
+
+msgid "This Week"
+msgstr "本周"
+
+msgid "This Month"
+msgstr "本月"
+
+msgid "Export"
+msgstr "导出"
+
+msgid "Leads - Imported"
+msgstr "线索 - 导入"
+
+msgid "Leads - Created"
+msgstr "线索 - 创建"
+
+msgid "Leads - Updated"
+msgstr "线索 - 更新"
+
+msgid "Leads - Deleted"
+msgstr "线索 - 删除"
+
+msgid "Pipeline - Created"
+msgstr "商机 - 创建"
+
+msgid "Pipeline - Stage Changed"
+msgstr "商机 - 阶段变更"
+
+msgid "Pipeline - Updated"
+msgstr "商机 - 更新"
+
+msgid "Pipeline - Deleted"
+msgstr "商机 - 删除"
+
+msgid "Task - Created"
+msgstr "任务 - 创建"
+
+msgid "Task - Completed"
+msgstr "任务 - 完成"
+
+msgid "Task - Reopened"
+msgstr "任务 - 重新打开"
+
+msgid "Follow up - Note"
+msgstr "跟进 - 备注"
+
+msgid "Account - Created"
+msgstr "账户 - 创建"
+
+msgid "Leads - Exported"
+msgstr "线索 - 导出"
+
+msgid "Pipeline - Deleted"
+msgstr "商机 - 删除"
+
+msgid "Pipeline - Exported"
+msgstr "商机 - 导出"
+
+msgid "Pipeline - Imported"
+msgstr "商机 - 导入"
+
+msgid "Task - Edited"
+msgstr "任务 - 编辑"
+
+msgid "Task - Deleted"
+msgstr "任务 - 删除"
+
+msgid "Task - Status Changed"
+msgstr "任务 - 状态变更"
+
+msgid "System - Password Changed"
+msgstr "系统 - 密码修改"
+
+msgid "System - Language Changed"
+msgstr "系统 - 语言切换"
+
+msgid "Admin - User Created"
+msgstr "管理员 - 用户创建"
+
+msgid "Admin - User Status Changed"
+msgstr "管理员 - 用户状态变更"
+
+msgid "Filter - Applied"
+msgstr "筛选 - 应用"
+
+msgid "Column - Visibility Changed"
+msgstr "列 - 可见性变更"
+
+msgid "All Subjects"
+msgstr "所有主题"
+
+msgid "Enable Live"
+msgstr "启用实时"
+
+msgid "Disable Live"
+msgstr "禁用实时"
+
+msgid "Live Activities"
+msgstr "实时活动"
+
+msgid "Subject Type"
+msgstr "主题类型"
+
+# Dashboard Metrics
+msgid "Total Leads"
+msgstr "线索总数"
+
+msgid "Qualified Leads"
+msgstr "合格线索"
+
+msgid "Pipeline #"
+msgstr "管道数量"
+
+msgid "Total TCV"
+msgstr "总合同价值"
+
+msgid "Current QTR Revenue"
+msgstr "本季度收入"
+
+msgid "Next QTR Revenue"
+msgstr "下季度收入"
+
+msgid "Current QTR"
+msgstr "本季度"
+
+msgid "Next QTR"
+msgstr "下季度"
+
+msgid "last week"
+msgstr "上周"
+
+msgid "Per-Owner Breakdown"
+msgstr "按负责人分解"
+
+msgid "Filter by Owner"
+msgstr "按负责人筛选"
+
+msgid "Select All"
+msgstr "全选"
+
+msgid "Total"
+msgstr "合计"
+
+# Kanban Board
+msgid "Sales Pipeline Kanban Board"
+msgstr "销售管道看板"
+
+msgid "No deals"
+msgstr "无交易"
+
+msgid "Win"
+msgstr "赢单"
+

@@ -1,0 +1,9 @@
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-globe me-1"></i>{{ _('Language') }}
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{{ url_for('main.set_language', lang='en') }}">🇺🇸 English</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('main.set_language', lang='zh') }}">🇨🇳 中文</a></li>
+    </ul>
+</li>

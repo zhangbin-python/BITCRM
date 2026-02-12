@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('User Management') }} - BITCRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">{{ _('User Management') }}</h1>
+            <p class="text-muted small">{{ _('Manage system users and their roles') }}</p>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-plus me-1"></i> {{ _('Add User') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ _('Username') }}</th>
+                            <th>{{ _('Email') }}</th>
+                            <th>{{ _('Role') }}</th>
+                            <th>{{ _('Status') }}</th>
+                            <th>{{ _('Created At') }}</th>
+                            <th>{{ _('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary text-white me-2">
+                                        {{ user.username[0].upper() }}
+                                    </div>
+                                    {{ user.username }}
+                                </div>
+                            </td>
+                            <td>{{ user.email or '-' }}</td>
+                            <td>
+                                <span class="badge {% if user.role == 'admin' %}bg-danger{% elif user.role == 'marketing' %}bg-info{% else %}bg-success{% endif %}">
+                                    {{ _(user.role|capitalize) }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge bg-success">{{ _('Active') }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ _('Inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if user.id != current_user.id %}
+                                <form action="{{ url_for('admin.toggle_user', user_id=user.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn {% if user.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} btn-sm" title="{{ _('Toggle Status') }}">
+                                        <i class="fas fa-power-off"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('admin.reset_password', user_id=user.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-info btn-sm" title="{{ _('Reset Password') }}" onclick="return confirm('{{ _('Reset password to default?') }}')">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal (outside table) -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Add New User') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('admin.add_user') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Username') }} *</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Email') }}</label>
+                        <input type="email" name="email" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Role') }} *</label>
+                        <select name="role" class="form-select" required>
+                            <option value="sales">{{ _('Sales') }}</option>
+                            <option value="marketing">{{ _('Marketing') }}</option>
+                            <option value="admin">{{ _('Admin') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Password') }} *</label>
+                        <input type="password" name="password" class="form-control" required>
+                        <small class="text-muted">{{ _('Default password will be: bitcrm') }}</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Add User') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modals (outside table, after loop) -->
+{% for user in users %}
+<div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Edit User') }} - {{ user.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('admin.edit_user', user_id=user.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Username') }}</label>
+                        <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Email') }}</label>
+                        <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Role') }}</label>
+                        <select name="role" class="form-select">
+                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>{{ _('Admin') }}</option>
+                            <option value="sales" {% if user.role == 'sales' %}selected{% endif %}>{{ _('Sales') }}</option>
+                            <option value="marketing" {% if user.role == 'marketing' %}selected{% endif %}>{{ _('Marketing') }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Save Changes') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* 遮罩层防御：防止多次触发导致的遮罩叠加 */
+.modal-backdrop + .modal-backdrop {
+    display: none !important;
+}
+
+/* 确保 modal 层级正确 */
+.modal {
+    z-index: 1050;
+}
+
+.modal-backdrop {
+    z-index: 1040;
+}
+
+/* 修复 modal 重复打开时的层级问题 */
+.modal.show {
+    z-index: 1060;
+}
+</style>
+{% endblock %}

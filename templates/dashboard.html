@@ -1,0 +1,1072 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Dashboard') }} - BITCRM{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Top Metrics Cards - Primary color theme with varying opacity */
+    .metric-card-1 .card-body { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
+    .metric-card-2 .card-body { background: linear-gradient(135deg, #1971c2 0%, #1864ab 100%); }
+    .metric-card-3 .card-body { background: linear-gradient(135deg, #228be6 0%, #1c7ed6 100%); }
+    .metric-card-4 .card-body { background: linear-gradient(135deg, #339af0 0%, #2582f0 100%); }
+    .metric-card-5 .card-body { background: linear-gradient(135deg, #4dabf7 0%, #3b8ee0 100%); }
+    .metric-card-6 .card-body { background: linear-gradient(135deg, #74c0fc 0%, #5aabf5 100%); }
+    
+    .metric-card .card-body {
+        color: white;
+        border-radius: 8px;
+        padding: 16px;
+    }
+    
+    .metric-card .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: white;
+    }
+    
+    .metric-card .metric-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .metric-card .metric-vs {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.25);
+        color: white;
+    }
+    
+    .metric-card .metric-vs.positive {
+        background: rgba(25, 135, 84, 0.4);
+    }
+    
+    .metric-card .metric-vs.negative {
+        background: rgba(220, 53, 69, 0.4);
+    }
+    
+    .metric-card .metric-vs.neutral {
+        background: rgba(108, 117, 125, 0.4);
+    }
+    
+    .metric-card .text-muted {
+        color: rgba(255,255,255,0.7) !important;
+    }
+    
+    .metric-card .text-white-50 {
+        color: rgba(255,255,255,0.75) !important;
+    }
+    
+    .owner-card {
+        transition: transform 0.2s ease;
+    }
+    
+    .owner-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Per-Owner Breakdown Table Styles */
+    .owner-table-container {
+        overflow-x: auto;
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .owner-table-container table {
+        min-width: 900px;
+        table-layout: fixed;
+    }
+    
+    .owner-table-container table th,
+    .owner-table-container table td {
+        white-space: nowrap;
+        padding: 12px 16px;
+        vertical-align: middle;
+    }
+    
+    .owner-table-container table td.numeric {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+    
+    .owner-table-container table td.center {
+        text-align: center;
+    }
+    
+    .vs-indicator {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+    
+    .vs-indicator.positive {
+        color: #198754;
+        background: rgba(25, 135, 84, 0.1);
+    }
+    
+    .vs-indicator.negative {
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
+    }
+    
+    .vs-indicator.neutral {
+        color: #6c757d;
+        background: rgba(108, 117, 125, 0.1);
+    }
+    
+    /* Kanban Board Styles */
+    .kanban-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 20px;
+    }
+    
+    .kanban-board {
+        display: flex;
+        gap: 16px;
+        min-width: max-content;
+        padding: 4px;
+    }
+    
+    .kanban-stage {
+        min-width: 260px;
+        max-width: 260px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    /* Deal Lost column - half width, gray */
+    .kanban-stage.is-lost {
+        min-width: 130px;
+        max-width: 130px;
+    }
+    
+    .kanban-stage.is-lost .kanban-stage-header {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+    
+    .kanban-stage.is-lost .kanban-deal-card {
+        background: #e9ecef;
+        border-left: 3px solid #6c757d;
+    }
+    
+    /* Stage colors based on order */
+    .kanban-stage:nth-child(1) .kanban-stage-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    }
+    
+    .kanban-stage:nth-child(2) .kanban-stage-header {
+        background: linear-gradient(135deg, #6610f2 0%, #5a189a 100%);
+    }
+    
+    .kanban-stage:nth-child(3) .kanban-stage-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #5f37a8 100%);
+    }
+    
+    .kanban-stage:nth-child(4) .kanban-stage-header {
+        background: linear-gradient(135deg, #d63384 0%, #b02a6f 100%);
+    }
+    
+    .kanban-stage:nth-child(5) .kanban-stage-header {
+        background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+    }
+    
+    .kanban-stage:nth-child(6) .kanban-stage-header {
+        background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+    }
+    
+    .kanban-stage:nth-child(7) .kanban-stage-header {
+        background: linear-gradient(135deg, #20c997 0%, #0ca678 100%);
+    }
+    
+    .kanban-stage.is-lost:nth-child(8) .kanban-stage-header {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+    
+    .kanban-stage-header {
+        padding: 12px;
+        color: white;
+        text-align: center;
+    }
+    
+    .kanban-stage-header h6 {
+        margin: 0;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .kanban-stage-stats {
+        font-size: 0.7rem;
+        opacity: 0.9;
+        margin-top: 4px;
+    }
+    
+    .kanban-stage-body {
+        padding: 10px;
+        min-height: 150px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .kanban-deal-card {
+        background: white;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .kanban-deal-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    
+    .kanban-deal-card:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Sortable drag styles */
+    .sortable-ghost {
+        opacity: 0.4;
+        background: #e9ecef;
+    }
+    
+    .sortable-chosen {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: scale(1.02);
+    }
+    
+    .sortable-drag {
+        opacity: 1;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        transform: rotate(2deg);
+    }
+    
+    .kanban-deal-company {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #212529;
+        margin-bottom: 4px;
+    }
+    
+    .kanban-deal-owner {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-bottom: 6px;
+    }
+    
+    .kanban-deal-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        font-size: 0.65rem;
+    }
+    
+    .kanban-deal-meta span {
+        padding: 2px 5px;
+        border-radius: 3px;
+        background: #e9ecef;
+    }
+    
+    .kanban-deal-values {
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7rem;
+    }
+    
+    .kanban-deal-values .tcv {
+        font-weight: 600;
+        color: #667eea;
+    }
+    
+    .kanban-deal-values .mrc {
+        color: #6c757d;
+    }
+    
+    .kanban-dates {
+        font-size: 0.65rem;
+        color: #6c757d;
+        margin-top: 4px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    /* Bi spin animation */
+    .bi-spin {
+        animation: bi-spin 1s infinite linear;
+    }
+    
+    @keyframes bi-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Filter dropdown */
+    .filter-dropdown .dropdown-menu {
+        min-width: 200px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .filter-dropdown .dropdown-item {
+        padding: 8px 16px;
+    }
+    
+    .filter-dropdown .form-check {
+        padding: 4px 12px;
+        margin: 0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .metric-card .metric-value {
+            font-size: 1.5rem;
+        }
+        
+        .kanban-stage {
+            min-width: 240px;
+            max-width: 240px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-speedometer2"></i>
+        {{ _('Dashboard') }}
+    </h1>
+</div>
+
+<!-- TOP METRICS ROW -->
+<div class="row mb-4">
+    <!-- Total Sales Leads -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card metric-card-1">
+            <div class="card-body">
+                <p class="metric-label mb-1">{{ _('Total Leads') }}</p>
+                <p class="metric-value">{{ total_leads }}</p>
+                {% set leads_diff = total_leads - vs_last_week_leads %}
+                {% if vs_last_week_leads > 0 %}
+                <span class="metric-vs {% if leads_diff >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if leads_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format((leads_diff / vs_last_week_leads * 100) if vs_last_week_leads > 0 else 0) }}%
+                </span>
+                {% else %}
+                <span class="metric-vs neutral">—</span>
+                {% endif %}
+                <p class="text-muted small mb-0 mt-1">
+                    vs {{ vs_last_week_leads }} {{ _('last week') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Qualified Leads -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card metric-card-2">
+            <div class="card-body">
+                <p class="metric-label mb-1">{{ _('Qualified Leads') }}</p>
+                <p class="metric-value">{{ qualified_leads }}</p>
+                {% set qualified_diff = qualified_leads - vs_last_week_qualified %}
+                {% if vs_last_week_qualified > 0 %}
+                <span class="metric-vs {% if qualified_diff >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if qualified_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format((qualified_diff / vs_last_week_qualified * 100) if vs_last_week_qualified > 0 else 0) }}%
+                </span>
+                {% else %}
+                <span class="metric-vs neutral">—</span>
+                {% endif %}
+                <p class="text-white-50 small mb-0 mt-1">
+                    vs {{ vs_last_week_qualified }} {{ _('last week') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pipeline Count -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card metric-card-3">
+            <div class="card-body">
+                <p class="metric-label mb-1">{{ _('Pipeline #') }}</p>
+                <p class="metric-value">{{ pipeline_count }}</p>
+                {% set pipeline_diff = pipeline_count - vs_last_week_pipeline %}
+                {% if vs_last_week_pipeline > 0 %}
+                <span class="metric-vs {% if pipeline_diff >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if pipeline_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format((pipeline_diff / vs_last_week_pipeline * 100) if vs_last_week_pipeline > 0 else 0) }}%
+                </span>
+                {% else %}
+                <span class="metric-vs neutral">—</span>
+                {% endif %}
+                <p class="text-white-50 small mb-0 mt-1">
+                    vs {{ vs_last_week_pipeline }} {{ _('last week') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total TCV -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card metric-card-4">
+            <div class="card-body">
+                <p class="metric-label mb-1">{{ _('Total TCV') }}</p>
+                <p class="metric-value">{{ format_currency_short(current_tcv) }}</p>
+                {% set tcv_diff = current_tcv - vs_last_week_tcv %}
+                {% if vs_last_week_tcv > 0 %}
+                <span class="metric-vs {% if tcv_diff >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if tcv_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format((tcv_diff / vs_last_week_tcv * 100) if vs_last_week_tcv > 0 else 0) }}%
+                </span>
+                {% else %}
+                <span class="metric-vs neutral">—</span>
+                {% endif %}
+                <p class="text-white-50 small mb-0 mt-1">
+                    vs {{ format_currency_short(vs_last_week_tcv) }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Current Quarter Revenue -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card metric-card-5">
+            <div class="card-body">
+                <p class="metric-label mb-1">{{ _('Current QTR Revenue') }}</p>
+                <p class="metric-value">{{ format_currency_short(current_quarter_revenue) }}</p>
+                <p class="text-white-50 small mb-0">
+                    <i class="bi bi-calendar3"></i>
+                    {% if now.month in [1,2,3] %}Q1{% elif now.month in [4,5,6] %}Q2{% elif now.month in [7,8,9] %}Q3{% else %}Q4{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Next Quarter Revenue -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card metric-card-6">
+            <div class="card-body">
+                <p class="metric-label mb-1">{{ _('Next QTR Revenue') }}</p>
+                <p class="metric-value">{{ format_currency_short(next_quarter_revenue) }}</p>
+                <p class="text-white-50 small mb-0">
+                    <i class="bi bi-arrow-right"></i>
+                    {% if now.month in [1,2,3] %}Q2{% elif now.month in [4,5,6] %}Q3{% elif now.month in [7,8,9] %}Q4{% else %}Q1{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================
+     SALES PIPELINE KANBAN BOARD
+     ============================================================================ -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <h5 class="mb-0">
+                        <i class="bi bi-kanban"></i>
+                        {{ _('Sales Pipeline Kanban Board') }}
+                        <small class="text-muted ms-2" style="font-size: 0.7rem;">
+                            <i class="bi bi-mouse"></i> {{ _('Double-click card to add follow-up') }}
+                        </small>
+                    </h5>
+                    
+                    <!-- Kanban Owner Filter Dropdown (multi-select) -->
+                    <div class="filter-dropdown dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle btn-sm" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false" id="kanbanFilterBtn">
+                            <i class="bi bi-person"></i>
+                            <span id="kanbanFilterLabel">{{ _('All Owners') }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 220px;">
+                            <li class="mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="kanban_owner_all" 
+                                           id="kanban_all" checked>
+                                    <label class="form-check-label fw-bold" for="kanban_all">
+                                        {{ _('All Owners') }}
+                                    </label>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% for user in users %}
+                            {% if user.role != 'marketing' %}
+                            <li>
+                                <div class="form-check">
+                                    <input class="form-check-input kanban-owner-checkbox" type="checkbox" 
+                                           name="kanban_owner_filter" 
+                                           id="kanban_owner_{{ user.id }}" value="{{ user.id }}" checked>
+                                    <label class="form-check-label" for="kanban_owner_{{ user.id }}">
+                                        {{ user.username }}
+                                    </label>
+                                </div>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Kanban Board Container -->
+                <div class="kanban-container">
+                    <div class="kanban-board" id="kanbanBoard">
+                        <!-- JavaScript will dynamically generate the kanban columns -->
+                    </div>
+                </div>
+                
+                <!-- Hidden data for JavaScript -->
+                <div id="kanbanData" 
+                     data-stages='{{ pipeline_stages|tojson }}'
+                     data-deals='{{ pipeline_deals|tojson }}'
+                     style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================
+     FOLLOW-UP MODAL (Hidden, triggered by double-click on kanban cards)
+     ============================================================================ -->
+<div class="modal fade" id="followupModal" tabindex="-1" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="followupModalTitle">{{ _('Add Follow-up') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="" method="POST" id="followupModalForm">
+                <div class="modal-body">
+                    <div id="followupModalContent">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p class="mt-2">{{ _('Loading...') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                    <button type="submit" class="btn btn-success" id="saveFollowupBtn">{{ _('Save Follow-up') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================
+     SALES BY OWNER TABLE (Admin Only)
+     ============================================================================ -->
+{% if current_user.is_admin() %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people"></i>
+                        {{ _('Sales by Owner') }}
+                    </h5>
+                    
+                    <!-- Sales by Owner Filter Dropdown (multi-select, independent from Kanban) -->
+                    <div class="filter-dropdown dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle btn-sm" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false" id="ownerTableFilterBtn">
+                            <i class="bi bi-person"></i>
+                            <span id="ownerTableFilterLabel">{{ _('All Owners') }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 200px;">
+                            <li class="mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="owner_table_all" checked>
+                                    <label class="form-check-label fw-bold" for="owner_table_all">
+                                        {{ _('All Owners') }}
+                                    </label>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% for metric in owner_metrics %}
+                            {% if metric.user.role != 'marketing' %}
+                            <li>
+                                <div class="form-check">
+                                    <input class="form-check-input owner-table-checkbox" type="checkbox" 
+                                           id="owner_table_{{ metric.user_id }}" 
+                                           value="{{ metric.user_id }}" checked>
+                                    <label class="form-check-label" for="owner_table_{{ metric.user_id }}">
+                                        {{ metric.username }}
+                                    </label>
+                                </div>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{{ _('Owner') }}</th>
+                                <th class="text-center">{{ _('Role') }}</th>
+                                <th class="text-center">{{ _('Leads') }}</th>
+                                <th class="text-center">{{ _('Qualified') }}</th>
+                                <th class="text-center">{{ _('Pipeline') }}</th>
+                                <th class="text-end">{{ _('TCV') }}</th>
+                                <th class="text-end">{{ _('Current QTR') }}</th>
+                                <th class="text-end">{{ _('Next QTR') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for metric in owner_metrics %}
+                            {% if metric.user.role != 'marketing' %}
+                            <tr class="owner-table-row" data-owner-id="{{ metric.user_id }}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-{{ loop.index0 % 6 + 1 }} me-2">
+                                            {{ metric.username[0].upper() }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ metric.username }}</div>
+                                            <small class="text-muted">{{ metric.user.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if metric.user.role == 'sales' %}
+                                    <span class="badge bg-primary">{{ _('Sales') }}</span>
+                                    {% elif metric.user.role == 'sales_manager' %}
+                                    <span class="badge bg-success">{{ _('Manager') }}</span>
+                                    {% elif metric.user.role == 'presales' %}
+                                    <span class="badge bg-info">{{ _('Presales') }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ metric.user.role }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">{{ metric.leads_count }}</td>
+                                <td class="text-center">{{ metric.qualified_leads_count }}</td>
+                                <td class="text-center">{{ metric.pipeline_count }}</td>
+                                <td class="text-end fw-bold">{{ format_currency_thousands(metric.tcv) }}</td>
+                                <td class="text-end">{{ format_currency_thousands(metric.current_qtr_revenue) }}</td>
+                                <td class="text-end">{{ format_currency_thousands(metric.next_qtr_revenue) }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// =========================================================================
+// SALES BY OWNER TABLE - Dropdown Multi-Select Filter (Independent from Kanban)
+// =========================================================================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const ownerTableCheckboxes = document.querySelectorAll('.owner-table-checkbox');
+        const ownerTableAllCheckbox = document.getElementById('owner_table_all');
+        const ownerTableFilterLabel = document.getElementById('ownerTableFilterLabel');
+        const ownerTableRows = document.querySelectorAll('.owner-table-row');
+        
+        // 从 localStorage 读取（带错误处理）
+        let savedOwnerTableFilter = [];
+        try {
+            const saved = localStorage.getItem('owner_table_owner_filter');
+            if (saved) {
+                savedOwnerTableFilter = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.warn('Failed to read localStorage:', e);
+            savedOwnerTableFilter = [];
+        }
+        
+        // 初始化复选框状态
+        if (savedOwnerTableFilter.length > 0) {
+            ownerTableCheckboxes.forEach(cb => {
+                cb.checked = savedOwnerTableFilter.includes(Number(cb.value)) || 
+                             savedOwnerTableFilter.includes(cb.value);
+            });
+            
+            if (savedOwnerTableFilter.length > 0 && 
+                savedOwnerTableFilter.length < ownerTableCheckboxes.length) {
+                ownerTableAllCheckbox.checked = false;
+            }
+            updateOwnerTableFilterLabel();
+            filterOwnerTableRows();
+        }
+        
+        // "All Owners" 复选框处理
+        ownerTableAllCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                ownerTableCheckboxes.forEach(cb => cb.checked = true);
+                localStorage.setItem('owner_table_owner_filter', JSON.stringify([]));
+            }
+            updateOwnerTableFilterLabel();
+            filterOwnerTableRows();
+        });
+        
+        // Individual owner 复选框处理
+        ownerTableCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (!this.checked) {
+                    ownerTableAllCheckbox.checked = false;
+                } else {
+                    const allChecked = Array.from(ownerTableCheckboxes).every(cb => cb.checked);
+                    ownerTableAllCheckbox.checked = allChecked;
+                }
+                
+                const selectedOwners = Array.from(ownerTableCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => Number(cb.value));
+                localStorage.setItem('owner_table_owner_filter', JSON.stringify(selectedOwners));
+                
+                updateOwnerTableFilterLabel();
+                filterOwnerTableRows();
+            });
+        });
+        
+        // 更新下拉菜单标签
+        function updateOwnerTableFilterLabel() {
+            const checked = Array.from(ownerTableCheckboxes).filter(cb => cb.checked);
+            if (ownerTableAllCheckbox.checked || checked.length === ownerTableCheckboxes.length) {
+                ownerTableFilterLabel.textContent = '{{ _('All Owners') }}';
+            } else if (checked.length === 1) {
+                const label = checked[0].nextElementSibling.textContent.trim();
+                ownerTableFilterLabel.textContent = label;
+            } else {
+                ownerTableFilterLabel.textContent = checked.length + ' {{ _('owners selected') }}';
+            }
+        }
+        
+        // 过滤表格行
+        function filterOwnerTableRows() {
+            const selectedOwners = Array.from(ownerTableCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => String(cb.value));
+            
+            const showAll = ownerTableAllCheckbox.checked || 
+                            selectedOwners.length === ownerTableCheckboxes.length;
+            
+            ownerTableRows.forEach(row => {
+                if (showAll) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = selectedOwners.includes(String(row.dataset.ownerId)) ? '' : 'none';
+                }
+            });
+        }
+    });
+</script>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // =========================================================================
+    // KANBAN BOARD - Dynamic Rendering from Database
+    // =========================================================================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const kanbanData = document.getElementById('kanbanData');
+        const stages = JSON.parse(kanbanData.dataset.stages);
+        const deals = JSON.parse(kanbanData.dataset.deals);
+        const kanbanBoard = document.getElementById('kanbanBoard');
+        
+        // Format currency helper
+        function formatCurrency(value) {
+            if (value >= 1000000) {
+                return '$' + (value / 1000000).toFixed(2) + 'M';
+            } else if (value >= 1000) {
+                return '$' + (value / 1000).toFixed(0) + 'K';
+            }
+            return '$' + value;
+        }
+        
+        // Format date helper
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('{{ 'zh-CN' if get_locale() == 'zh' else 'en-US' }}', { month: 'short', day: 'numeric' });
+        }
+        
+        // Render kanban board
+        function renderKanban() {
+            kanbanBoard.innerHTML = '';
+            
+            stages.forEach(stage => {
+                // Get all deals for this stage
+                const stageDeals = deals.filter(d => d.stage === stage.value);
+                
+                // Calculate stage totals (exclude lost deals from TCV)
+                const activeDeals = stageDeals.filter(d => !d.is_lost);
+                const totalTCV = activeDeals.reduce((sum, d) => sum + (d.tcv_usd || 0), 0);
+                const totalMRC = activeDeals.reduce((sum, d) => sum + (d.mrc_usd || 0), 0);
+                
+                // Create stage column HTML
+                const stageCol = document.createElement('div');
+                stageCol.className = 'kanban-stage' + (stage.is_lost ? ' is-lost' : '');
+                stageCol.innerHTML = `
+                    <div class="kanban-stage-header">
+                        <h6>${stage.label}</h6>
+                        <div class="kanban-stage-stats">
+                            <span class="badge bg-light text-dark">${stageDeals.length} deals</span>
+                            <span class="kanban-stage-tcv">${formatCurrency(totalTCV)}</span>
+                        </div>
+                    </div>
+                    <div class="kanban-stage-body">
+                        ${stageDeals.length === 0 
+                            ? '<div class="text-center text-muted py-4">{{ _("No opportunities") }}</div>' 
+                            : stageDeals.map(deal => `
+                                <div class="kanban-deal-card" data-id="${deal.id}" data-owner-id="${deal.owner_id}">
+                                    <div class="kanban-deal-company">${deal.company || '-'}</div>
+                                    <div class="kanban-deal-owner">
+                                        <i class="bi bi-person"></i> ${deal.owner_name || '-'}
+                                    </div>
+                                    <div class="kanban-deal-meta">
+                                        <span><i class="bi bi-calendar"></i> ${formatDate(deal.est_sign_date)}</span>
+                                    </div>
+                                    <div class="kanban-deal-values">
+                                        <span class="tcv">${formatCurrency(deal.tcv_usd)}</span>
+                                        <span class="mrc">${formatCurrency(deal.mrc_usd)}/mo</span>
+                                    </div>
+                                    <div class="kanban-dates">
+                                        <span><i class="bi bi-flag"></i> ${formatDate(deal.latest_followup)}</span>
+                                    </div>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                `;
+                kanbanBoard.appendChild(stageCol);
+            });
+        }
+        
+        // Initial render
+        renderKanban();
+        
+        // Kanban Owner Filter (multi-select)
+        const kanbanOwnerCheckboxes = document.querySelectorAll('.kanban-owner-checkbox');
+        const kanbanAllCheckbox = document.getElementById('kanban_all');
+        const kanbanFilterLabel = document.getElementById('kanbanFilterLabel');
+        
+        // Load saved kanban filter (with error handling)
+        let savedKanbanOwners = [];
+        try {
+            const saved = localStorage.getItem('kanban_owner_filter');
+            if (saved) {
+                savedKanbanOwners = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.warn('Failed to read localStorage:', e);
+            savedKanbanOwners = [];
+        }
+        
+        // Initialize checkboxes from saved state
+        if (savedKanbanOwners.length > 0) {
+            // 验证 saved owner id 是否存在于当前 checkbox 中
+            const validOwners = Array.from(kanbanOwnerCheckboxes).map(cb => cb.value);
+            const filteredOwners = savedKanbanOwners.filter(id => validOwners.includes(String(id)));
+            
+            kanbanOwnerCheckboxes.forEach(cb => {
+                cb.checked = filteredOwners.includes(Number(cb.value)) || filteredOwners.includes(cb.value);
+            });
+            
+            // 如果过滤后的 owner 数量和保存的不同，说明有无效数据
+            if (filteredOwners.length > 0 && filteredOwners.length < kanbanOwnerCheckboxes.length) {
+                kanbanAllCheckbox.checked = false;
+            }
+            
+            // 如果保存的数据和当前 checkbox 不匹配，更新 localStorage
+            if (filteredOwners.length !== savedKanbanOwners.length) {
+                localStorage.setItem('kanban_owner_filter', JSON.stringify(filteredOwners));
+            }
+            
+            updateKanbanFilterLabel();
+            filterKanbanDealsMulti();
+        }
+        
+        // "All Owners" checkbox handler
+        kanbanAllCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                kanbanOwnerCheckboxes.forEach(cb => cb.checked = true);
+                localStorage.setItem('kanban_owner_filter', JSON.stringify([]));
+                updateKanbanFilterLabel();
+                filterKanbanDealsMulti();
+            }
+        });
+        
+        // Individual owner checkbox handler
+        kanbanOwnerCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (!this.checked) {
+                    kanbanAllCheckbox.checked = false;
+                }
+                const selectedOwners = Array.from(kanbanOwnerCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+                localStorage.setItem('kanban_owner_filter', JSON.stringify(selectedOwners));
+                updateKanbanFilterLabel();
+                filterKanbanDealsMulti();
+            });
+        });
+        
+        // Update filter label
+        function updateKanbanFilterLabel() {
+            const checked = Array.from(kanbanOwnerCheckboxes).filter(cb => cb.checked);
+            if (kanbanAllCheckbox.checked || checked.length === kanbanOwnerCheckboxes.length) {
+                kanbanFilterLabel.textContent = '{{ _('All Owners') }}';
+            } else if (checked.length === 1) {
+                const label = checked[0].nextElementSibling.textContent.trim();
+                kanbanFilterLabel.textContent = label;
+            } else {
+                kanbanFilterLabel.textContent = checked.length + ' ' + '{{ _('owners selected') }}';
+            }
+        }
+        
+        // Filter kanban deals by multiple owners
+        function filterKanbanDealsMulti() {
+            const selectedOwners = Array.from(kanbanOwnerCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            
+            const showAll = kanbanAllCheckbox.checked || selectedOwners.length === kanbanOwnerCheckboxes.length;
+            
+            const dealCards = document.querySelectorAll('.kanban-deal-card');
+            dealCards.forEach(card => {
+                if (showAll) {
+                    card.style.display = '';
+                } else {
+                    // 统一转成字符串比较：checkbox value 是字符串，dataset.ownerId 是数字
+                    card.style.display = selectedOwners.includes(String(card.dataset.ownerId)) ? '' : 'none';
+                }
+            });
+        }
+        
+        // Expose render function for filter changes
+        window.renderKanban = renderKanban;
+    });
+</script>
+
+<!-- ============================================================================
+     FOLLOW-UP MODAL JAVASCRIPT
+     ============================================================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('followupModal');
+    const form = document.getElementById('followupModalForm');
+    const content = document.getElementById('followupModalContent');
+    const title = document.getElementById('followupModalTitle');
+    
+    // Handle modal show event
+    modal.addEventListener('show.bs.modal', function(e) {
+        const btn = e.relatedTarget;
+        if (!btn) return;
+        
+        const pipelineId = btn.dataset.pipelineId;
+        const company = btn.dataset.company;
+        
+        form.action = '/pipeline/' + pipelineId + '/add-followup';
+        title.textContent = '{{ _('Add Follow-up') }} - ' + company;
+        
+        content.innerHTML = '<div class="text-center py-4"><i class="bi bi-arrow-repeat bi-spin fa-2x"></i><p class="mt-2">{{ _('Loading...') }}</p></div>';
+        
+        fetch('/pipeline/' + pipelineId + '/followup-data')
+            .then(r => r.text())
+            .then(html => {
+                content.innerHTML = html;
+            })
+            .catch(err => {
+                content.innerHTML = '<div class="alert alert-danger">{{ _('Error loading data') }}</div>';
+            });
+    });
+    
+    // Handle AJAX form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('saveFollowupBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-arrow-repeat bi-spin"></i> {{ _("Saving...") }}';
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+                // Refresh page to show updated data
+                window.location.reload();
+            } else {
+                alert(data.error || '{{ _("Error saving") }}');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '{{ _("Save Follow-up") }}';
+            }
+        })
+        .catch(err => {
+            alert('{{ _("Error saving") }}: ' + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '{{ _("Save Follow-up") }}';
+        });
+    });
+    
+    // Reset form when modal is closed
+    modal.addEventListener('hidden.bs.modal', function() {
+        form.reset();
+    });
+    
+    // Add double-click handler to kanban cards
+    document.addEventListener('dblclick', function(e) {
+        const card = e.target.closest('.kanban-deal-card');
+        if (card) {
+            const pipelineId = card.dataset.id;
+            const company = card.querySelector('.kanban-deal-company').textContent;
+            
+            // Set modal data directly
+            form.action = '/pipeline/' + pipelineId + '/add-followup';
+            title.textContent = '{{ _('Add Follow-up') }} - ' + company;
+            
+            // Load data and show modal
+            content.innerHTML = '<div class="text-center py-4"><i class="bi bi-arrow-repeat bi-spin fa-2x"></i><p class="mt-2">{{ _('Loading...') }}</p></div>';
+            
+            fetch('/pipeline/' + pipelineId + '/followup-data')
+                .then(r => r.text())
+                .then(html => {
+                    content.innerHTML = html;
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+                })
+                .catch(err => {
+                    content.innerHTML = '<div class="alert alert-danger">{{ _('Error loading data') }}</div>';
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+                });
+        }
+    });
+});
+</script>
+
+{% endblock %}

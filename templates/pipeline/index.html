@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+
+{% from "partials/column_settings.html" import render_column_settings %}
+
+{% block title %}{{ _('Pipeline Management') }} - BITCRM{% endblock %}
+
+{% block column_settings_btn %}
+<button class="btn btn-outline-secondary me-3 column-settings-btn" type="button" 
+        data-bs-toggle="offcanvas" data-bs-target="#columnSettingsOffcanvas"
+        onclick="initColumnSettingsFromServer('pipeline')">
+    <i class="bi bi-table-columns"></i>
+    {{ _('Fields') }}
+</button>
+{% endblock %}
+
+{% block column_settings_offcanvas %}
+{{ render_column_settings('pipeline', available_columns, default_columns) }}
+{% endblock %}
+
+{% block content %}
+
+<style>
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+}
+
+.table-scroll table {
+    min-width: 1200px;
+}
+
+/* Zebra stripe - light gray for odd rows, but don't override red/yellow backgrounds */
+.table-scroll table tbody tr:nth-child(odd) td:not([style*="background-color"]) {
+    background-color: #f8f9fa;
+}
+
+/* Ensure red/yellow backgrounds are not overridden by stripe or hover */
+.table-scroll table tbody tr:hover td[style*="background-color: #fdeaea"],
+.table-scroll table tbody tr:hover td[style*="background-color: #fff3cd"] {
+    background-color: #fdeaea !important;
+}
+</style>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">{{ _('Pipeline Management') }}</h1>
+            <p class="text-muted small">{{ _('Track and manage your sales opportunities') }}</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('pipeline.export', show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to) }}" class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-file-excel me-1"></i> {{ _('Export') }}
+                </a>
+                <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-info btn-sm">
+                    <i class="fas fa-download me-1"></i> {{ _('Template') }}
+                </a>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="fas fa-file-import me-1"></i> {{ _('Import') }}
+            </button>
+            <a href="{{ url_for('pipeline.add') }}" class="btn btn-success btn-sm ms-2">
+                <i class="fas fa-plus me-1"></i> {{ _('Add Pipeline') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body py-3">
+                    <h6 class="mb-1 text-muted">{{ _('Total Opportunities') }}</h6>
+                    <h4 class="mb-0">{{ total_count }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body py-3">
+                    <h6 class="mb-1 text-muted">{{ _('Total TCV') }}</h6>
+                    <h4 class="mb-0">{{ format_currency(total_tcv) }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body py-3">
+                    <h6 class="mb-1 text-muted">{{ _('Active Deals') }}</h6>
+                    <h4 class="mb-0">{{ total_count - pipelines.items|selectattr('stage', 'equalto', '6b) Deal Lost')|list|length }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body py-3">
+                    <h6 class="mb-1 text-muted">{{ _('Won Deals') }}</h6>
+                    <h4 class="mb-0">{{ pipelines.items|selectattr('stage', 'equalto', '6a) Deal Won')|list|length }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <!-- Show Lost Switch -->
+                <div class="col-md-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showLost" name="show_lost" value="true" {% if show_lost %}checked{% endif %} onchange="this.form.submit()">
+                        <label class="form-check-label" for="showLost">{{ _('Show Lost') }}</label>
+                    </div>
+                </div>
+                <!-- Est. Sign Date Range -->
+                <div class="col-md-3">
+                    <label class="form-label small">{{ _('Est. Sign Date') }}</label>
+                    <div class="input-group input-group-sm">
+                        <input type="month" name="est_sign_date_from" class="form-control" value="{{ est_sign_date_from or '' }}" min="2020-01" max="2027-12">
+                        <span class="input-group-text">至</span>
+                        <input type="month" name="est_sign_date_to" class="form-control" value="{{ est_sign_date_to or '' }}" min="2020-01" max="2027-12">
+                    </div>
+                </div>
+                <!-- Est. Activate Date Range -->
+                <div class="col-md-3">
+                    <label class="form-label small">{{ _('Est. Activate Date') }}</label>
+                    <div class="input-group input-group-sm">
+                        <input type="month" name="est_activate_date_from" class="form-control" value="{{ est_activate_date_from or '' }}" min="2020-01" max="2027-12">
+                        <span class="input-group-text">至</span>
+                        <input type="month" name="est_activate_date_to" class="form-control" value="{{ est_activate_date_to or '' }}" min="2020-01" max="2027-12">
+                    </div>
+                </div>
+                <!-- Stage -->
+                <div class="col-md-2">
+                    <label class="form-label small">{{ _('Stage') }}</label>
+                    <select name="stage" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">{{ _('All Stages') }}</option>
+                        {% for stage in ['1) Prospecting', '2) Lead Qualified', '3) Demo/Meeting', '4) Proposal Submitted', '5) Negotiation', '6a) Deal Won', '6b) Deal Lost', '7) Activated'] %}
+                        <option value="{{ stage }}" {% if stage_filter == stage %}selected{% endif %}>{{ _(stage) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Level -->
+                <div class="col-md-1">
+                    <label class="form-label small">{{ _('Level') }}</label>
+                    <select name="level" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">{{ _('All') }}</option>
+                        <option value="Committed" {% if level_filter == 'Committed' %}selected{% endif %}>{{ _('Committed') }}</option>
+                        <option value="Stretch" {% if level_filter == 'Stretch' %}selected{% endif %}>{{ _('Stretch') }}</option>
+                    </select>
+                </div>
+                <!-- Owner -->
+                <div class="col-md-1">
+                    <label class="form-label small">{{ _('Owner') }}</label>
+                    <select name="owner" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">{{ _('All') }}</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if owner_filter|int == user.id %}selected{% endif %}>{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            {{ _('Filtered %(count)s Opportunities', count=total_count) }}
+        </span>
+        <button class="btn btn-outline-secondary btn-sm" type="button" 
+                data-bs-toggle="offcanvas" data-bs-target="#columnSettingsOffcanvas"
+                onclick="initColumnSettingsFromServer('pipeline')">
+            <i class="bi bi-table-columns"></i>
+            {{ _('Fields') }}
+        </button>
+    </div>
+
+    <!-- Pipeline Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-scroll">
+                <table class="table table-hover mb-0" style="min-width: {{ visible_column_keys|length * 120 }}px;">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            {% for col in visible_columns %}
+                            <th>{{ col.label }}</th>
+                            {% endfor %}
+                            <th>{{ _('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pipeline in pipelines.items %}
+                        <tr>
+                            {# Dynamic cells based on visible_column_keys order #}
+                            {% for col_key in visible_column_keys %}
+                                {% if col_key == 'company' %}
+                                <td>
+                                    <div class="fw-bold">{{ pipeline.company or '-' }}</div>
+                                    {% if pipeline.name %}
+                                    <div class="small text-muted">{{ pipeline.name }}</div>
+                                    {% endif %}
+                                </td>
+                                {% elif col_key == 'name' %}
+                                <td>{{ pipeline.name or '-' }}</td>
+                                {% elif col_key == 'industry' %}
+                                <td>{{ pipeline.industry or '-' }}</td>
+                                {% elif col_key == 'position' %}
+                                <td>{{ pipeline.position or '-' }}</td>
+                                {% elif col_key == 'email' %}
+                                <td>{{ pipeline.email or '-' }}</td>
+                                {% elif col_key == 'mobile_number' %}
+                                <td>{{ pipeline.mobile_number or '-' }}</td>
+                                {% elif col_key == 'product' %}
+                                <td>
+                                    {% if pipeline.product %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 120px; cursor: pointer;" title="{{ pipeline.product }}" onclick="showFullText(this)">{{ pipeline.product[:30] }}{{ '...' if pipeline.product|length > 30 else '' }}</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                {% elif col_key == 'owner' %}
+                                <td>
+                                    <span class="badge bg-secondary">{{ pipeline.owner.username if pipeline.owner else '-' }}</span>
+                                </td>
+                                {% elif col_key == 'stage' %}
+                                <td>
+                                    <span class="badge bg-{{ pipeline.get_stage_color() }}">{{ _(pipeline.stage) }}</span>
+                                </td>
+                                {% elif col_key == 'tcv_usd' %}
+                                <td class="fw-bold">{{ "${:,.0f}".format(pipeline.tcv_usd) }}</td>
+                                {% elif col_key == 'mrc_usd' %}
+                                <td>{{ "${:,.0f}".format(pipeline.mrc_usd) }}</td>
+                                {% elif col_key == 'otc_usd' %}
+                                <td>{{ "${:,.0f}".format(pipeline.otc_usd) }}</td>
+                                {% elif col_key == 'contract_term_yrs' %}
+                                <td>{{ pipeline.contract_term_yrs }} {{ _('Yrs') }}</td>
+                                {% elif col_key == 'gp_margin' %}
+                                <td>{{ "%.1f"|format(pipeline.gp_margin * 100) }}%</td>
+                                {% elif col_key == 'gp' %}
+                                <td>{{ "${:,.0f}".format(pipeline.gp) }}</td>
+                                {% elif col_key == 'win_rate' %}
+                                <td>{{ "%.0f"|format(pipeline.win_rate * 100) }}%</td>
+                                {% elif col_key == 'est_sign_date' %}
+                                {# 红色背景: stage 1-5, 日期 < 今天 #}
+                                <td {% if pipeline.est_sign_date and pipeline.stage not in ['6a) Deal Won', '6b) Deal Lost', '7) Activated'] and pipeline.est_sign_date < date.today() %}style="background-color: #fdeaea;"{% endif %}>
+                                    {{ pipeline.est_sign_date.strftime('%Y-%m-%d') if pipeline.est_sign_date else '-' }}
+                                </td>
+                                {% elif col_key == 'est_act_date' %}
+                                {# 红色背景: stage 1-6b, 日期 < 今天 #}
+                                <td {% if pipeline.est_act_date and pipeline.stage != '7) Activated' and pipeline.est_act_date < date.today() %}style="background-color: #fdeaea;"{% endif %}>
+                                    {{ pipeline.est_act_date.strftime('%Y-%m-%d') if pipeline.est_act_date else '-' }}
+                                </td>
+                                {% elif col_key == 'award_date' %}
+                                <td>{{ pipeline.award_date.strftime('%Y-%m-%d') if pipeline.award_date else '-' }}</td>
+                                {% elif col_key == 'proposal_sent_date' %}
+                                {# 红色背景: stage 1-3, 日期 < 今天 #}
+                                <td {% if pipeline.proposal_sent_date and pipeline.stage in ['1) Prospecting', '2) Lead Qualified', '3) Demo/Meeting'] and pipeline.proposal_sent_date < date.today() %}style="background-color: #fdeaea; position: relative;"{% else %}style="position: relative;"{% endif %}>
+                                    {{ pipeline.proposal_sent_date.strftime('%Y-%m-%d') if pipeline.proposal_sent_date else '-' }}
+                                    {# 红色数字: 今天 - proposal_sent_date > 0 #}
+                                    {% if pipeline.proposal_sent_date and (date.today() - pipeline.proposal_sent_date).days > 0 %}
+                                    <span style="position: absolute; top: 2px; right: 2px; font-size: 0.6rem; color: red; font-weight: bold;">+{{ (date.today() - pipeline.proposal_sent_date).days }} days</span>
+                                    {% endif %}
+                                </td>
+                                {% elif col_key == 'date_added' %}
+                                <td>{{ pipeline.date_added.strftime('%Y-%m-%d') if pipeline.date_added else '-' }}</td>
+                                {% elif col_key == 'stuckpoint' %}
+                                {# 黄色背景 #}
+                                <td {% if pipeline.stuckpoint %}style="background-color: #fff3cd;"{% endif %}>
+                                    {% if pipeline.stuckpoint %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 120px; cursor: pointer;" title="{{ pipeline.stuckpoint }}" onclick="showFullText(this)">{{ pipeline.stuckpoint[:30] }}{{ '...' if pipeline.stuckpoint|length > 30 else '' }}</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                {% elif col_key == 'follow_up' %}
+                                <td>
+                                    {% if pipeline.follow_up %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 120px; cursor: pointer;" title="{{ pipeline.follow_up }}" onclick="showFullText(this)">{{ pipeline.follow_up[:30] }}{{ '...' if pipeline.follow_up|length > 30 else '' }}</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                {% elif col_key == 'comments' %}
+                                <td>
+                                    {% if pipeline.comments %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 120px; cursor: pointer;" title="{{ pipeline.comments }}" onclick="showFullText(this)">{{ pipeline.comments[:30] }}{{ '...' if pipeline.comments|length > 30 else '' }}</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                            {% endfor %}
+                            <td style="min-width: 200px;">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <a href="{{ url_for('pipeline.edit', pipeline_id=pipeline.id) }}" 
+                                       class="btn btn-sm btn-primary" 
+                                       title="{{ _('Edit') }}"
+                                       data-bs-toggle="tooltip">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-success" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#followupModal"
+                                            data-pipeline-id="{{ pipeline.id }}"
+                                            data-company="{{ pipeline.company }}">
+                                        <i class="bi bi-chat-dots-fill me-1"></i>
+                                        {{ _('Follow-up') }}
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger" 
+                                            title="{{ _('Delete') }}"
+                                            data-bs-toggle="tooltip"
+                                            onclick="if(confirm('{{ _('Are you sure?') }}')) { document.getElementById('deleteForm{{ pipeline.id }}').submit(); }">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                    <!-- Hidden delete form -->
+                                    <form id="deleteForm{{ pipeline.id }}" action="{{ url_for('pipeline.delete', pipeline_id=pipeline.id) }}" method="POST" style="display: none;">
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow-up Modal - Single Instance (MOVED OUTSIDE LOOP) -->
+    <div class="modal fade" id="followupModal" tabindex="-1" data-bs-backdrop="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="followupModalTitle">{{ _('Add Follow-up') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="" method="POST" id="followupModalForm">
+                    <div class="modal-body">
+                        <div id="followupModalContent">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p class="mt-2">{{ _('Loading...') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                        <button type="submit" class="btn btn-success" id="saveFollowupBtn">{{ _('Save Follow-up') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if pipelines.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center mb-0">
+            {% for page_num in pipelines.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+            {% if page_num %}
+            {% if page_num == pipelines.page %}
+            <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to) }}">{{ page_num }}</a></li>
+            {% endif %}
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Import Pipeline from Excel') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('pipeline.import_data') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Excel File') }} *</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                        <small class="text-muted">{{ _('Please download the template first to ensure correct format') }}</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Import') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Force cleanup all backdrops on page load -->
+<script>
+// Aggressive cleanup on page load
+(function() {
+    // Remove all possible backdrops
+    document.querySelectorAll('.modal-backdrop, .offcanvas-backdrop').forEach(el => el.remove());
+    
+    // Reset body
+    document.body.classList.remove('modal-open', 'offcanvas-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    
+    // Also cleanup when mouse enters viewport
+    document.addEventListener('mouseenter', function() {
+        document.querySelectorAll('.modal-backdrop, .offcanvas-backdrop').forEach(el => el.remove());
+    }, { once: false });
+})();
+</script>
+
+<!-- Single Modal Instance Script - AJAX Form Submit -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('followupModal');
+    const form = document.getElementById('followupModalForm');
+    const content = document.getElementById('followupModalContent');
+    const title = document.getElementById('followupModalTitle');
+    
+    modal.addEventListener('show.bs.modal', function(e) {
+        const btn = e.relatedTarget;
+        if (!btn) return;
+        
+        const pipelineId = btn.dataset.pipelineId;
+        const company = btn.dataset.company;
+        
+        form.action = '/pipeline/' + pipelineId + '/add-followup';
+        title.textContent = '{{ _('Add Follow-up') }} - ' + company;
+        
+        content.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">{{ _('Loading...') }}</p></div>';
+        
+        fetch('/pipeline/' + pipelineId + '/followup-data')
+            .then(r => r.text())
+            .then(html => {
+                content.innerHTML = html;
+            })
+            .catch(err => {
+                content.innerHTML = '<div class="alert alert-danger">{{ _('Error loading data') }}</div>';
+            });
+    });
+    
+    // Handle AJAX form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();  // 阻止默认表单提交
+        
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('saveFollowupBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{ _("Saving...") }}';
+        
+        console.log('Submitting to:', form.action);
+        const startTime = Date.now();
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => {
+            const endTime = Date.now();
+            console.log('Response time:', (endTime - startTime) / 1000, 'seconds');
+            console.log('Response status:', r.status);
+            
+            if (!r.ok) {
+                throw new Error('Server returned status: ' + r.status);
+            }
+            
+            return r.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                // 成功：关闭 Modal，刷新页面
+                console.log('Save successful, closing modal...');
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) {
+                    bsModal.hide();
+                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 300);
+            } else {
+                // 失败：显示错误
+                console.error('Save failed:', data.error);
+                content.innerHTML += '<div class="alert alert-danger mt-2">' + data.error + '</div>';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '{{ _("Save Follow-up") }}';
+            }
+        })
+        .catch(err => {
+            console.error('Fetch error:', err);
+            content.innerHTML += '<div class="alert alert-danger mt-2">{{ _("Error saving: ") }}' + err.message + '</div>';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '{{ _("Save Follow-up") }}';
+        });
+    });
+    
+    modal.addEventListener('hidden.bs.modal', function() {
+        content.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">{{ _("Loading...") }}</p></div>';
+        form.action = '';
+        form.reset();
+    });
+    
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+});
+
+// Show full text in modal
+function showFullText(element) {
+    var fullText = element.getAttribute('title');
+    var shortText = element.innerText;
+    
+    // Create modal if not exists
+    if (!document.getElementById('fullTextModal')) {
+        var modalHtml = `
+            <div class="modal fade" id="fullTextModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ _('Full Text') }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="fullTextContent"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    document.getElementById('fullTextContent').innerHTML = '<pre style="white-space: pre-wrap; word-wrap: break-word;">' + fullText + '</pre>';
+    var modal = new bootstrap.Modal(document.getElementById('fullTextModal'));
+    modal.show();
+}
+</script>
+
+{% endblock %}

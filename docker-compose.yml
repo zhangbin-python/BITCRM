@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  bitcrm:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - bitcrm_data:/app/data
+    environment:
+      - SECRET_KEY=dev-secret-key
+      - FLASK_ENV=development
+      - DATABASE_URL=sqlite:///data/bitcrm.db
+    volumes:
+      - bitcrm_data:/app/data
+
+volumes:
+  bitcrm_data:

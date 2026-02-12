@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - BITCRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+            <p class="text-muted small">{{ _('Enter deal information and calculate metrics') }}</p>
+        </div>
+    </div>
+
+    <form method="POST" id="pipelineForm">
+        <div class="row">
+            <!-- Basic Information -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-building me-2"></i>{{ _('Basic Information') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Company') }} *</label>
+                                <input type="text" name="company" class="form-control" value="{{ pipeline.company if pipeline else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Contact Name') }} *</label>
+                                <input type="text" name="name" class="form-control" value="{{ pipeline.name if pipeline else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Industry') }}</label>
+                                <input type="text" name="industry" class="form-control" value="{{ pipeline.industry if pipeline else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Position/Title') }}</label>
+                                <input type="text" name="position" class="form-control" value="{{ pipeline.position if pipeline else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Email') }}</label>
+                                <input type="email" name="email" class="form-control" value="{{ pipeline.email if pipeline else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Mobile Number') }}</label>
+                                <input type="text" name="mobile_number" class="form-control" value="{{ pipeline.mobile_number if pipeline else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ownership -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-users me-2"></i>{{ _('Ownership') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">{{ _('Owner') }} *</label>
+                                <select name="owner_id" class="form-select" required>
+                                    <option value="">{{ _('Select Owner') }}</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}" {% if pipeline and pipeline.owner_id == user.id %}selected{% endif %}>
+                                        {{ user.username }} ({{ _(user.role) }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">{{ _('Support Team') }}</label>
+                                <select name="support" class="form-select" multiple size="4">
+                                    {% for user in support_users %}
+                                    <option value="{{ user.id }}" {% if pipeline and user in pipeline.support_team %}selected{% endif %}>
+                                        {{ user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">{{ _('Hold Ctrl/Cmd to select multiple') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deal Information -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>{{ _('Deal Information') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">{{ _('Product/Solution') }}</label>
+                                <input type="text" name="product" class="form-control" value="{{ pipeline.product if pipeline else '' }}" placeholder="{{ _('e.g., Cloud Services, Software License, etc.') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ _('MRC (Monthly)') }} *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="mrc_usd" class="form-control" value="{{ pipeline.mrc_usd if pipeline else 0 }}" min="0" step="0.0001" required oninput="calculateTCV()">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ _('OTC (One-time)') }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="otc_usd" class="form-control" value="{{ pipeline.otc_usd if pipeline else 0 }}" min="0" step="0.0001" oninput="calculateTCV()">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ _('Contract Term') }}</label>
+                                <div class="input-group">
+                                    <input type="number" name="contract_term_yrs" class="form-control" value="{{ pipeline.contract_term_yrs if pipeline else 1 }}" min="1" max="10" oninput="calculateTCV()">
+                                    <span class="input-group-text">{{ _('Years') }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ _('GP Margin') }}</label>
+                                <div class="input-group">
+                                    <input type="number" name="gp_margin" class="form-control" value="{{ (pipeline.gp_margin * 100)|int if pipeline and pipeline.gp_margin else 0 }}" min="0" max="100" oninput="calculateTCV()">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ _('TCV (Auto-calculated)') }}</label>
+                                <div class="form-control bg-light fw-bold" id="tcvDisplay">$0</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ _('Gross Profit') }}</label>
+                                <div class="form-control bg-light" id="gpDisplay">$0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Stage -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-tasks me-2"></i>{{ _('Pipeline Stage') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('Current Stage') }} *</label>
+                            <select name="stage" class="form-select" id="stageSelect" required>
+                                {% for stage in ['1) Prospecting', '2) Lead Qualified', '3) Demo/Meeting', '4) Proposal Submitted', '5) Negotiation', '6a) Deal Won', '6b) Deal Lost', '7) Activated'] %}
+                                <option value="{{ stage }}" {% if pipeline and pipeline.stage == stage %}selected{% endif %}>{{ _(stage) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('Deal Level') }}</label>
+                            <select name="level" class="form-select">
+                                <option value="Stretch" {% if pipeline and pipeline.level == 'Stretch' %}selected{% endif %}>{{ _('Stretch') }}</option>
+                                <option value="Committed" {% if pipeline and pipeline.level == 'Committed' %}selected{% endif %}>{{ _('Committed') }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('Win Probability') }}</label>
+                            <div class="input-group">
+                                <input type="number" name="win_rate" class="form-control" value="{{ (pipeline.win_rate * 100)|int if pipeline and pipeline.win_rate else 0 }}" min="0" max="100">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Dates -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-calendar me-2"></i>{{ _('Important Dates') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3 col-6">
+                                <label class="form-label">{{ _('Est. Signing') }}</label>
+                                <input type="date" name="est_sign_date" class="form-control" value="{{ pipeline.est_sign_date if pipeline and pipeline.est_sign_date else '' }}">
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <label class="form-label">{{ _('Est. Activation') }}</label>
+                                <input type="date" name="est_act_date" class="form-control" value="{{ pipeline.est_act_date if pipeline and pipeline.est_act_date else '' }}">
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <label class="form-label">{{ _('Award') }}</label>
+                                <input type="date" name="award_date" class="form-control" value="{{ pipeline.award_date if pipeline and pipeline.award_date else '' }}">
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <label class="form-label">{{ _('Proposal Sent') }}</label>
+                                <input type="date" name="proposal_sent_date" class="form-control" value="{{ pipeline.proposal_sent_date if pipeline and pipeline.proposal_sent_date else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments & Follow-up -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-comment me-2"></i>{{ _('Comments & Notes') }}</h6>
+            </div>
+            <div class="card-body">
+                <!-- Follow-up History (Editable) -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-primary">{{ _('Follow-up History') }}</label>
+                    <textarea name="follow_up" class="form-control" rows="4" placeholder="{{ _('Enter follow-up records...') }}">{{ pipeline.follow_up if pipeline else '' }}</textarea>
+                </div>
+                
+                <!-- Current Stuckpoint -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">{{ _('Current Stuckpoint') }}</label>
+                    <textarea name="stuckpoint" class="form-control" rows="2" placeholder="{{ _('What is blocking progress?') }}">{{ pipeline.stuckpoint if pipeline else '' }}</textarea>
+                </div>
+                
+                <!-- Comments -->
+                <div class="mb-3">
+                    <label class="form-label">{{ _('Comments & Notes') }}</label>
+                    <textarea name="comments" class="form-control" rows="4" placeholder="{{ _('Enter any additional notes or comments...') }}">{{ pipeline.comments if pipeline else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="row">
+            <div class="col">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('pipeline.index') }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
+                    <div>
+                        <button type="submit" name="continue" value="1" class="btn btn-outline-primary me-2">{{ _('Save & Continue Adding') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ _('Save Pipeline') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculateTCV() {
+    const mrc = parseFloat(document.querySelector('input[name="mrc_usd"]').value) || 0;
+    const otc = parseFloat(document.querySelector('input[name="otc_usd"]').value) || 0;
+    const term = parseInt(document.querySelector('input[name="contract_term_yrs"]').value) || 1;
+    const gpMargin = parseFloat(document.querySelector('input[name="gp_margin"]').value) || 0;
+
+    const tcv = (mrc * 12 * term) + otc;
+    const gp = tcv * (gpMargin / 100);
+
+    document.getElementById('tcvDisplay').textContent = '$' + tcv.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4});
+    document.getElementById('gpDisplay').textContent = '$' + gp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4});
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTCV();
+});
+</script>
+{% endblock %}

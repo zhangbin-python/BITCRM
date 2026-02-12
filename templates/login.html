@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Login') }} - BITCRM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-100">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-lg">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <div class="d-flex flex-column align-items-center">
+                        <img src="{{ url_for('static', filename='logo.png') }}" 
+                             alt="Logo" 
+                             class="mb-3"
+                             style="height: 60px; width: auto; max-width: 150px; object-fit: contain;">
+                        <div>
+                            <h2 class="fw-bold text-primary mb-0">BITCRM</h2>
+                            <p class="text-muted mb-0" style="font-size: 0.875rem;">{{ _('Customer Relationship Management') }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">{{ _('Username') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" 
+                                   name="username" required autofocus
+                                   placeholder="{{ _('Enter your username') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">{{ _('Password') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" 
+                                   name="password" required
+                                   placeholder="{{ _('Enter your password') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            {{ _('Login') }}
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-muted">
+                        <small>{{ _('Please contact your enterprise administrator to apply for an account or reset your password.') }}</small>
+                    </p>
+                </div>
+                
+                <!-- Language Selection on Login Page -->
+                <div class="mt-4 pt-3 border-top">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <a href="{{ url_for('main.set_language', lang='en') }}" 
+                               class="btn btn-outline-secondary btn-sm w-100">
+                                🇺🇸 English
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('main.set_language', lang='zh') }}" 
+                               class="btn btn-outline-secondary btn-sm w-100">
+                                🇨🇳 中文
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

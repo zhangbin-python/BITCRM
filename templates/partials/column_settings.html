@@ -1,0 +1,68 @@
+<!-- Column Settings Offcanvas -->
+{% macro render_column_settings(page, available_columns, default_selected) %}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="columnSettingsOffcanvas" 
+     aria-labelledby="columnSettingsLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="columnSettingsLabel">
+            <i class="bi bi-table-columns me-2"></i>
+            {{ _('Column Settings') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <p class="text-muted small mb-3">
+            {{ _('Select and reorder columns to customize your view.') }}
+        </p>
+        
+        <!-- Selected Columns (Sortable) -->
+        <div class="mb-4">
+            <h6 class="fw-bold mb-2">
+                <i class="bi bi-check-circle text-success me-1"></i>
+                {{ _('Shown Columns') }}
+            </h6>
+            <small class="text-muted d-block mb-2">{{ _('Drag to reorder') }}</small>
+            <div id="selectedColumnsList" class="column-list">
+                <!-- Selected columns will be rendered here by JS -->
+            </div>
+        </div>
+        
+        <!-- Available Columns -->
+        <div class="mb-4">
+            <h6 class="fw-bold mb-2">
+                <i class="bi bi-plus-circle text-primary me-1"></i>
+                {{ _('Available Columns') }}
+            </h6>
+            <div id="availableColumnsList" class="available-columns">
+                <!-- Available columns will be rendered here by JS -->
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary" onclick="applyColumnChanges()">
+                <i class="bi bi-check-lg me-1"></i>
+                {{ _('Apply Changes') }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+                {{ _('Cancel') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize column settings when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Available columns data passed from server (convert from Jinja2)
+    const availableColumns = [
+        {% for col in available_columns %}
+        {key: '{{ col.key }}', label: '{{ col.label }}', sortable: {{ 'true' if col.sortable else 'false' }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ];
+    const defaultSelected = {{ default_selected | tojson }};
+    const page = '{{ page }}';
+    
+    initColumnSettings(page, availableColumns, defaultSelected);
+});
+</script>
+{% endmacro %}

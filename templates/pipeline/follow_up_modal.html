@@ -1,0 +1,51 @@
+<div class="modal fade" id="followupModal{{ pipeline.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Add Follow-up') }} - {{ pipeline.company }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('pipeline.add_followup', pipeline_id=pipeline.id) }}" method="POST">
+                <div class="modal-body">
+                    <!-- Follow-up History -->
+                    {% if pipeline.follow_up %}
+                    <div class="mb-4">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-history me-1"></i>{{ _('Follow-up History') }}
+                        </label>
+                        <textarea class="form-control bg-light" rows="10" readonly 
+                            style="resize: vertical; font-size: 0.875rem; max-height: 300px; overflow-y: auto;">{{ pipeline.follow_up }}</textarea>
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">{{ _('Follow-up Notes') }} *</label>
+                            <textarea name="followup_text" class="form-control" rows="4" required placeholder="{{ _('Describe what was discussed...') }}"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ _('Current Stuckpoint') }}</label>
+                            <textarea name="stuckpoint_text" class="form-control" rows="2" placeholder="{{ _('What is blocking progress?') }}"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ _('Next Steps / To-do') }}</label>
+                            <textarea name="todo_text" class="form-control" rows="2" placeholder="{{ _('What needs to be done next?') }}"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ _('To-do Due Date') }}</label>
+                            <input type="date" name="todo_due_date" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ _('Current Stage') }}</label>
+                            <div class="form-control bg-light">{{ _(pipeline.stage) }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                    <button type="submit" class="btn btn-success">{{ _('Save Follow-up') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

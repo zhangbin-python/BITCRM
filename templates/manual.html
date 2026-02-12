@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BITCRM System Manual</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.8; color: #333; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 40px auto 40px; padding: 0 20px; }
+        h1 { text-align: center; color: #2c3e50; font-size: 2.2em; margin-bottom: 10px; padding-bottom: 20px; border-bottom: 3px solid #3498db; }
+        .subtitle { text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 40px; }
+        h2 { color: #2c3e50; font-size: 1.6em; margin: 40px 0 15px; padding-bottom: 10px; border-bottom: 2px solid #3498db; }
+        h3 { color: #34495e; font-size: 1.2em; margin: 25px 0 12px; padding-left: 12px; border-left: 4px solid #3498db; }
+        p { margin: 10px 0; }
+        ul, ol { margin: 12px 0 12px 25px; }
+        li { margin: 6px 0; }
+        .info-box { background: #e8f4fd; border-left: 4px solid #3498db; padding: 12px 18px; margin: 15px 0; border-radius: 0 5px 5px 0; }
+        .warning-box { background: #fef9e7; border-left: 4px solid #f39c12; padding: 12px 18px; margin: 15px 0; border-radius: 0 5px 5px 0; }
+        .step { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin: 12px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .step-number { display: inline-block; width: 26px; height: 26px; background: #3498db; color: #fff; border-radius: 50%; text-align: center; line-height: 26px; font-weight: bold; margin-right: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; }
+        th { background: #3498db; color: #fff; font-weight: 600; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        tr:hover { background: #f1f1f1; }
+        .highlight { background: #fff3cd; padding: 2px 5px; border-radius: 3px; }
+        .workflow { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; border-radius: 8px; margin: 25px 0; }
+        .workflow ol { list-style: none; counter-reset: workflow; }
+        .workflow li { counter-increment: workflow; padding: 8px 0 8px 45px; position: relative; }
+        .workflow li::before { content: counter(workflow); position: absolute; left: 0; top: 8px; width: 30px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 50%; text-align: center; line-height: 30px; font-weight: bold; }
+        .nav { position: fixed; top: 70px; right: 20px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 220px; }
+        .nav h4 { margin-top: 0; color: #2c3e50; font-size: 0.95em; }
+        .nav ul { margin: 0; list-style: none; }
+        .nav li { margin: 4px 0; }
+        .nav a { color: #3498db; text-decoration: none; font-size: 0.9em; }
+        .nav a:hover { color: #2980b9; text-decoration: underline; }
+        .footer { text-align: center; padding: 30px 20px; color: #95a5a6; font-size: 0.85em; border-top: 1px solid #ddd; margin-top: 40px; }
+        @media print { .nav { display: none !important; } body { background: #fff; } .container { max-width: 100%; margin-top: 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BITCRM System Manual</h1>
+        <p class="subtitle">Version 1.0 | February 2026</p>
+        <div class="nav">
+            <h4>Contents</h4>
+            <ul>
+                <li><a href="#login">1. Login</a></li>
+                <li><a href="#leads">2. Leads</a></li>
+                <li><a href="#pipeline">3. Pipeline</a></li>
+                <li><a href="#followup">4. Follow-up</a></li>
+                <li><a href="#task">5. Tasks</a></li>
+                <li><a href="#dashboard">6. Dashboard</a></li>
+            </ul>
+        </div>
+        
+        <h2 id="login">1. Login &amp; Permissions</h2>
+        
+        <h3>Permissions</h3>
+        <table>
+            <tr>
+                <th>Role</th>
+                <th>View Leads</th>
+                <th>View Pipeline</th>
+                <th>Create Leads</th>
+                <th>Other</th>
+            </tr>
+            <tr>
+                <td><span class="highlight">Admin</span></td>
+                <td>All</td>
+                <td>All</td>
+                <td>Yes</td>
+                <td>Full access</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Sales</span></td>
+                <td>Own + Assigned</td>
+                <td>Own + Assigned</td>
+                <td>No</td>
+                <td>Edit own</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Marketing</span></td>
+                <td>All</td>
+                <td>All</td>
+                <td>Yes</td>
+                <td>Create only</td>
+            </tr>
+        </table>
+        
+        <h2 id="leads">2. Leads Management</h2>
+        
+        <h3>2.1 What is a Lead?</h3>
+        <p>A Lead is a potential customer from various channels: trade shows, website inquiries, referrals, cold calls.</p>
+        
+        <h3>2.2 Add New Lead</h3>
+        <div class="step"><p><span class="step-number">1</span> Click <strong>Leads</strong> in top nav</p></div>
+        <div class="step"><p><span class="step-number">2</span> Click <strong>+ New Lead</strong></p></div>
+        <div class="step"><p><span class="step-number">3</span> Fill info and Save</p></div>
+        
+        <h3>2.3 Bulk Import</h3>
+        <div class="step"><p><span class="step-number">1</span> Click <strong>Leads</strong> then <strong>Import</strong></p></div>
+        <div class="step"><p><span class="step-number">2</span> Download template, fill, upload</p></div>
+        <div class="step"><p><span class="step-number">3</span> Click <strong>Import</strong></p></div>
+        <div class="warning-box"><strong>Notes:</strong> Filename in English, date YYYY-MM-DD, keep headers</div>
+        
+        <h3>2.7 Import Validation Rules</h3>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Rule</th>
+            </tr>
+            <tr>
+                <td><span class="highlight">Name</span></td>
+                <td>Required</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Leads Status</span></td>
+                <td>Qualified, Waiting for Response, Unqualified, Waiting to be Contacted</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Source</span></td>
+                <td>Website, Referral, Email Campaign, Social Media, Event, Trade Show, Advertisement, Partner, Direct Inquiry</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Date Added</span></td>
+                <td>Multiple date formats auto-recognized</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Email</span></td>
+                <td>Valid format OR blank</td>
+            </tr>
+        </table>
+        
+        <h3>2.4 Edit Lead</h3>
+        <ul>
+            <li><strong>Method 1:</strong> Click <strong>Edit</strong> button</li>
+            <li><strong>Method 2:</strong> Click any text field to edit inline</li>
+        </ul>
+        
+        <h3>2.5 Fields Filter</h3>
+        <p>Use <strong>Fields</strong> button to show/hide or reorder columns. Preferences saved automatically.</p>
+        
+        <h3>2.6 Lead Status</h3>
+        <table>
+            <tr>
+                <th>Status</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+            <tr>
+                <td><span class="highlight">New</span></td>
+                <td>New lead</td>
+                <td>Follow up</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Contacted</span></td>
+                <td>Contacted</td>
+                <td>Nurture</td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Qualified</span></td>
+                <td>Interest confirmed</td>
+                <td><strong>Pipeline</strong></td>
+            </tr>
+            <tr>
+                <td><span class="highlight">Unqualified</span></td>
+                <td>Not fit</td>
+                <td>Close</td>
+            </tr>
+        </table>
+        
+        <h2 id="pipeline">3. Pipeline Management</h2>
+        
+        <h3>3.1 What is Pipeline?</h3>
+        <p>Pipeline represents active sales opportunities. TCV and quarterly revenue are calculated based on Pipeline data.</p>
+        
+        <h3>3.2 Lead to Pipeline</h3>
+        <div class="workflow"><ol>
+            <li>Find a <strong>Qualified</strong> lead</li>
+            <li>Change Status to <strong>Qualified</strong></li>
+            <li>Click <strong>Save</strong></li>
+            <li>Lead auto-links to Pipeline</li>
+        </ol></div>
+        
+        <h3>3.3 Create Pipeline</h3>
+        <div class="step"><p><span class="step-number">1</span> Go to <strong>Pipeline</strong> page</p></div>
+        <div class="step"><p><span class="step-number">2</span> Click <strong>+ New Pipeline</strong></p></div>
+        <div class="step"><p><span class="step-number">3</span> Fill info and Save</p></div>
+        
+        <h3>3.4 Core Fields</h3>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>TCV ($)</td>
+                <td>MRCx12xYears + OTC</td>
+            </tr>
+            <tr>
+                <td>MRC ($)</td>
+                <td>Monthly Recurring Revenue</td>
+            </tr>
+            <tr>
+                <td>OTC ($)</td>
+                <td>One-time Charge</td>
+            </tr>
+            <tr>
+                <td>Est. Sign Date</td>
+                <td>Signing date</td>
+            </tr>
+            <tr>
+                <td>Est. Act. Date</td>
+                <td>Activation. Empty/TBD = no forecast</td>
+            </tr>
+            <tr>
+                <td>Support</td>
+                <td>Support team (multi-select)</td>
+            </tr>
+            <tr>
+                <td>Contract Term</td>
+                <td>Years (1-5, default 3)</td>
+            </tr>
+        </table>
+        
+        <h3>3.5 Edit Pipeline</h3>
+        <p>Click <strong>Edit</strong> button to modify MRC, OTC, dates, stage, etc.</p>
+        
+        <h3>3.6 Sales Stages</h3>
+        <table>
+            <tr>
+                <th>Stage</th>
+                <th>Description</th>
+                <th>In Revenue</th>
+            </tr>
+            <tr>
+                <td>1) Prospecting</td>
+                <td>Lead identified / Pre-qualification</td>
+                <td rowspan="6" style="background:#e8f8f5;text-align:center;"><strong>Yes</strong></td>
+            </tr>
+            <tr>
+                <td>2) Lead Qualified</td>
+                <td>Move to downstream, opportunities for BIT</td>
+            </tr>
+            <tr>
+                <td>3) Demo/Meeting</td>
+                <td>Meeting / solution</td>
+            </tr>
+            <tr>
+                <td>4) Proposal</td>
+                <td>Proposing solution + pricing</td>
+            </tr>
+            <tr>
+                <td>5) Negotiation</td>
+                <td>Negotiating</td>
+            </tr>
+            <tr>
+                <td>6a) Deal Won</td>
+                <td>Won</td>
+            </tr>
+            <tr>
+                <td>6b) Deal Lost</td>
+                <td>Lost</td>
+                <td style="background:#fdeaea;text-align:center;"><strong>No</strong></td>
+            </tr>
+            <tr>
+                <td>7) Activated</td>
+                <td>Activated</td>
+                <td rowspan="6" style="background:#e8f8f5;text-align:center;"><strong>Yes</strong></td>
+            </tr>
+        </table>
+        <div class="info-box"><strong>Rule:</strong> All stages count <strong>EXCEPT Deal Lost</strong>.</div>
+        
+        <h3>3.7 Pipeline List</h3>
+        <p>View and manage all Pipeline opportunities.</p>
+        
+        <h2 id="followup">4. Follow-up</h2>
+        
+        <h3>4.1 What is Follow-up?</h3>
+        <p>Follow-up records each customer communication including notes, stuckpoints, and next steps.</p>
+        
+        <h3>4.2 Add Follow-up</h3>
+        <div class="step"><p><span class="step-number">1</span> Open Pipeline detail</p></div>
+        <div class="step"><p><span class="step-number">2</span> Click <strong>Follow</strong> button</p></div>
+        <div class="step"><p><span class="step-number">3</span> View history (read-only)</p></div>
+        <div class="step"><p><span class="step-number">4</span> Fill: Note(required), Stuckpoint(opt), Stage(opt), Next Steps/To-do(opt)</p></div>
+        <div class="step"><p><span class="step-number">5</span> If adding To-do, fill Due Date</p></div>
+        <div class="step"><p><span class="step-number">6</span> Click <strong>Save</strong></p></div>
+        <div class="info-box"><strong>Sync:</strong> Follow-up saved. To-do = new Task. Stage updates Pipeline.</div>
+        
+        <h2 id="task">5. Task Management</h2>
+        
+        <h3>5.1 Task vs Follow-up</h3>
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th>Follow-up</th>
+                <th>Task</th>
+            </tr>
+            <tr>
+                <td>Nature</td>
+                <td>Communication record</td>
+                <td>Pending action</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td>Append-only</td>
+                <td>Status changes</td>
+            </tr>
+        </table>
+        
+        <h3>5.2 Create Task</h3>
+        <div class="step"><p><span class="step-number">1</span> Go to <strong>Tasks</strong></p></div>
+        <div class="step"><p><span class="step-number">2</span> Click <strong>+ New Task</strong></p></div>
+        <div class="step"><p><span class="step-number">3</span> Fill and Save</p></div>
+        
+        <h3>5.3 Task Status</h3>
+        <p>Three statuses, click to switch:</p>
+        <table>
+            <tr>
+                <th>Status</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><span class="highlight">In Progress</span></td>
+                <td>Working on it</td>
+            </tr>
+            <tr>
+                <td><span class="highlight" style="background:#fdeaea;">Overdue</span></td>
+                <td>Past due date</td>
+            </tr>
+            <tr>
+                <td><span class="highlight" style="background:#d4edda;">Completed</span></td>
+                <td>Done</td>
+            </tr>
+        </table>
+        
+        <h2 id="dashboard">6. Dashboard</h2>
+        
+        <h3>6.1 Key Metrics</h3>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>Total Leads</td>
+                <td>Valid leads count</td>
+            </tr>
+            <tr>
+                <td>Qualified Leads</td>
+                <td>Qualified count</td>
+            </tr>
+            <tr>
+                <td>Pipeline Count</td>
+                <td>Pipeline count (excl. Lost)</td>
+            </tr>
+            <tr>
+                <td>Current TCV</td>
+                <td>Total Contract Value</td>
+            </tr>
+            <tr>
+                <td>Current Qtr Revenue</td>
+                <td>This quarter forecast</td>
+            </tr>
+            <tr>
+                <td>Next Qtr Revenue</td>
+                <td>Next quarter forecast</td>
+            </tr>
+        </table>
+        
+        <h3>6.2 Weekly Comparison</h3>
+        <p>Indicators show week-over-week change: <span style="color:green;">&#8593;</span> growth, <span style="color:red;">&#8595;</span> decline, <span style="color:gray;">-</span> no change.</p>
+        
+        <h3>6.3 Kanban View</h3>
+        <p>Visual pipeline by stage. Drag cards to update stage. Toggle Lost visibility.</p>
+        
+        <div class="footer">
+            <p>BITCRM Manual | Version 1.0 | February 2026</p>
+        </div>
+    </div>
+</body>
+</html>

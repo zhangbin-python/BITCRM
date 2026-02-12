@@ -1,0 +1,16 @@
+[Unit]
+Description=BITCRM Flask Application
+After=network]
+User.target
+
+[Service=www-data
+Group=www-data
+WorkingDirectory=/var/www/bitcrm
+Environment="PATH=/var/www/bitcrm/venv/bin"
+Environment="FLASK_APP=app.py"
+Environment="SECRET_KEY=change-this-to-secure-key"
+ExecStart=/var/www/bitcrm/venv/bin/python app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

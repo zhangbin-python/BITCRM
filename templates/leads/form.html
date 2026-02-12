@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - BITCRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+            <p class="text-muted small">{{ _('Enter lead information to track potential customers') }}</p>
+        </div>
+    </div>
+
+    <form method="POST" id="leadForm">
+        <div class="row">
+            <!-- Basic Information -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>{{ _('Basic Information') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Contact Name') }} *</label>
+                                <input type="text" name="name" class="form-control" value="{{ lead.name if lead else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Company') }}</label>
+                                <input type="text" name="company" class="form-control" value="{{ lead.company if lead else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Industry') }}</label>
+                                <input type="text" name="industry" class="form-control" value="{{ lead.industry if lead else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Position/Title') }}</label>
+                                <input type="text" name="position" class="form-control" value="{{ lead.position if lead else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Email') }}</label>
+                                <input type="email" name="email" class="form-control" value="{{ lead.email if lead else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Mobile Number') }}</label>
+                                <input type="text" name="mobile_number" class="form-control" value="{{ lead.mobile_number if lead else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lead Details -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-tags me-2"></i>{{ _('Lead Details') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Status') }} *</label>
+                                <select name="leads_status" class="form-select" required>
+                                    {% for status in ['Qualified', 'Waiting for Response', 'Unqualified', 'Waiting to be Contacted'] %}
+                                    <option value="{{ status }}" {% if lead and lead.leads_status == status %}selected{% endif %}>{{ _(status) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Source') }}</label>
+                                <select name="source" class="form-select">
+                                    <option value="">{{ _('Select Source') }}</option>
+                                    {% for source in ['Website', 'Referral', 'Email Campaign', 'Social Media', 'Event', 'Trade Show', 'Advertisement', 'Partner', 'Direct Inquiry'] %}
+                                    <option value="{{ source }}" {% if lead and lead.source == source %}selected{% endif %}>{{ _(source) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Event/Campaign') }}</label>
+                                <input type="text" name="event" class="form-control" value="{{ lead.event if lead else '' }}" placeholder="{{ _('e.g., Trade Show 2024') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ _('Date Added') }}</label>
+                                <input type="date" name="date_added" class="form-control" value="{{ lead.date_added if lead and lead.date_added else '' }}">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">{{ _('Owner') }}</label>
+                                <select name="owner_id" class="form-select">
+                                    <option value="">{{ _('Select Owner') }}</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}" {% if lead and lead.owner_id == user.id %}selected{% endif %}>
+                                        {{ user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requirements & Notes -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-list me-2"></i>{{ _('Requirements') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('Requirements/Details') }}</label>
+                            <textarea name="requirements" class="form-control" rows="5" placeholder="{{ _('Describe the prospect\'s requirements...') }}">{{ lead.requirements if lead else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i>{{ _('Notes') }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('Additional Notes') }}</label>
+                            <textarea name="note" class="form-control" rows="5" placeholder="{{ _('Any additional notes...') }}">{{ lead.note if lead else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="row">
+            <div class="col">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('leads.index') }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
+                    <div>
+                        <button type="submit" name="continue" value="1" class="btn btn-outline-primary me-2">{{ _('Save & Continue Adding') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ _('Save Lead') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
