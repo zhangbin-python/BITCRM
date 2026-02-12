@@ -466,6 +466,10 @@ def index():
     # Build query
     query = SalesLead.query
     
+    # Sales can only see their own leads (unless admin/marketing)
+    if not current_user.can_view_all_leads():
+        query = query.filter(SalesLead.owner_id == current_user.id)
+    
     # Filter by unqualified status
     if not show_unqualified:
         query = query.filter(SalesLead.leads_status != 'Unqualified')
@@ -788,6 +792,10 @@ def export():
     
     # Get filtered leads
     query = SalesLead.query
+    
+    # Sales can only see their own leads (unless admin/marketing)
+    if not current_user.can_view_all_leads():
+        query = query.filter(SalesLead.owner_id == current_user.id)
     
     # Apply current filters
     show_unqualified = request.args.get('show_unqualified', 'false') == 'true'
