@@ -27,7 +27,7 @@ from utils import (
     get_quarter_dates, get_next_quarter_dates, calculate_quarter_revenue,
     format_currency_thousands, format_currency_short, format_vs_indicator
 )
-from activity_logger import log_activity, log_lead_import, log_lead_created, log_lead_updated, log_pipeline_created, log_pipeline_stage_changed, log_task_created, log_task_completed, log_task_reopened, log_followup_created, log_account_created, log_lead_deleted, log_lead_exported, log_pipeline_deleted, log_pipeline_exported, log_pipeline_imported, log_task_edited, log_task_deleted, log_task_status_changed, log_password_changed, log_language_changed, log_user_created, log_user_status_changed, log_filter_applied, log_column_visibility_changed
+from activity_logger import log_activity, log_lead_import, log_lead_created, log_lead_updated, log_pipeline_created, log_pipeline_stage_changed, log_task_created, log_task_completed, log_task_reopened, log_followup_created, log_account_created, log_lead_deleted, log_lead_exported, log_pipeline_deleted, log_pipeline_exported, log_pipeline_imported, log_task_edited, log_task_deleted, log_task_status_changed, log_password_changed, log_language_changed, log_user_created, log_user_status_changed, log_filter_applied, log_column_visibility_changed, log_login, log_logout
 from extensions import cache
 
 # ============================================================================
@@ -430,9 +430,11 @@ def login():
         
         if user and user.check_password(password):
             login_user(user)
+            log_login(user, request.remote_addr, success=True)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('main.dashboard'))
         else:
+            log_login(user or username, request.remote_addr, success=False)
             flash('Invalid username or password', 'danger')
     
     return render_template('login.html')
@@ -442,6 +444,7 @@ def login():
 @login_required
 def logout():
     """User logout."""
+    log_logout(current_user, request.remote_addr)
     logout_user()
     return redirect(url_for('main.login'))
 
@@ -2218,6 +2221,82 @@ def reset_password(user_id):
         flash(f'Error resetting password: {str(e)}', 'danger')
     
     return redirect(url_for('admin.users'))
+
+
+# ============================================================================
+# LOGIN LOGS (Admin only)
+# ============================================================================
+
+@admin_bp.route('/login-logs')
+@login_required
+def login_logs():
+    """View login/logout activity logs (admin only)."""
+    
+    if not current_user.is_admin():
+        flash('Admin access required.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Get filter parameters
+    action_filter = request.args.get('action', None)
+    user_filter = request.args.get('user', None)
+    start_date = request.args.get('start_date', None)
+    end_date = request.args.get('end_date', None)
+    
+    # Build query
+    query = ActivityLog.query
+    
+    # Filter by action type (login/logout)
+    if action_filter:
+        if action_filter == 'login':
+            query = query.filter(ActivityLog.action_type.like('%Login%'))
+        elif action_filter == 'logout':
+            query = query.filter(ActivityLog.action_type.like('%Logout%'))
+        elif action_filter == 'failed':
+            query = query.filter(ActivityLog.action_type.like('%Failed%'))
+    
+    # Filter by user
+    if user_filter:
+        query = query.filter(ActivityLog.user_name.ilike(f'%{user_filter}%'))
+    
+    # Filter by date range
+    if start_date:
+        query = query.filter(ActivityLog.created_at >= start_date)
+    if end_date:
+        query = query.filter(ActivityLog.created_at <= f'{end_date} 23:59:59')
+    
+    # Get logs (most recent first)
+    logs = query.order_by(ActivityLog.created_at.desc()).limit(500).all()
+    
+    return render_template('admin/login_logs.html', logs=logs)
+
+
+@admin_bp.route('/login-logs/clear', methods=['POST'])
+@login_required
+def clear_login_logs():
+    """Clear old login logs (older than 30 days, admin only)."""
+    
+    if not current_user.is_admin():
+        flash('Admin access required.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    try:
+        from datetime import timedelta
+        cutoff_date = datetime.utcnow() - timedelta(days=30)
+        
+        deleted = ActivityLog.query.filter(
+            ActivityLog.action_type.like('%Login%'),
+            ActivityLog.created_at < cutoff_date
+        ).delete()
+        
+        db.session.commit()
+        
+        flash(f'Cleared {deleted} old login logs.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error clearing logs: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.login_logs'))
 
 
 # ============================================================================

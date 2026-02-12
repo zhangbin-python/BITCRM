@@ -382,3 +382,39 @@ def log_column_visibility_changed(user, page, columns, ip_address=None):
         description=f'Changed column visibility on {page}: {", ".join(columns)}',
         ip_address=ip_address
     )
+
+
+def log_login(user, ip_address=None, success=True):
+    """Log user login activity."""
+    if success:
+        return log_activity(
+            user=user,
+            action_type='System - Login',
+            subject_type='account',
+            subject_id=user.id if hasattr(user, 'id') else None,
+            subject_name=user.username if hasattr(user, 'username') else 'Unknown',
+            description='User logged in successfully',
+            ip_address=ip_address
+        )
+    else:
+        return log_activity(
+            user=user,
+            action_type='System - Failed Login',
+            subject_type='account',
+            subject_name=f'Username: {user}' if isinstance(user, str) else user.username if hasattr(user, 'username') else 'Unknown',
+            description='Failed login attempt',
+            ip_address=ip_address
+        )
+
+
+def log_logout(user, ip_address=None):
+    """Log user logout activity."""
+    return log_activity(
+        user=user,
+        action_type='System - Logout',
+        subject_type='account',
+        subject_id=user.id if hasattr(user, 'id') else None,
+        subject_name=user.username if hasattr(user, 'username') else 'Unknown',
+        description='User logged out',
+        ip_address=ip_address
+    )
