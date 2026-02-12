@@ -179,37 +179,3 @@
 {% endfor %}
 
 {% endblock %}
-
-{% block extra_css %}
-<style>
-.avatar-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-/* 遮罩层防御：防止多次触发导致的遮罩叠加 */
-.modal-backdrop + .modal-backdrop {
-    display: none !important;
-}
-
-/* 确保 modal 层级正确 */
-.modal {
-    z-index: 1050;
-}
-
-.modal-backdrop {
-    z-index: 1040;
-}
-
-/* 修复 modal 重复打开时的层级问题 */
-.modal.show {
-    z-index: 1060;
-}
-</style>
-{% endblock %}
