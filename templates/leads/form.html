@@ -70,7 +70,7 @@
                                 <label class="form-label">{{ _('Source') }}</label>
                                 <select name="source" class="form-select">
                                     <option value="">{{ _('Select Source') }}</option>
-                                    {% for source in ['Website', 'Referral', 'Email Campaign', 'Social Media', 'Event', 'Trade Show', 'Advertisement', 'Partner', 'Direct Inquiry'] %}
+                                    {% for source in ['Website', 'Referral', 'Email Campaign', 'Social Media', 'Event', 'Trade Show', 'Advertisement', 'Partner', 'Direct Inquiry', 'BFSI', 'Channel', 'Others'] %}
                                     <option value="{{ source }}" {% if lead and lead.source == source %}selected{% endif %}>{{ _(source) }}</option>
                                     {% endfor %}
                                 </select>

@@ -187,7 +187,10 @@ class SalesLead(db.Model):
         'Trade Show',
         'Advertisement',
         'Partner',
-        'Direct Inquiry'
+        'Direct Inquiry',
+        'BFSI',
+        'Channel',
+        'Others'
     ]
     
     def get_status_color(self):
