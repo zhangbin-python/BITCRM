@@ -471,12 +471,12 @@ def index():
         from models import User
         marketing_user_ids = db.session.query(User.id).filter(User.role == 'marketing').all()
         marketing_ids = [u[0] for u in marketing_user_ids]
-        query = query.filter(
-            db.or_(
-                SalesLead.owner_id == current_user.id,
-                SalesLead.owner_id.in_(marketing_ids)
-            )
-        )
+        
+        filters = [SalesLead.owner_id == current_user.id]
+        if marketing_ids:
+            filters.append(SalesLead.owner_id.in_(marketing_ids))
+        
+        query = query.filter(db.or_(*filters))
     
     # Filter by unqualified status
     if not show_unqualified:
@@ -806,12 +806,12 @@ def export():
         from models import User
         marketing_user_ids = db.session.query(User.id).filter(User.role == 'marketing').all()
         marketing_ids = [u[0] for u in marketing_user_ids]
-        query = query.filter(
-            db.or_(
-                SalesLead.owner_id == current_user.id,
-                SalesLead.owner_id.in_(marketing_ids)
-            )
-        )
+        
+        filters = [SalesLead.owner_id == current_user.id]
+        if marketing_ids:
+            filters.append(SalesLead.owner_id.in_(marketing_ids))
+        
+        query = query.filter(db.or_(*filters))
     
     # Apply current filters
     show_unqualified = request.args.get('show_unqualified', 'false') == 'true'
