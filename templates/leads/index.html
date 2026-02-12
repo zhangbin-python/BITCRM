@@ -107,7 +107,7 @@
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="showUnqualified" name="show_unqualified" value="true"
                        {% if show_unqualified %}checked{% endif %}
-                       onchange="var url = new URL(window.location.href); url.searchParams.set('show_unqualified', this.checked ? 'true' : 'false'); url.searchParams.delete('page'); window.location.href = url.toString();">
+                       onchange="var checked = this.checked; var url = new URL(window.location.href); url.searchParams.set('show_unqualified', checked ? 'true' : 'false'); url.searchParams.delete('page'); window.location.href = url.toString();">
                 <label class="form-check-label" for="showUnqualified">
                     {{ _('Show Unqualified Leads') }}
                 </label>
