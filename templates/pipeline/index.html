@@ -202,14 +202,9 @@
                                     <div class="fw-bold">{{ pipeline.company or '-' }}</div>
                                     {% set fu_color = pipeline.get_followup_color_class() %}
                                     {% set fu_display = pipeline.get_followup_display() %}
-                                    {% if fu_display and fu_display != 'No follow-up' %}
-                                    <div {% if fu_color %}class="{{ fu_color }}"{% endif %}
-                                         style="padding: 2px 5px; border-radius: 3px; margin-top: 3px; font-size: 0.85em;">
-                                        {{ fu_display }}
-                                    </div>
-                                    {% elif fu_display == 'No follow-up' %}
-                                    <div class="text-danger" style="font-size: 0.85em;">
-                                        {{ fu_display }}
+                                    {% if fu_display %}
+                                    <div style="padding: 2px 5px; border-radius: 3px; margin-top: 3px; font-size: 0.85em;">
+                                        <span {% if fu_color %}class="{{ fu_color }}"{% endif %} style="padding: 1px 4px; border-radius: 2px;">Follow-up:</span> {{ fu_display }}
                                     </div>
                                     {% endif %}
                                 </td>
