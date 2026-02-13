@@ -200,7 +200,7 @@
                                 {% if col_key == 'company' %}
                                 <td>
                                     <div class="fw-bold">{{ pipeline.company or '-' }}</div>
-                                    {% if pipeline.name %}
+                                    {% if pipeline.name and pipeline.name != pipeline.company %}
                                     <div class="small text-muted">{{ pipeline.name }}</div>
                                     {% endif %}
                                 </td>
