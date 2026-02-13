@@ -411,40 +411,40 @@ class Pipeline(db.Model):
     
     def get_followup_color_class(self):
         """Return background color class based on days since follow-up.
-        
+
         Rules:
+        - No follow-up: red (bg-danger), display "无跟进"
         - <=10 days: green (bg-success)
         - 11-30 days: yellow (bg-warning)
         - >30 days: red (bg-danger)
-        - No follow-up: no color
-        
+
         Returns: Bootstrap class string
         """
         days = self.get_followup_days_ago()
         if days is None:
-            return ''  # No follow-up, no color
+            return 'bg-danger'  # No follow-up: red
         elif days <= 10:
             return 'bg-success'  # Green
         elif days <= 30:
             return 'bg-warning'  # Yellow
         else:
-            return 'bg-danger'  # Red
-    
-    # Stage options
-    STAGE_OPTIONS = [
-        '1) Prospecting',
-        '2) Lead Qualified',
-        '3) Demo/Meeting',
-        '4) Proposal Submitted',
-        '5) Negotiation',
-        '6a) Deal Won',
-        '6b) Deal Lost',
-        '7) Activated'
-    ]
-    
-    # Level options
-    LEVEL_OPTIONS = ['Committed', 'Stretch']
-    
+            return 'bg-danger'   # Red
+
+    def get_followup_display(self):
+        """Return display text for follow-up.
+
+        Returns: "N天前" for follow-ups, or "无跟进" if none.
+        """
+        days = self.get_followup_days_ago()
+        if days is None:
+            return '无跟进'
+        elif days == 0:
+            return '今天'
+        elif days == 1:
+            return '1天前'
+        else:
+            return str(days) + '天前'
+
     def get_tcv(self):
         """Calculate Total Contract Value."""
         mrc = self.mrc_usd if self.mrc_usd else 0
