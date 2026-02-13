@@ -1065,7 +1065,7 @@ def index():
     if stage_filter:
         query = query.filter(Pipeline.stage == stage_filter)
     if level_filter:
-        query = query.filter(Pipeline.level == level_filter)
+        query = query.filter(func.lower(Pipeline.level) == func.lower(level_filter))
     if owner_filter:
         query = query.filter(Pipeline.owner_id == owner_filter)
     
