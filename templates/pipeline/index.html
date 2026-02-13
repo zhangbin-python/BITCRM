@@ -68,36 +68,36 @@
     </div>
 
     <!-- Summary Stats -->
-    <div class="row mb-4">
+    <div class="row mb-4 g-3">
         <div class="col-md-3">
-            <div class="card border-primary">
-                <div class="card-body py-3">
-                    <h6 class="mb-1 text-muted">{{ _('Total Opportunities') }}</h6>
-                    <h4 class="mb-0">{{ total_count }}</h4>
+            <div class="card border-primary bg-primary bg-opacity-10 h-100">
+                <div class="card-body py-3 text-center">
+                    <h6 class="mb-2 text-primary fw-bold">{{ _('Total Opportunities') }}</h6>
+                    <h3 class="mb-0 text-primary fw-bold">{{ total_count }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-success">
-                <div class="card-body py-3">
-                    <h6 class="mb-1 text-muted">{{ _('Total TCV') }}</h6>
-                    <h4 class="mb-0">{{ format_currency_thousands(total_tcv) }}</h4>
+            <div class="card border-success bg-success bg-opacity-10 h-100">
+                <div class="card-body py-3 text-center">
+                    <h6 class="mb-2 text-success fw-bold">{{ _('Total TCV') }}</h6>
+                    <h3 class="mb-0 text-success fw-bold">{{ format_currency_thousands(total_tcv) }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-info">
-                <div class="card-body py-3">
-                    <h6 class="mb-1 text-muted">{{ _('Active Deals') }}</h6>
-                    <h4 class="mb-0">{{ total_count - pipelines.items|selectattr('stage', 'equalto', '6b) Deal Lost')|list|length }}</h4>
+            <div class="card border-info bg-info bg-opacity-10 h-100">
+                <div class="card-body py-3 text-center">
+                    <h6 class="mb-2 text-info fw-bold">{{ _('Active Deals') }}</h6>
+                    <h3 class="mb-0 text-info fw-bold">{{ total_count - pipelines.items|selectattr('stage', 'equalto', '6b) Deal Lost')|list|length }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-warning">
-                <div class="card-body py-3">
-                    <h6 class="mb-1 text-muted">{{ _('Won Deals') }}</h6>
-                    <h4 class="mb-0">{{ pipelines.items|selectattr('stage', 'equalto', '6a) Deal Won')|list|length }}</h4>
+            <div class="card border-warning bg-warning bg-opacity-10 h-100">
+                <div class="card-body py-3 text-center">
+                    <h6 class="mb-2 text-warning fw-bold">{{ _('Won Deals') }}</h6>
+                    <h3 class="mb-0 text-warning fw-bold">{{ pipelines.items|selectattr('stage', 'equalto', '6a) Deal Won')|list|length }}</h3>
                 </div>
             </div>
         </div>
