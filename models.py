@@ -445,6 +445,21 @@ class Pipeline(db.Model):
         else:
             return f'{days} days ago'
 
+    # Stage options
+    STAGE_OPTIONS = [
+        '1) Prospecting',
+        '2) Lead Qualified',
+        '3) Demo/Meeting',
+        '4) Proposal Submitted',
+        '5) Negotiation',
+        '6a) Deal Won',
+        '6b) Deal Lost',
+        '7) Activated'
+    ]
+
+    # Level options
+    LEVEL_OPTIONS = ['Committed', 'Stretch']
+
     def get_tcv(self):
         """Calculate Total Contract Value."""
         mrc = self.mrc_usd if self.mrc_usd else 0
