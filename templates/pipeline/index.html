@@ -200,8 +200,13 @@
                                 {% if col_key == 'company' %}
                                 <td>
                                     <div class="fw-bold">{{ pipeline.company or '-' }}</div>
-                                    {% if pipeline.name and pipeline.name != pipeline.company %}
-                                    <div class="small text-muted">{{ pipeline.name }}</div>
+                                    {% set latest_followup = pipeline.get_latest_followup_date() %}
+                                    {% set fu_color = pipeline.get_followup_color_class() %}
+                                    {% if latest_followup %}
+                                    <div {% if fu_color %}class="{{ fu_color }}"{% endif %}
+                                         style="padding: 2px 5px; border-radius: 3px; margin-top: 3px; font-size: 0.85em;">
+                                        {{ _('Follow Up') }}: {{ latest_followup.strftime('%Y-%m-%d') }}
+                                    </div>
                                     {% endif %}
                                 </td>
                                 {% elif col_key == 'name' %}

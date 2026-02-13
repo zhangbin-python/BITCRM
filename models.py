@@ -361,6 +361,75 @@ class Pipeline(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Follow-up methods
+    def get_latest_followup_date(self):
+        """Extract the latest follow-up date from follow_up text field.
+        
+        Format: Follow-up, YYYY-MM-DD HH:MM: text
+        
+        Returns: date object or None
+        """
+        if not self.follow_up or str(self.follow_up).strip() == '':
+            return None
+        
+        import re
+        from datetime import datetime
+        
+        lines = self.follow_up.split('\n')
+        
+        # Regex to match "Follow-up, YYYY-MM-DD"
+        # Does not match "To-do" (that's a task, not a follow-up)
+        pattern = re.compile(r'Follow-up,\s+(\d{4}-\d{2}-\d{2})')
+        
+        latest_date = None
+        
+        for line in lines:
+            match = pattern.search(line)
+            if match:
+                date_str = match.group(1)  # YYYY-MM-DD
+                try:
+                    date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    if latest_date is None or date_obj > latest_date:
+                        latest_date = date_obj
+                except ValueError:
+                    # Skip invalid dates
+                    pass
+        
+        return latest_date
+    
+    def get_followup_days_ago(self):
+        """Calculate days since latest follow-up.
+        
+        Returns: days count or None
+        """
+        from datetime import date
+        
+        latest_date = self.get_latest_followup_date()
+        if latest_date:
+            return (date.today() - latest_date).days
+        return None
+    
+    def get_followup_color_class(self):
+        """Return background color class based on days since follow-up.
+        
+        Rules:
+        - <=10 days: green (bg-success)
+        - 11-30 days: yellow (bg-warning)
+        - >30 days: red (bg-danger)
+        - No follow-up: no color
+        
+        Returns: Bootstrap class string
+        """
+        days = self.get_followup_days_ago()
+        if days is None:
+            return ''  # No follow-up, no color
+        elif days <= 10:
+            return 'bg-success'  # Green
+        elif days <= 30:
+            return 'bg-warning'  # Yellow
+        else:
+            return 'bg-danger'  # Red
+    
     # Stage options
     STAGE_OPTIONS = [
         '1) Prospecting',

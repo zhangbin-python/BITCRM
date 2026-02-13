@@ -371,9 +371,35 @@ def create_app(config_class=None):
     def format_currency(value):
         return f"${value:,}" if value is not None else '$0'
 
+    @app.template_filter('format_currency_thousands')
+    def format_currency_thousands(value):
+        """Format number as USD currency with thousands separator, no decimals."""
+        if value is None:
+            return '$0'
+        return f"${int(value):,}"
+
+    @app.template_filter('format_currency_short')
+    def format_currency_short(value):
+        """Format number as USD currency in short format (e.g., $1.5M, $150K)."""
+        if value is None:
+            return '$0'
+        if value >= 1000000:
+            return f"${value / 1000000:.2f}M"
+        elif value >= 1000:
+            return f"${int(value / 1000)}K"
+        return f"${value}"
+
     @app.template_filter('format_percent')
     def format_percent(value):
         return f"{value * 100:.0f}%" if value is not None else '0%'
+    
+    # Register template context processors to make functions available in templates
+    @app.context_processor
+    def inject_template_functions():
+        return {
+            'format_currency_thousands': format_currency_thousands,
+            'format_currency_short': format_currency_short,
+        }
     
     return app
 
