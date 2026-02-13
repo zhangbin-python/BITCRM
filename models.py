@@ -433,17 +433,17 @@ class Pipeline(db.Model):
     def get_followup_display(self):
         """Return display text for follow-up.
 
-        Returns: "N天前" for follow-ups, or "无跟进" if none.
+        Returns: "N days ago" for follow-ups, or "No follow-up" if none.
         """
         days = self.get_followup_days_ago()
         if days is None:
-            return '无跟进'
+            return 'No follow-up'
         elif days == 0:
-            return '今天'
+            return 'Today'
         elif days == 1:
-            return '1天前'
+            return '1 day ago'
         else:
-            return str(days) + '天前'
+            return f'{days} days ago'
 
     def get_tcv(self):
         """Calculate Total Contract Value."""
