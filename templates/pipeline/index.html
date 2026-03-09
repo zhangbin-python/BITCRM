@@ -51,7 +51,7 @@
         </div>
         <div class="col-auto">
             <div class="btn-group me-2">
-                <a href="{{ url_for('pipeline.export', show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to) }}" class="btn btn-outline-success btn-sm">
+                <a href="{{ url_for('pipeline.export', show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to, sort=sort_by, order=sort_order) }}" class="btn btn-outline-success btn-sm">
                     <i class="fas fa-file-excel me-1"></i> {{ _('Export') }}
                 </a>
                 <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-info btn-sm">
@@ -159,6 +159,26 @@
                         {% for user in users %}
                         <option value="{{ user.id }}" {% if owner_filter|int == user.id %}selected{% endif %}>{{ user.username }}</option>
                         {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">{{ _('Sort By') }}</label>
+                    <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="date_added" {% if sort_by == 'date_added' %}selected{% endif %}>{{ _('Date Added') }}</option>
+                        <option value="est_sign_date" {% if sort_by == 'est_sign_date' %}selected{% endif %}>{{ _('Sign Date') }}</option>
+                        <option value="est_act_date" {% if sort_by == 'est_act_date' %}selected{% endif %}>{{ _('Activate Date') }}</option>
+                        <option value="tcv_usd" {% if sort_by == 'tcv_usd' %}selected{% endif %}>{{ _('TCV') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">{{ _('Order') }}</label>
+                    <select name="order" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>
+                            {% if sort_by == 'tcv_usd' %}{{ _('High to Low') }}{% else %}{{ _('Newest First') }}{% endif %}
+                        </option>
+                        <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>
+                            {% if sort_by == 'tcv_usd' %}{{ _('Low to High') }}{% else %}{{ _('Oldest First') }}{% endif %}
+                        </option>
                     </select>
                 </div>
             </form>
@@ -370,7 +390,7 @@
             {% if page_num == pipelines.page %}
             <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
             {% else %}
-            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to) }}">{{ page_num }}</a></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
             {% endif %}
             {% else %}
             <li class="page-item disabled"><span class="page-link">...</span></li>

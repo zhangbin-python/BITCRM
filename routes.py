@@ -1040,6 +1040,8 @@ def index():
     est_sign_date_to = request.args.get('est_sign_date_to', None)
     est_activate_date_from = request.args.get('est_activate_date_from', None)
     est_activate_date_to = request.args.get('est_activate_date_to', None)
+    sort_by = request.args.get('sort', 'date_added')  # Default: date_added desc
+    sort_order = request.args.get('order', 'desc')  # Default: desc
     
     # Build base query
     query = Pipeline.query
@@ -1081,8 +1083,12 @@ def index():
     if est_activate_date_to:
         query = query.filter(Pipeline.est_act_date <= est_activate_date_to)
     
-    # Order by date_added descending
-    query = query.order_by(Pipeline.date_added.desc())
+    # Apply sorting
+    sort_column = getattr(Pipeline, sort_by, Pipeline.date_added)
+    if sort_order == 'asc':
+        query = query.order_by(sort_column.asc().nullslast())
+    else:
+        query = query.order_by(sort_column.desc().nullslast())
     
     # Get total count
     total_count = query.count()
@@ -1171,6 +1177,8 @@ def index():
                           est_sign_date_to=est_sign_date_to,
                           est_activate_date_from=est_activate_date_from,
                           est_activate_date_to=est_activate_date_to,
+                          sort_by=sort_by,
+                          sort_order=sort_order,
                           format_currency=format_currency,
                           date=date,
                           available_columns=available_columns,
@@ -1588,6 +1596,8 @@ def export():
     owner_filter = request.args.get('owner', None)
     est_sign_date_from = request.args.get('est_sign_date_from', None)
     est_sign_date_to = request.args.get('est_sign_date_to', None)
+    sort_by = request.args.get('sort', 'date_added')
+    sort_order = request.args.get('order', 'desc')
     
     # Get filtered pipelines
     query = Pipeline.query
@@ -1623,8 +1633,17 @@ def export():
     if est_sign_date_to:
         query = query.filter(Pipeline.est_sign_date <= datetime.strptime(est_sign_date_to, '%Y-%m-%d').date())
     
+    # Apply sorting
+    sort_column = getattr(Pipeline, sort_by, None)
+    if sort_column is None:
+        sort_column = Pipeline.date_added
+    if sort_order == 'asc':
+        query = query.order_by(sort_column.asc().nullslast())
+    else:
+        query = query.order_by(sort_column.desc().nullslast())
+    
     # Eagerly load relationships to avoid lazy loading issues
-    pipelines = query.options(db.joinedload(Pipeline.owner), db.joinedload(Pipeline.support_team)).order_by(Pipeline.date_added.desc()).all()
+    pipelines = query.options(db.joinedload(Pipeline.owner), db.joinedload(Pipeline.support_team)).all()
     
     # Find reference date for column naming (use earliest est_act_date or current month)
     reference_dates = [p.est_act_date for p in pipelines if p.est_act_date]
