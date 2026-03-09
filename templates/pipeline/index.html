@@ -105,50 +105,43 @@
 
     <!-- Filters -->
     <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3 align-items-end">
-                <!-- Show Lost Switch -->
-                <div class="col-md-2">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="showLost" name="show_lost" value="true" {% if show_lost %}checked{% endif %} onchange="this.form.submit()">
-                        <label class="form-check-label" for="showLost">{{ _('Show Lost') }}</label>
-                    </div>
-                </div>
+        <div class="card-body py-3">
+            <form method="GET" class="row g-2 g-md-3 align-items-end">
                 <!-- Est. Sign Date Quarter -->
-                <div class="col-md-2">
-                    <label class="form-label small">{{ _('Est. Sign Date') }}</label>
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small mb-1">{{ _('Sign Date') }}</label>
                     <select name="est_sign_quarter" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">{{ _('All') }}</option>
-                        <option value="Q1" {% if est_sign_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }} (Jan-Mar)</option>
-                        <option value="Q2" {% if est_sign_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }} (Apr-Jun)</option>
-                        <option value="Q3" {% if est_sign_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }} (Jul-Sep)</option>
-                        <option value="Q4" {% if est_sign_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }} (Oct-Dec)</option>
+                        <option value="Q1" {% if est_sign_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }}</option>
+                        <option value="Q2" {% if est_sign_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }}</option>
+                        <option value="Q3" {% if est_sign_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }}</option>
+                        <option value="Q4" {% if est_sign_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }}</option>
                     </select>
                 </div>
                 <!-- Est. Activate Date Quarter -->
-                <div class="col-md-2">
-                    <label class="form-label small">{{ _('Est. Activate Date') }}</label>
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small mb-1">{{ _('Activate Date') }}</label>
                     <select name="est_activate_quarter" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">{{ _('All') }}</option>
-                        <option value="Q1" {% if est_activate_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }} (Jan-Mar)</option>
-                        <option value="Q2" {% if est_activate_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }} (Apr-Jun)</option>
-                        <option value="Q3" {% if est_activate_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }} (Jul-Sep)</option>
-                        <option value="Q4" {% if est_activate_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }} (Oct-Dec)</option>
+                        <option value="Q1" {% if est_activate_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }}</option>
+                        <option value="Q2" {% if est_activate_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }}</option>
+                        <option value="Q3" {% if est_activate_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }}</option>
+                        <option value="Q4" {% if est_activate_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }}</option>
                     </select>
                 </div>
                 <!-- Stage -->
-                <div class="col-md-2">
-                    <label class="form-label small">{{ _('Stage') }}</label>
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small mb-1">{{ _('Stage') }}</label>
                     <select name="stage" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">{{ _('All Stages') }}</option>
+                        <option value="">{{ _('All') }}</option>
                         {% for stage in ['1) Prospecting', '2) Lead Qualified', '3) Demo/Meeting', '4) Proposal Submitted', '5) Negotiation', '6a) Deal Won', '6b) Deal Lost', '7) Activated'] %}
                         <option value="{{ stage }}" {% if stage_filter == stage %}selected{% endif %}>{{ _(stage) }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <!-- Level -->
-                <div class="col-md-1">
-                    <label class="form-label small">{{ _('Level') }}</label>
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small mb-1">{{ _('Level') }}</label>
                     <select name="level" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">{{ _('All') }}</option>
                         <option value="Committed" {% if level_filter == 'Committed' %}selected{% endif %}>{{ _('Committed') }}</option>
@@ -156,8 +149,8 @@
                     </select>
                 </div>
                 <!-- Owner -->
-                <div class="col-md-1">
-                    <label class="form-label small">{{ _('Owner') }}</label>
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small mb-1">{{ _('Owner') }}</label>
                     <select name="owner" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">{{ _('All') }}</option>
                         {% for user in users %}
@@ -165,8 +158,9 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small">{{ _('Sort By') }}</label>
+                <!-- Sort By -->
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small mb-1">{{ _('Sort') }}</label>
                     <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="date_added" {% if sort_by == 'date_added' %}selected{% endif %}>{{ _('Date Added') }}</option>
                         <option value="est_sign_date" {% if sort_by == 'est_sign_date' %}selected{% endif %}>{{ _('Sign Date') }}</option>
@@ -174,16 +168,24 @@
                         <option value="tcv_usd" {% if sort_by == 'tcv_usd' %}selected{% endif %}>{{ _('TCV') }}</option>
                     </select>
                 </div>
-                <div class="col-md-1">
-                    <label class="form-label small">{{ _('Order') }}</label>
+                <!-- Order -->
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small mb-1">{{ _('Order') }}</label>
                     <select name="order" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>
-                            {% if sort_by == 'tcv_usd' %}{{ _('High to Low') }}{% else %}{{ _('Newest First') }}{% endif %}
+                            {% if sort_by == 'tcv_usd' %}{{ _('↓') }}{% else %}{{ _('↓ New') }}{% endif %}
                         </option>
                         <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>
-                            {% if sort_by == 'tcv_usd' %}{{ _('Low to High') }}{% else %}{{ _('Oldest First') }}{% endif %}
+                            {% if sort_by == 'tcv_usd' %}{{ _('↑') }}{% else %}{{ _('↑ Old') }}{% endif %}
                         </option>
                     </select>
+                </div>
+                <!-- Show Lost Switch - Right side -->
+                <div class="col-auto ms-md-auto">
+                    <div class="form-check form-switch mb-1">
+                        <input class="form-check-input" type="checkbox" id="showLost" name="show_lost" value="true" {% if show_lost %}checked{% endif %} onchange="this.form.submit()">
+                        <label class="form-check-label small" for="showLost">{{ _('Show Lost') }}</label>
+                    </div>
                 </div>
             </form>
         </div>
