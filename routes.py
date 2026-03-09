@@ -1036,11 +1036,26 @@ def index():
     stage_filter = request.args.get('stage', None)
     level_filter = request.args.get('level', None)
     owner_filter = request.args.get('owner', None)
-    est_sign_date_from = request.args.get('est_sign_date_from', None)
-    est_sign_date_to = request.args.get('est_sign_date_to', None)
-    est_activate_date_from = request.args.get('est_activate_date_from', None)
-    est_activate_date_to = request.args.get('est_activate_date_to', None)
+    est_sign_quarter = request.args.get('est_sign_quarter', None)
+    est_activate_quarter = request.args.get('est_activate_quarter', None)
     sort_by = request.args.get('sort', 'date_added')  # Default: date_added desc
+    
+    # Convert quarter to date range
+    current_year = date.today().year
+    quarter_ranges = {
+        'Q1': (f'{current_year}-01-01', f'{current_year}-03-31'),
+        'Q2': (f'{current_year}-04-01', f'{current_year}-06-30'),
+        'Q3': (f'{current_year}-07-01', f'{current_year}-09-30'),
+        'Q4': (f'{current_year}-10-01', f'{current_year}-12-31'),
+    }
+    
+    est_sign_date_from = est_sign_date_to = None
+    if est_sign_quarter and est_sign_quarter in quarter_ranges:
+        est_sign_date_from, est_sign_date_to = quarter_ranges[est_sign_quarter]
+    
+    est_activate_date_from = est_activate_date_to = None
+    if est_activate_quarter and est_activate_quarter in quarter_ranges:
+        est_activate_date_from, est_activate_date_to = quarter_ranges[est_activate_quarter]
     sort_order = request.args.get('order', 'desc')  # Default: desc
     
     # Build base query
@@ -1173,10 +1188,8 @@ def index():
                           stage_filter=stage_filter,
                           level_filter=level_filter,
                           owner_filter=owner_filter,
-                          est_sign_date_from=est_sign_date_from,
-                          est_sign_date_to=est_sign_date_to,
-                          est_activate_date_from=est_activate_date_from,
-                          est_activate_date_to=est_activate_date_to,
+                          est_sign_quarter=est_sign_quarter,
+                          est_activate_quarter=est_activate_quarter,
                           sort_by=sort_by,
                           sort_order=sort_order,
                           format_currency=format_currency,
@@ -1594,10 +1607,27 @@ def export():
     stage_filter = request.args.get('stage', None)
     level_filter = request.args.get('level', None)
     owner_filter = request.args.get('owner', None)
-    est_sign_date_from = request.args.get('est_sign_date_from', None)
-    est_sign_date_to = request.args.get('est_sign_date_to', None)
+    est_sign_quarter = request.args.get('est_sign_quarter', None)
+    est_activate_quarter = request.args.get('est_activate_quarter', None)
     sort_by = request.args.get('sort', 'date_added')
     sort_order = request.args.get('order', 'desc')
+    
+    # Convert quarter to date range
+    current_year = date.today().year
+    quarter_ranges = {
+        'Q1': (f'{current_year}-01-01', f'{current_year}-03-31'),
+        'Q2': (f'{current_year}-04-01', f'{current_year}-06-30'),
+        'Q3': (f'{current_year}-07-01', f'{current_year}-09-30'),
+        'Q4': (f'{current_year}-10-01', f'{current_year}-12-31'),
+    }
+    
+    est_sign_date_from = est_sign_date_to = None
+    if est_sign_quarter and est_sign_quarter in quarter_ranges:
+        est_sign_date_from, est_sign_date_to = quarter_ranges[est_sign_quarter]
+    
+    est_activate_date_from = est_activate_date_to = None
+    if est_activate_quarter and est_activate_quarter in quarter_ranges:
+        est_activate_date_from, est_activate_date_to = quarter_ranges[est_activate_quarter]
     
     # Get filtered pipelines
     query = Pipeline.query

@@ -51,7 +51,7 @@
         </div>
         <div class="col-auto">
             <div class="btn-group me-2">
-                <a href="{{ url_for('pipeline.export', show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to, sort=sort_by, order=sort_order) }}" class="btn btn-outline-success btn-sm">
+                <a href="{{ url_for('pipeline.export', show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_quarter=est_sign_quarter, est_activate_quarter=est_activate_quarter, sort=sort_by, order=sort_order) }}" class="btn btn-outline-success btn-sm">
                     <i class="fas fa-file-excel me-1"></i> {{ _('Export') }}
                 </a>
                 <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-info btn-sm">
@@ -114,23 +114,27 @@
                         <label class="form-check-label" for="showLost">{{ _('Show Lost') }}</label>
                     </div>
                 </div>
-                <!-- Est. Sign Date Range -->
-                <div class="col-md-3">
+                <!-- Est. Sign Date Quarter -->
+                <div class="col-md-2">
                     <label class="form-label small">{{ _('Est. Sign Date') }}</label>
-                    <div class="input-group input-group-sm">
-                        <input type="month" name="est_sign_date_from" class="form-control" value="{{ est_sign_date_from or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
-                        <span class="input-group-text">至</span>
-                        <input type="month" name="est_sign_date_to" class="form-control" value="{{ est_sign_date_to or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
-                    </div>
+                    <select name="est_sign_quarter" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">{{ _('All') }}</option>
+                        <option value="Q1" {% if est_sign_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }} (Jan-Mar)</option>
+                        <option value="Q2" {% if est_sign_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }} (Apr-Jun)</option>
+                        <option value="Q3" {% if est_sign_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }} (Jul-Sep)</option>
+                        <option value="Q4" {% if est_sign_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }} (Oct-Dec)</option>
+                    </select>
                 </div>
-                <!-- Est. Activate Date Range -->
-                <div class="col-md-3">
+                <!-- Est. Activate Date Quarter -->
+                <div class="col-md-2">
                     <label class="form-label small">{{ _('Est. Activate Date') }}</label>
-                    <div class="input-group input-group-sm">
-                        <input type="month" name="est_activate_date_from" class="form-control" value="{{ est_activate_date_from or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
-                        <span class="input-group-text">至</span>
-                        <input type="month" name="est_activate_date_to" class="form-control" value="{{ est_activate_date_to or '' }}" min="2020-01" max="2027-12" onchange="this.form.submit()">
-                    </div>
+                    <select name="est_activate_quarter" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">{{ _('All') }}</option>
+                        <option value="Q1" {% if est_activate_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }} (Jan-Mar)</option>
+                        <option value="Q2" {% if est_activate_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }} (Apr-Jun)</option>
+                        <option value="Q3" {% if est_activate_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }} (Jul-Sep)</option>
+                        <option value="Q4" {% if est_activate_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }} (Oct-Dec)</option>
+                    </select>
                 </div>
                 <!-- Stage -->
                 <div class="col-md-2">
@@ -390,7 +394,7 @@
             {% if page_num == pipelines.page %}
             <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
             {% else %}
-            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_date_from=est_sign_date_from, est_sign_date_to=est_sign_date_to, est_activate_date_from=est_activate_date_from, est_activate_date_to=est_activate_date_to, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_quarter=est_sign_quarter, est_activate_quarter=est_activate_quarter, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
             {% endif %}
             {% else %}
             <li class="page-item disabled"><span class="page-link">...</span></li>
