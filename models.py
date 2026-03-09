@@ -357,6 +357,20 @@ class Pipeline(db.Model):
     comments = db.Column(db.Text, nullable=True)
     follow_up = db.Column(db.Text, nullable=True)
     
+    # Monthly revenue projections (M1-M12)
+    m1 = db.Column(db.Float, default=0.0)
+    m2 = db.Column(db.Float, default=0.0)
+    m3 = db.Column(db.Float, default=0.0)
+    m4 = db.Column(db.Float, default=0.0)
+    m5 = db.Column(db.Float, default=0.0)
+    m6 = db.Column(db.Float, default=0.0)
+    m7 = db.Column(db.Float, default=0.0)
+    m8 = db.Column(db.Float, default=0.0)
+    m9 = db.Column(db.Float, default=0.0)
+    m10 = db.Column(db.Float, default=0.0)
+    m11 = db.Column(db.Float, default=0.0)
+    m12 = db.Column(db.Float, default=0.0)
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

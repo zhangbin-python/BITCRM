@@ -1581,6 +1581,14 @@ def export():
     """Export Pipeline to Excel."""
     from dateutil.relativedelta import relativedelta
     
+    # Get filter parameters from URL
+    show_lost = request.args.get('show_lost', 'false') == 'true'
+    stage_filter = request.args.get('stage', None)
+    level_filter = request.args.get('level', None)
+    owner_filter = request.args.get('owner', None)
+    est_sign_date_from = request.args.get('est_sign_date_from', None)
+    est_sign_date_to = request.args.get('est_sign_date_to', None)
+    
     # Get filtered pipelines
     query = Pipeline.query
     
@@ -1596,7 +1604,27 @@ def export():
             )
         )
     
-    pipelines = query.order_by(Pipeline.date_added.desc()).all()
+    # Apply filters (same as index view)
+    if not show_lost:
+        query = query.filter(Pipeline.stage != '6b) Deal Lost')
+    
+    if stage_filter:
+        query = query.filter(Pipeline.stage == stage_filter)
+    
+    if level_filter:
+        query = query.filter(Pipeline.level == level_filter)
+    
+    if owner_filter:
+        query = query.filter(Pipeline.owner_id == int(owner_filter))
+    
+    if est_sign_date_from:
+        query = query.filter(Pipeline.est_sign_date >= datetime.strptime(est_sign_date_from, '%Y-%m-%d').date())
+    
+    if est_sign_date_to:
+        query = query.filter(Pipeline.est_sign_date <= datetime.strptime(est_sign_date_to, '%Y-%m-%d').date())
+    
+    # Eagerly load relationships to avoid lazy loading issues
+    pipelines = query.options(db.joinedload(Pipeline.owner), db.joinedload(Pipeline.support_team)).order_by(Pipeline.date_added.desc()).all()
     
     # Find reference date for column naming (use earliest est_act_date or current month)
     reference_dates = [p.est_act_date for p in pipelines if p.est_act_date]
@@ -1614,7 +1642,16 @@ def export():
     # Prepare data
     data = []
     for p in pipelines:
-        support_names = '/'.join([u.username for u in p.support_team])
+        try:
+            # Force evaluation of support_team query and handle None owner
+            support_list = list(p.support_team)
+            support_names = '/'.join([u.username for u in support_list]) if support_list else ''
+            owner_name = p.owner.username if p.owner else ''
+        except Exception as e:
+            # Log the error and continue with empty values
+            app.logger.error(f"Error processing pipeline {p.id}: {str(e)}")
+            support_names = ''
+            owner_name = ''
         
         row_data = {
             'Name': p.name,
@@ -1623,7 +1660,7 @@ def export():
             'Position': p.position,
             'Email': p.email,
             'Mobile Number': p.mobile_number,
-            'Owner': p.owner.username if p.owner else '',
+            'Owner': owner_name,
             'Support': support_names,
             'Product': p.product,
             'TCV USD': p.tcv_usd,
