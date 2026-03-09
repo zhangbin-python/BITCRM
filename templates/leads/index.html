@@ -110,6 +110,9 @@
                         {{ _('Show Unqualified') }}
                     </label>
                 </div>
+                <a href="{{ url_for('main.clear_filters', page='leads') }}" class="btn btn-outline-secondary btn-sm ms-2" title="{{ _('Clear Filters') }}">
+                    <i class="bi bi-x-circle"></i>
+                </a>
             </div>
         </form>
     </div>

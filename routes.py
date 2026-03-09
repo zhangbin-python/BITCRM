@@ -3,7 +3,7 @@ BITCRM Route Definitions
 All Flask routes for the application.
 """
 import pandas as pd
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response, session
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_babel import gettext as _, get_locale
 from werkzeug.security import generate_password_hash
@@ -43,6 +43,18 @@ def index():
     """Redirect to dashboard."""
     return redirect(url_for('main.dashboard'))
 
+
+@main_bp.route('/clear-filters/<page>')
+@login_required
+def clear_filters(page):
+    """Clear saved filters from session."""
+    if page == 'pipeline':
+        session.pop('pipeline_filters', None)
+        return redirect(url_for('pipeline.index'))
+    elif page == 'leads':
+        session.pop('leads_filters', None)
+        return redirect(url_for('leads.index'))
+    return redirect(url_for('main.dashboard'))
 
 @main_bp.route('/dashboard')
 @login_required
@@ -470,11 +482,32 @@ def index():
         flash('You do not have permission to access Sales Leads.', 'danger')
         return redirect(url_for('main.dashboard'))
     
-    # Get filter parameters
-    show_unqualified = request.args.get('show_unqualified', 'false') == 'true'
-    status_filter = request.args.get('status', None)
-    source_filter = request.args.get('source', None)
-    owner_filter = request.args.get('owner', None)
+    # Get filter parameters from URL or session
+    has_url_filters = any([
+        request.args.get('show_unqualified'),
+        request.args.get('status'),
+        request.args.get('source'),
+        request.args.get('owner')
+    ])
+    
+    if has_url_filters:
+        session['leads_filters'] = {
+            'show_unqualified': request.args.get('show_unqualified', 'false'),
+            'status': request.args.get('status'),
+            'source': request.args.get('source'),
+            'owner': request.args.get('owner')
+        }
+        saved_filters = session['leads_filters']
+    else:
+        saved_filters = session.get('leads_filters', {})
+    
+    # Get filter values (URL param or from session)
+    show_unqualified = request.args.get('show_unqualified') or saved_filters.get('show_unqualified', 'false')
+    status_filter = request.args.get('status') or saved_filters.get('status')
+    source_filter = request.args.get('source') or saved_filters.get('source')
+    owner_filter = request.args.get('owner') or saved_filters.get('owner')
+    
+    show_unqualified = show_unqualified == 'true'
     
     # Build query
     query = SalesLead.query
@@ -1031,14 +1064,44 @@ pipeline_bp = Blueprint('pipeline', __name__)
 def index():
     """Pipeline Management page."""
     
-    # Get filter parameters
-    show_lost = request.args.get('show_lost', 'false') == 'true'
-    stage_filter = request.args.get('stage', None)
-    level_filter = request.args.get('level', None)
-    owner_filter = request.args.get('owner', None)
-    est_sign_quarter = request.args.get('est_sign_quarter', None)
-    est_activate_quarter = request.args.get('est_activate_quarter', None)
-    sort_by = request.args.get('sort', 'date_added')  # Default: date_added desc
+    # Get filter parameters from URL or session
+    # Check if filters are in URL (user is setting new filters)
+    has_url_filters = any([
+        request.args.get('show_lost'),
+        request.args.get('stage'),
+        request.args.get('level'),
+        request.args.get('owner'),
+        request.args.get('est_sign_quarter'),
+        request.args.get('est_activate_quarter'),
+        request.args.get('sort'),
+        request.args.get('order')
+    ])
+    
+    # If URL has filters, save to session; otherwise load from session
+    if has_url_filters:
+        session['pipeline_filters'] = {
+            'show_lost': request.args.get('show_lost', 'false'),
+            'stage': request.args.get('stage'),
+            'level': request.args.get('level'),
+            'owner': request.args.get('owner'),
+            'est_sign_quarter': request.args.get('est_sign_quarter'),
+            'est_activate_quarter': request.args.get('est_activate_quarter'),
+            'sort': request.args.get('sort', 'date_added'),
+            'order': request.args.get('order', 'desc')
+        }
+        saved_filters = session['pipeline_filters']
+    else:
+        saved_filters = session.get('pipeline_filters', {})
+    
+    # Get filter values (URL param or from session)
+    show_lost = request.args.get('show_lost', saved_filters.get('show_lost', 'false')) == 'true'
+    stage_filter = request.args.get('stage') or saved_filters.get('stage')
+    level_filter = request.args.get('level') or saved_filters.get('level')
+    owner_filter = request.args.get('owner') or saved_filters.get('owner')
+    est_sign_quarter = request.args.get('est_sign_quarter') or saved_filters.get('est_sign_quarter')
+    est_activate_quarter = request.args.get('est_activate_quarter') or saved_filters.get('est_activate_quarter')
+    sort_by = request.args.get('sort') or saved_filters.get('sort', 'date_added')
+    sort_order = request.args.get('order') or saved_filters.get('order', 'desc')
     
     # Convert quarter to date range
     current_year = date.today().year
@@ -1602,15 +1665,21 @@ def export():
     """Export Pipeline to Excel."""
     from dateutil.relativedelta import relativedelta
     
-    # Get filter parameters from URL
-    show_lost = request.args.get('show_lost', 'false') == 'true'
-    stage_filter = request.args.get('stage', None)
-    level_filter = request.args.get('level', None)
-    owner_filter = request.args.get('owner', None)
-    est_sign_quarter = request.args.get('est_sign_quarter', None)
-    est_activate_quarter = request.args.get('est_activate_quarter', None)
-    sort_by = request.args.get('sort', 'date_added')
-    sort_order = request.args.get('order', 'desc')
+    # Get saved filters from session
+    saved_filters = session.get('pipeline_filters', {})
+    
+    # Get filter parameters from URL or session
+    show_lost = request.args.get('show_lost') or saved_filters.get('show_lost', 'false')
+    stage_filter = request.args.get('stage') or saved_filters.get('stage')
+    level_filter = request.args.get('level') or saved_filters.get('level')
+    owner_filter = request.args.get('owner') or saved_filters.get('owner')
+    est_sign_quarter = request.args.get('est_sign_quarter') or saved_filters.get('est_sign_quarter')
+    est_activate_quarter = request.args.get('est_activate_quarter') or saved_filters.get('est_activate_quarter')
+    sort_by = request.args.get('sort') or saved_filters.get('sort', 'date_added')
+    sort_order = request.args.get('order') or saved_filters.get('order', 'desc')
+    
+    # Convert to booleans
+    show_lost = show_lost == 'true'
     
     # Convert quarter to date range
     current_year = date.today().year
