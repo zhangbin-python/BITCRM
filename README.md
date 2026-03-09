@@ -56,23 +56,7 @@ flask run
 6. **Access the application**:
 Open your browser and navigate to: http://localhost:5000
 
-### Default Login Credentials
 
-| Role | Username | Password |
-|------|----------|----------|
-| Admin | Bruce | bitcrm |
-| Admin | Admin | bitcrm |
-| Sales | Eric | bitcrm |
-| Sales | Anthony | bitcrm |
-| Sales | Joseph | bitcrm |
-| Sales | Romeo | bitcrm |
-| Sales | Uly | bitcrm |
-| Sales | Lancey | bitcrm |
-| Sales | Sherwin | bitcrm |
-| Sales | Cean | bitcrm |
-| Sales | Jeromo | bitcrm |
-| Sales | Jokie | bitcrm |
-| Sales | Jam | bitcrm |
 
 ## Project Structure
 
