@@ -3,7 +3,7 @@ BITCRM Route Definitions
 All Flask routes for the application.
 """
 import pandas as pd
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_babel import gettext as _, get_locale
 from werkzeug.security import generate_password_hash
@@ -18,10 +18,10 @@ from urllib.parse import urlparse, urljoin
 from extensions import db, cache
 from models import User, SalesLead, Pipeline, Task, ActivityLog, disable_metrics_events
 from utils import (
-    allowed_file, validate_date, validate_numeric,
+    allowed_file, validate_date, validate_numeric, validate_integer,
     create_excel_template, export_to_excel, import_from_excel,
     validate_sales_lead_import, validate_pipeline_import,
-    calculate_pipeline_metrics,
+    calculate_pipeline_metrics, get_forecast_base_month, pipeline_forecast_needs_refresh,
     excel_date_to_str, excel_date_to_date,
     get_this_week_range, get_previous_week_range,
     calculate_weekly_growth, format_currency,
@@ -1396,7 +1396,7 @@ def add():
                 product=request.form.get('product'),
                 mrc_usd=validate_numeric(request.form.get('mrc_usd'), 'MRC USD'),
                 otc_usd=validate_numeric(request.form.get('otc_usd'), 'OTC USD'),
-                contract_term_yrs=validate_numeric(request.form.get('contract_term_yrs', 1), 'Contract Term'),
+                contract_term_yrs=validate_integer(request.form.get('contract_term_yrs', 1), 'Contract Term'),
                 gp_margin=validate_numeric(request.form.get('gp_margin', 0), 'GP Margin') / 100,
                 est_sign_date=validate_date(request.form.get('est_sign_date')),
                 est_act_date=validate_date(request.form.get('est_act_date')),
@@ -1470,7 +1470,7 @@ def edit(pipeline_id):
             pipeline.product = request.form.get('product')
             pipeline.mrc_usd = validate_numeric(request.form.get('mrc_usd'), 'MRC USD')
             pipeline.otc_usd = validate_numeric(request.form.get('otc_usd'), 'OTC USD')
-            pipeline.contract_term_yrs = validate_numeric(request.form.get('contract_term_yrs', 1), 'Contract Term')
+            pipeline.contract_term_yrs = validate_integer(request.form.get('contract_term_yrs', 1), 'Contract Term')
             pipeline.gp_margin = validate_numeric(request.form.get('gp_margin', 0), 'GP Margin') / 100
             pipeline.est_sign_date = validate_date(request.form.get('est_sign_date'))
             pipeline.est_act_date = validate_date(request.form.get('est_act_date'))
@@ -1689,8 +1689,6 @@ def import_template():
 @login_required
 def export():
     """Export Pipeline to Excel."""
-    from dateutil.relativedelta import relativedelta
-    
     # Get saved filters from session
     saved_filters = session.get('pipeline_filters', {})
     
@@ -1769,19 +1767,14 @@ def export():
     
     # Eagerly load relationships to avoid lazy loading issues
     pipelines = query.options(db.joinedload(Pipeline.owner), db.joinedload(Pipeline.support_team)).all()
-    
-    # Find reference date for column naming (use earliest est_act_date or current month)
-    reference_dates = [p.est_act_date for p in pipelines if p.est_act_date]
-    if reference_dates:
-        ref_date = min(reference_dates)
-    else:
-        ref_date = date.today()
-    
-    # Create month column names based on reference date
-    month_columns = {}
-    for i in range(1, 13):
-        month_date = ref_date + relativedelta(months=i-1)
-        month_columns[f'm{i}'] = month_date.strftime('%b %Y')  # e.g., Feb 2026
+    forecast_base_month = get_forecast_base_month()
+
+    stale_pipelines = [pipeline for pipeline in pipelines if pipeline_forecast_needs_refresh(pipeline, forecast_base_month)]
+    if stale_pipelines:
+        with disable_metrics_events():
+            for pipeline in stale_pipelines:
+                calculate_pipeline_metrics(pipeline, forecast_base_month)
+            db.session.commit()
     
     # Prepare data
     data = []
@@ -1793,7 +1786,7 @@ def export():
             owner_name = p.owner.username if p.owner else ''
         except Exception as e:
             # Log the error and continue with empty values
-            app.logger.error(f"Error processing pipeline {p.id}: {str(e)}")
+            current_app.logger.error(f"Error processing pipeline {p.id}: {str(e)}")
             support_names = ''
             owner_name = ''
         
@@ -1824,21 +1817,22 @@ def export():
             'Stuckpoint': p.stuckpoint or '',
             'Follow-up': p.follow_up or '',
             'Comments': p.comments or '',
+            'Forecast Base Month': p.forecast_base_month.strftime('%Y-%m-%d') if p.forecast_base_month else '',
             'Date Added': p.date_added.strftime('%Y-%m-%d') if p.date_added else '',
             'Created At': p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '',
             'Updated At': p.updated_at.strftime('%Y-%m-%d %H:%M') if p.updated_at else ''
         }
         
-        # Add M1-M12 values (columns will be renamed to actual months)
+        # Keep fixed M1-M12 headers so exported files remain round-trip compatible
+        # with the import logic and avoid cross-row month misalignment.
         for i in range(1, 13):
-            row_data[f'm{i}'] = getattr(p, f'm{i}')
+            monthly_value = getattr(p, f'm{i}')
+            row_data[f'M{i}'] = round(float(monthly_value or 0), 4)
         
         data.append(row_data)
     
     if data:
         df = pd.DataFrame(data)
-        # Rename m1-m12 columns to actual month names
-        df = df.rename(columns=month_columns)
     else:
         # Create empty dataframe with proper column names
         base_columns = ['Name', 'Company', 'Industry', 'Position', 'Email',
@@ -1846,13 +1840,23 @@ def export():
                        'TCV USD', 'Contract Term (Yrs)', 'MRC USD', 'OTC USD',
                        'GP Margin', 'GP', 'MG', 'Est. Sign Date', 'Est. Act. Date',
                        'Win Rate', 'Stage', 'Award Date', 'Proposal Sent Date', 'Level', 
-                       'Stuckpoint', 'Follow-up', 'Comments', 'Date Added', 
+                       'Stuckpoint', 'Follow-up', 'Comments', 'Forecast Base Month', 'Date Added', 
                        'Created At', 'Updated At']
-        df = pd.DataFrame(columns=base_columns + list(month_columns.values()))
+        df = pd.DataFrame(columns=base_columns + [f'M{i}' for i in range(1, 13)])
     
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Pipeline')
+        worksheet = writer.sheets['Pipeline']
+
+        numeric_columns = {'TCV USD', 'MRC USD', 'OTC USD', 'GP'}
+        numeric_columns.update({f'M{i}' for i in range(1, 13)})
+
+        for column_cells in worksheet.iter_cols(1, worksheet.max_column):
+            header = column_cells[0].value
+            if header in numeric_columns:
+                for cell in column_cells[1:]:
+                    cell.number_format = '#,##0.0000'
     
     output.seek(0)
     

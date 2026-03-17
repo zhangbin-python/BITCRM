@@ -1,7 +1,8 @@
 """
-Cross-database migration script for pipeline.m1-m12.
+Cross-database migration script for pipeline rolling forecast fields.
 
 Unified target:
+- Database column `forecast_base_month` stores the rolling forecast anchor month
 - Database columns use NUMERIC(15,4)
 - Python values stay as float via SQLAlchemy `asdecimal=False`
 
@@ -15,13 +16,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy import inspect, text
 
-from app import app
+from app import create_app
 from extensions import db
+from models import Pipeline, disable_metrics_events
+from utils import calculate_pipeline_metrics, get_forecast_base_month
 
 
 TARGET_COLUMNS = [f"m{i}" for i in range(1, 13)]
 TARGET_SQLITE_TYPE = "NUMERIC"
 TARGET_DECIMAL_TYPE = "NUMERIC(15,4)"
+FORECAST_BASE_MONTH_COLUMN = "forecast_base_month"
 
 
 def get_existing_column_names():
@@ -30,6 +34,12 @@ def get_existing_column_names():
 
 
 def migrate_postgresql():
+    existing_columns = get_existing_column_names()
+    if FORECAST_BASE_MONTH_COLUMN not in existing_columns:
+        db.session.execute(text(
+            f"ALTER TABLE pipeline ADD COLUMN {FORECAST_BASE_MONTH_COLUMN} DATE"
+        ))
+
     statements = []
     for column in TARGET_COLUMNS:
         statements.append(
@@ -46,6 +56,7 @@ def migrate_sqlite():
     missing_columns = [column for column in TARGET_COLUMNS if column not in existing_columns]
     if missing_columns:
         raise RuntimeError(f"Missing pipeline columns: {', '.join(missing_columns)}")
+    has_forecast_base_month = FORECAST_BASE_MONTH_COLUMN in existing_columns
 
     db.session.execute(text("PRAGMA foreign_keys=OFF"))
     try:
@@ -80,6 +91,7 @@ def migrate_sqlite():
                 stuckpoint TEXT,
                 comments TEXT,
                 follow_up TEXT,
+                forecast_base_month DATE,
                 m1 {TARGET_SQLITE_TYPE},
                 m2 {TARGET_SQLITE_TYPE},
                 m3 {TARGET_SQLITE_TYPE},
@@ -105,12 +117,17 @@ def migrate_sqlite():
             "owner_id", "sales_lead_id", "product", "tcv_usd", "contract_term_yrs",
             "mrc_usd", "otc_usd", "gp_margin", "gp", "mg", "est_sign_date", "est_act_date",
             "award_date", "proposal_sent_date", "win_rate", "stage", "level", "date_added",
-            "stuckpoint", "comments", "follow_up", "m1", "m2", "m3", "m4", "m5", "m6",
+            "stuckpoint", "comments", "follow_up", "forecast_base_month", "m1", "m2", "m3", "m4", "m5", "m6",
             "m7", "m8", "m9", "m10", "m11", "m12", "created_at", "updated_at"
         ]
         select_columns = []
         for column in all_columns:
-            if column in TARGET_COLUMNS:
+            if column == FORECAST_BASE_MONTH_COLUMN:
+                if has_forecast_base_month:
+                    select_columns.append(column)
+                else:
+                    select_columns.append(f"NULL AS {column}")
+            elif column in TARGET_COLUMNS:
                 select_columns.append(f"ROUND(COALESCE({column}, 0), 4) AS {column}")
             else:
                 select_columns.append(column)
@@ -141,7 +158,22 @@ def migrate_sqlite():
         raise
 
 
+def refresh_existing_forecasts(reference_date=None):
+    forecast_base_month = get_forecast_base_month(reference_date)
+    pipelines = Pipeline.query.all()
+    if not pipelines:
+        return 0
+
+    with disable_metrics_events():
+        for pipeline in pipelines:
+            calculate_pipeline_metrics(pipeline, forecast_base_month)
+        db.session.commit()
+
+    return len(pipelines)
+
+
 def main():
+    app = create_app()
     with app.app_context():
         dialect = db.engine.dialect.name
 
@@ -154,10 +186,14 @@ def main():
                 raise RuntimeError(f"Unsupported database dialect: {dialect}")
 
             db.session.commit()
-            print(f"✅ m1-m12 unified to {TARGET_DECIMAL_TYPE} on {dialect}")
+            refreshed_count = refresh_existing_forecasts()
+            print(
+                f"SUCCESS: rolling forecast fields unified on {dialect}; "
+                f"refreshed {refreshed_count} pipelines for {get_forecast_base_month()}"
+            )
         except Exception as exc:
             db.session.rollback()
-            print(f"❌ Migration failed on {dialect}: {exc}")
+            print(f"ERROR: Migration failed on {dialect}: {exc}")
             raise
 
 

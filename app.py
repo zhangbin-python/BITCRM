@@ -143,7 +143,7 @@ def create_app(config_class=None):
         os.makedirs(app.config.get('EXCEL_TEMPLATES_FOLDER', 'templates/excel'), exist_ok=True)
         
         # 3. Create database tables (import models to register them)
-        from models import User
+        from models import User, Pipeline, disable_metrics_events
         
         # 3.1 Add dashboard_filters column if it doesn't exist
         from sqlalchemy import text
@@ -154,6 +154,14 @@ def create_app(config_class=None):
         except Exception:
             db.session.rollback()
             print("[INFO] dashboard_filters column might already exist")
+
+        try:
+            db.session.execute(text('ALTER TABLE pipeline ADD COLUMN forecast_base_month DATE'))
+            db.session.commit()
+            print("[OK] Added forecast_base_month column")
+        except Exception:
+            db.session.rollback()
+            print("[INFO] forecast_base_month column might already exist")
         
         # 3.2 Create all tables
         db.create_all()
@@ -165,6 +173,19 @@ def create_app(config_class=None):
                 user.dashboard_filters = '{}'
         if users:
             db.session.commit()
+
+        from utils import calculate_pipeline_metrics, get_forecast_base_month
+        current_forecast_month = get_forecast_base_month()
+        stale_pipelines = Pipeline.query.filter(
+            (Pipeline.forecast_base_month.is_(None)) |
+            (Pipeline.forecast_base_month != current_forecast_month)
+        ).all()
+        if stale_pipelines:
+            with disable_metrics_events():
+                for pipeline in stale_pipelines:
+                    calculate_pipeline_metrics(pipeline, current_forecast_month)
+                db.session.commit()
+            print(f"[OK] Refreshed rolling forecast for {len(stale_pipelines)} pipelines")
         
         # 5. Initialize default users (only if users table is empty)
         # Use file lock to prevent race condition in gunicorn

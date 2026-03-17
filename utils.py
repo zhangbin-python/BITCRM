@@ -110,9 +110,20 @@ def validate_numeric(value, field_name):
     try:
         # Remove commas and spaces
         cleaned = str(value).replace(',', '').replace(' ', '')
-        return int(float(cleaned))
+        return round(float(cleaned), 4)
     except (ValueError, TypeError):
         raise ValueError(f"{field_name} must be a valid number")
+
+
+def validate_integer(value, field_name):
+    """Validate and convert integer value."""
+    if value is None or value == '':
+        return 0
+    try:
+        cleaned = str(value).replace(',', '').replace(' ', '')
+        return int(float(cleaned))
+    except (ValueError, TypeError):
+        raise ValueError(f"{field_name} must be a valid integer")
 
 
 def create_excel_template(columns, filename):
@@ -309,15 +320,20 @@ def validate_pipeline_import(row):
                 row[date_field] = date_val
     
     # Validate numeric fields
-    numeric_fields = ['TCV USD', 'MRC USD', 'OTC USD', 'Contract Term (Yrs)', 
-                      'GP Margin', 'Win Rate']
+    numeric_fields = ['TCV USD', 'MRC USD', 'OTC USD']
     for field in numeric_fields:
-        if row.get(field) and field in ['TCV USD', 'MRC USD', 'OTC USD', 'Contract Term (Yrs)']:
+        if row.get(field):
             try:
                 val = validate_numeric(row.get(field), field)
                 row[field] = val
             except ValueError as e:
                 errors.append(str(e))
+
+    if row.get('Contract Term (Yrs)'):
+        try:
+            row['Contract Term (Yrs)'] = validate_integer(row.get('Contract Term (Yrs)'), 'Contract Term (Yrs)')
+        except ValueError as e:
+            errors.append(str(e))
     
     # Validate GP Margin (percentage)
     if row.get('GP Margin'):
@@ -346,7 +362,70 @@ def validate_pipeline_import(row):
     return errors
 
 
-def calculate_pipeline_metrics(pipeline):
+def get_forecast_base_month(reference_date=None):
+    """Get the first day of the rolling forecast month."""
+    if reference_date is None:
+        reference_date = date.today()
+    return date(reference_date.year, reference_date.month, 1)
+
+
+def get_month_end(month_start):
+    """Get the last day of the month for a given month start date."""
+    return date(
+        month_start.year,
+        month_start.month,
+        calendar.monthrange(month_start.year, month_start.month)[1]
+    )
+
+
+def calculate_pipeline_forecast(pipeline, reference_date=None):
+    """Calculate rolling M1-M12 revenue forecast for a pipeline."""
+    forecast_base_month = get_forecast_base_month(reference_date)
+    pipeline.forecast_base_month = forecast_base_month
+
+    for month_index in range(1, 13):
+        setattr(pipeline, f'm{month_index}', 0.0)
+
+    if pipeline.stage == '6b) Deal Lost' or not pipeline.est_act_date:
+        return pipeline
+
+    activation_date = pipeline.est_act_date
+    monthly_recurring = float(pipeline.mrc_usd or 0)
+    one_time_charge = float(pipeline.otc_usd or 0)
+
+    for month_index in range(1, 13):
+        month_start = forecast_base_month + relativedelta(months=month_index - 1)
+        month_end = get_month_end(month_start)
+        forecast_value = 0.0
+
+        if activation_date > month_end:
+            forecast_value = 0.0
+        elif activation_date < month_start:
+            forecast_value = monthly_recurring
+        else:
+            days_in_month = (month_end - month_start).days + 1
+            active_days = (month_end - activation_date).days + 1
+            forecast_value = (monthly_recurring * active_days / days_in_month) + one_time_charge
+
+        setattr(pipeline, f'm{month_index}', round(forecast_value, 4))
+
+    return pipeline
+
+
+def pipeline_forecast_needs_refresh(pipeline, reference_date=None):
+    """Check whether a pipeline's rolling forecast should be recalculated."""
+    forecast_base_month = get_forecast_base_month(reference_date)
+    if pipeline.forecast_base_month != forecast_base_month:
+        return True
+
+    for month_index in range(1, 13):
+        if getattr(pipeline, f'm{month_index}', None) is None:
+            return True
+
+    return False
+
+
+def calculate_pipeline_metrics(pipeline, reference_date=None):
     """Calculate and update pipeline metrics."""
     # Calculate TCV (4 decimal places)
     pipeline.tcv_usd = round((pipeline.mrc_usd * 12 * pipeline.contract_term_yrs) + pipeline.otc_usd, 4)
@@ -366,6 +445,8 @@ def calculate_pipeline_metrics(pipeline):
         pipeline.mg = 'C'
     else:
         pipeline.mg = 'D'
+
+    calculate_pipeline_forecast(pipeline, reference_date)
     
     return pipeline
 

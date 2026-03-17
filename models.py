@@ -395,6 +395,7 @@ class Pipeline(db.Model):
     stuckpoint = db.Column(db.Text, nullable=True)
     comments = db.Column(db.Text, nullable=True)
     follow_up = db.Column(db.Text, nullable=True)
+    forecast_base_month = db.Column(db.Date, nullable=True)
     
     # Monthly revenue projections (M1-M12)
     # Use NUMERIC for cross-database schema compatibility while returning float in Python.
