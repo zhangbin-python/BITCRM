@@ -95,22 +95,61 @@ class User(UserMixin, db.Model):
         import json
         try:
             prefs = json.loads(self.column_preferences or '{}')
-            return prefs.get(page, {})
+            page_prefs = prefs.get(page, {})
+            if not isinstance(page_prefs, dict):
+                return {}
+
+            columns = page_prefs.get('columns', [])
+            if not isinstance(columns, list):
+                columns = []
+
+            order = page_prefs.get('order')
+            if order is not None and not isinstance(order, list):
+                order = None
+
+            return {
+                'columns': columns,
+                'order': order
+            }
         except (json.JSONDecodeError, TypeError):
             return {}
     
     def set_column_preferences(self, page, columns, order=None):
         """Set user's column preferences for a specific page."""
         import json
+        normalized_columns = []
+        seen_columns = set()
+
+        for column in columns or []:
+            if not isinstance(column, str) or column in seen_columns:
+                continue
+            normalized_columns.append(column)
+            seen_columns.add(column)
+
+        normalized_order = None
+        if isinstance(order, list):
+            normalized_order = []
+            seen_order = set()
+            for column in order:
+                if not isinstance(column, str) or column in seen_order:
+                    continue
+                normalized_order.append(column)
+                seen_order.add(column)
+
         try:
             prefs = json.loads(self.column_preferences or '{}')
             prefs[page] = {
-                'columns': columns,
-                'order': order
+                'columns': normalized_columns,
+                'order': normalized_order
             }
             self.column_preferences = json.dumps(prefs)
         except (json.JSONDecodeError, TypeError):
-            self.column_preferences = json.dumps({page: {'columns': columns, 'order': order}})
+            self.column_preferences = json.dumps({
+                page: {
+                    'columns': normalized_columns,
+                    'order': normalized_order
+                }
+            })
     
     def get_dashboard_filters(self):
         """Get user's dashboard filter preferences."""
@@ -606,6 +645,8 @@ class Task(db.Model):
         if self.due_date and date.today() > self.due_date:
             self.status = 'Overdue'
             return True
+        if self.status == 'Overdue':
+            self.status = 'In Progress'
         return False
     
     def __repr__(self):

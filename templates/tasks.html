@@ -213,7 +213,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="mb-0 text-danger">{{ _('Overdue') }}</h6>
-                            <h4 class="mb-0">{{ overdue_tasks|length }}</h4>
+                            <h4 class="mb-0" id="overdueCount">{{ overdue_tasks|length }}</h4>
                         </div>
                     </div>
                 </div>
@@ -228,7 +228,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="mb-0 text-success">{{ _('In Progress') }}</h6>
-                            <h4 class="mb-0">{{ in_progress_tasks|length }}</h4>
+                            <h4 class="mb-0" id="inProgressCount">{{ in_progress_tasks|length }}</h4>
                         </div>
                     </div>
                 </div>
@@ -243,7 +243,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="mb-0 text-secondary">{{ _('Completed') }}</h6>
-                            <h4 class="mb-0">{{ completed_tasks|length }}</h4>
+                            <h4 class="mb-0" id="completedCount">{{ completed_tasks|length }}</h4>
                         </div>
                     </div>
                 </div>
@@ -273,7 +273,7 @@
                     </thead>
                     <tbody>
                         {% for task in overdue_tasks %}
-                        <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}">
+                        <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="Overdue">
                             <td class="text-center align-middle status-cell" 
                                 data-task-id="{{ task.id }}" 
                                 data-current-status="{{ task.status }}">
@@ -332,7 +332,7 @@
                     </thead>
                     <tbody>
                         {% for task in in_progress_tasks %}
-                        <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}">
+                        <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="In Progress">
                             <td class="text-center align-middle status-cell" 
                                 data-task-id="{{ task.id }}" 
                                 data-current-status="{{ task.status }}">
@@ -396,7 +396,7 @@
                     </thead>
                     <tbody>
                         {% for task in completed_tasks %}
-                        <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}">
+                        <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="Completed">
                             <td class="text-center align-middle status-cell" 
                                 data-task-id="{{ task.id }}" 
                                 data-current-status="{{ task.status }}">
@@ -584,7 +584,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const ownerId = row.dataset.ownerId;
             row.style.display = selectedOwners.includes(ownerId) ? '' : 'none';
         });
+
+        updateSummaryCounts();
     }
+
+    function updateSummaryCounts() {
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+        const counts = {
+            'Overdue': 0,
+            'In Progress': 0,
+            'Completed': 0
+        };
+
+        visibleRows.forEach(row => {
+            const status = row.dataset.taskStatus;
+            if (status in counts) {
+                counts[status] += 1;
+            }
+        });
+
+        const overdueCount = document.getElementById('overdueCount');
+        const inProgressCount = document.getElementById('inProgressCount');
+        const completedCount = document.getElementById('completedCount');
+
+        if (overdueCount) overdueCount.textContent = counts['Overdue'];
+        if (inProgressCount) inProgressCount.textContent = counts['In Progress'];
+        if (completedCount) completedCount.textContent = counts['Completed'];
+    }
+
+    updateSummaryCounts();
     
     // =========================================================================
     // TASK STATUS TOGGLE - Click on status badge to toggle
