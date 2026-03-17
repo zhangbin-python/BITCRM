@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
+    <div class="page-header mb-4">
+        <div class="page-title-stack">
             <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
             <p class="text-muted small">{{ _('Enter lead information to track potential customers') }}</p>
         </div>
@@ -133,10 +133,10 @@
         <!-- Form Actions -->
         <div class="row">
             <div class="col">
-                <div class="d-flex justify-content-between">
+                <div class="form-actions-bar">
                     <a href="{{ url_for('leads.index') }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
-                    <div>
-                        <button type="submit" name="continue" value="1" class="btn btn-outline-primary me-2">{{ _('Save & Continue Adding') }}</button>
+                    <div class="form-actions-buttons">
+                        <button type="submit" name="continue" value="1" class="btn btn-outline-primary">{{ _('Save & Continue Adding') }}</button>
                         <button type="submit" class="btn btn-primary">{{ _('Save Lead') }}</button>
                     </div>
                 </div>

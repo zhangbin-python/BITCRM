@@ -31,6 +31,7 @@
         body {
             background-color: #f8f9fa;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .sidebar {
@@ -113,12 +114,99 @@
         .language-switcher:hover {
             background-color: #f8f9fa;
         }
-        
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-left: auto;
+        }
+
+        .topbar-actions > *,
+        .topbar-actions .dropdown {
+            flex: 0 0 auto;
+        }
+
+        .topbar-actions .btn,
+        .topbar-actions .dropdown-toggle {
+            white-space: nowrap;
+        }
+
+        .mobile-icon-label {
+            display: inline;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .page-title-stack {
+            min-width: 0;
+        }
+
+        .page-header-actions,
+        .page-status-bar,
+        .form-actions-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .page-header-actions {
+            justify-content: flex-end;
+        }
+
+        .page-status-bar {
+            justify-content: space-between;
+        }
+
+        .form-actions-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .form-actions-buttons {
+            justify-content: flex-end;
+        }
+
+        .list-toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .list-toolbar-group .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            min-height: 38px;
+        }
+
         .flash-messages {
             position: fixed;
             top: 80px;
             right: 20px;
             z-index: 1050;
+            width: min(420px, calc(100vw - 40px));
         }
         
         .status-badge {
@@ -204,6 +292,16 @@
             bottom: 20px;
             right: 20px;
             z-index: 9999;
+            width: min(360px, calc(100vw - 40px));
+        }
+
+        .toast-notification .toast {
+            width: 100%;
+        }
+
+        .pagination {
+            flex-wrap: wrap;
+            gap: 0.35rem;
         }
 
         /* Mobile Sidebar Styles */
@@ -253,6 +351,87 @@
                 padding: 10px 15px !important;
             }
 
+            .navbar .container-fluid {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+
+            .topbar-brand {
+                flex: 0 1 auto;
+                min-width: 0;
+            }
+
+            .topbar-actions {
+                width: auto;
+                flex: 1 1 auto;
+                flex-wrap: nowrap;
+                justify-content: flex-end;
+                gap: 0.35rem;
+                margin-left: auto;
+                min-width: 0;
+            }
+
+            .topbar-actions > *,
+            .topbar-actions .dropdown {
+                flex: 0 1 auto;
+                min-width: 0;
+            }
+
+            .topbar-actions .btn,
+            .topbar-actions .dropdown-toggle {
+                width: auto;
+                min-width: 2.5rem;
+                padding: 0.45rem 0.65rem;
+                justify-content: center;
+            }
+
+            .mobile-icon-label {
+                display: none;
+            }
+
+            .topbar-actions .language-switcher,
+            .topbar-actions .btn-outline-info {
+                padding-left: 0.6rem;
+                padding-right: 0.6rem;
+            }
+
+            .topbar-actions .dropdown-menu {
+                max-width: min(92vw, 320px);
+            }
+
+            .page-header-actions,
+            .page-status-bar,
+            .form-actions-bar,
+            .form-actions-buttons {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .page-header-actions > *,
+            .page-status-bar > *,
+            .form-actions-bar > *,
+            .form-actions-buttons > * {
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+
+            .list-toolbar-group,
+            .list-toolbar-group > * {
+                width: 100%;
+            }
+
+            .page-header-actions .btn-group,
+            .page-header-actions .dropdown,
+            .page-header-actions .btn,
+            .page-status-bar .btn,
+            .form-actions-bar .btn,
+            .form-actions-buttons .btn,
+            .list-toolbar-group .btn {
+                width: 100%;
+            }
+
             .hamburger-btn {
                 display: flex !important;
                 align-items: center;
@@ -276,6 +455,24 @@
 
             .card {
                 margin-bottom: 15px !important;
+            }
+
+            .flash-messages {
+                top: 70px;
+                right: 10px;
+                left: 10px;
+                width: auto;
+            }
+
+            .toast-notification {
+                right: 10px;
+                left: 10px;
+                bottom: 10px;
+                width: auto;
+            }
+
+            .modal-dialog {
+                margin: 0.75rem;
             }
         }
 
@@ -386,32 +583,33 @@
                             <i class="bi bi-list"></i>
                         </button>
 
-                        <!-- Logo in main content area - Using actual logo image -->
-                        <img src="{{ url_for('static', filename='logo.png') }}" 
-                             alt="BITCRM Logo"
-                             class="d-none d-lg-block me-3"
-                             style="height: 40px; width: auto; max-width: 100px; object-fit: contain;">
-                        <img src="{{ url_for('static', filename='logo.png') }}" 
-                             alt="BITCRM Logo"
-                             class="d-lg-none me-2"
-                             style="height: 32px; width: auto; max-width: 80px; object-fit: contain;">
+                        <div class="topbar-brand">
+                            <img src="{{ url_for('static', filename='logo.png') }}" 
+                                 alt="BITCRM Logo"
+                                 class="d-none d-lg-block"
+                                 style="height: 40px; width: auto; max-width: 100px; object-fit: contain;">
+                            <img src="{{ url_for('static', filename='logo.png') }}" 
+                                 alt="BITCRM Logo"
+                                 class="d-lg-none"
+                                 style="height: 32px; width: auto; max-width: 80px; object-fit: contain;">
+                        </div>
 
-                        <div class="d-flex align-items-center ms-auto">
+                        <div class="topbar-actions">
                             <!-- Manual Button -->
-                            <a href="{{ url_for('main.manual') }}" class="btn btn-outline-info me-3" title="{{ _('User Manual') }}">
+                            <a href="{{ url_for('main.manual') }}" class="btn btn-outline-info" title="{{ _('User Manual') }}">
                                 <i class="bi bi-book"></i>
-                                {% if g.lang == 'zh' %}{{ _('Manual') }}{% else %}Manual{% endif %}
+                                <span class="mobile-icon-label">{% if g.lang == 'zh' %}{{ _('Manual') }}{% else %}Manual{% endif %}</span>
                             </a>
 
                             <!-- Column Settings Button (for list pages) -->
                             {% block column_settings_btn %}{% endblock %}
 
                             <!-- Language Switcher -->
-                            <div class="dropdown me-3">
+                            <div class="dropdown">
                                 <a class="btn btn-outline-secondary dropdown-toggle language-switcher"
                                    href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-globe"></i>
-                                    {% if g.lang == 'zh' %}涓枃{% else %}EN{% endif %}
+                                    <span class="mobile-icon-label">{% if g.lang == 'zh' %}涓枃{% else %}EN{% endif %}</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>

@@ -22,29 +22,55 @@
 .table-scroll table {
     min-width: 1200px;
 }
+
+.lead-filter-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.lead-filter-actions .show-unqualified-toggle {
+    width: 120px;
+}
+
+@media (max-width: 767.98px) {
+    .lead-filter-actions,
+    .lead-filter-actions > * {
+        width: 100%;
+    }
+
+    .lead-filter-actions .btn,
+    .lead-filter-actions .show-unqualified-toggle {
+        width: 100%;
+        margin-left: 0 !important;
+    }
+}
 </style>
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="bi bi-people"></i>
-        {{ _('Sales Leads Management') }}
-    </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a href="{{ url_for('leads.import_template') }}" class="btn btn-outline-secondary">
+<div class="page-header pt-3 pb-2 mb-3 border-bottom">
+    <div class="page-title-stack">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-people"></i>
+            {{ _('Sales Leads Management') }}
+        </h1>
+    </div>
+    <div class="page-header-actions">
+        <div class="list-toolbar-group">
+            <a href="{{ url_for('leads.import_template') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-download"></i>
                 {{ _('Download Template') }}
             </a>
-            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importModal">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="bi bi-upload"></i>
                 {{ _('Import') }}
             </button>
-            <a href="{{ url_for('leads.export', show_unqualified=show_unqualified) }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('leads.export', show_unqualified=show_unqualified) }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel"></i>
                 {{ _('Export') }}
             </a>
         </div>
-        <a href="{{ url_for('leads.add') }}" class="btn btn-primary">
+        <a href="{{ url_for('leads.add') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg"></i>
             {{ _('Add Sales Lead') }}
         </a>
@@ -91,8 +117,9 @@
                 </select>
             </div>
             
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary me-2">
+            <div class="col-12 col-xl-4">
+                <div class="lead-filter-actions">
+                <button type="submit" class="btn btn-primary">
                     <i class="bi bi-search"></i>
                     {{ _('Filter') }}
                 </button>
@@ -102,7 +129,7 @@
                 </a>
                 
                 <!-- Show Unqualified Switch - inside form -->
-                <div class="d-flex flex-column ms-3" style="width: 120px;">
+                <div class="d-flex flex-column show-unqualified-toggle">
                     <input class="form-check-input" type="checkbox" id="showUnqualified" name="show_unqualified" value="true"
                            {% if show_unqualified %}checked{% endif %}
                            onchange="this.form.submit()">
@@ -110,16 +137,17 @@
                         {{ _('Show Unqualified') }}
                     </label>
                 </div>
-                <a href="{{ url_for('main.clear_filters', page='leads') }}" class="btn btn-outline-secondary btn-sm ms-2" title="{{ _('Clear Filters') }}">
+                <a href="{{ url_for('main.clear_filters', page='leads') }}" class="btn btn-outline-secondary btn-sm" title="{{ _('Clear Filters') }}">
                     <i class="bi bi-x-circle"></i>
                 </a>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Status Bar -->
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="page-status-bar mb-3">
     <span class="text-muted">
         <i class="bi bi-info-circle"></i>
         {{ _('Filtered %(count)s Sales Leads', count=total_count) }}

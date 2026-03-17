@@ -149,15 +149,14 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header with Unified Owner Filter and Add Task Button -->
-    <div class="row mb-4 align-items-center">
-        <div class="col">
+    <div class="page-header mb-4">
+        <div class="page-title-stack">
             <h1 class="h3 mb-0 text-gray-800">{{ _('Tasks Management') }}</h1>
             <p class="text-muted small mb-0">{{ _('Track and manage your to-do items') }}</p>
         </div>
-        
-        <!-- Unified Owner Filter Dropdown -->
-        <div class="col-auto owner-filter dropdown">
+
+        <div class="page-header-actions">
+        <div class="owner-filter dropdown">
             <button class="btn btn-outline-secondary d-flex align-items-center gap-2 px-4 py-2" 
                     style="min-height: 44px; min-width: 44px;"
                     type="button" 
@@ -188,17 +187,15 @@
                 {% endfor %}
             </ul>
         </div>
-        
-        <!-- Add Task Button -->
-        <div class="col-auto">
-            <button type="button" 
-                    class="btn btn-primary d-flex align-items-center gap-2 px-4 py-2" 
-                    style="min-height: 44px; min-width: 44px;"
-                    data-bs-toggle="modal" 
-                    data-bs-target="#addTaskModal">
-                <i class="fas fa-plus fa-lg"></i>
-                <span class="fw-semibold">{{ _('Add Task') }}</span>
-            </button>
+
+        <button type="button" 
+                class="btn btn-primary d-flex align-items-center gap-2 px-4 py-2" 
+                style="min-height: 44px; min-width: 44px;"
+                data-bs-toggle="modal" 
+                data-bs-target="#addTaskModal">
+            <i class="fas fa-plus fa-lg"></i>
+            <span class="fw-semibold">{{ _('Add Task') }}</span>
+        </button>
         </div>
     </div>
 

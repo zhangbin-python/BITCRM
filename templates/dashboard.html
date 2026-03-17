@@ -331,6 +331,19 @@
         .metric-card .metric-value {
             font-size: 1.5rem;
         }
+
+        .kanban-card-header {
+            align-items: stretch !important;
+        }
+
+        .kanban-card-header .filter-dropdown {
+            width: 100%;
+        }
+
+        .kanban-card-header .filter-dropdown .btn {
+            width: 100%;
+            justify-content: space-between;
+        }
         
         .kanban-stage {
             min-width: 240px;
@@ -341,11 +354,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="bi bi-speedometer2"></i>
-        {{ _('Dashboard') }}
-    </h1>
+<div class="page-header pt-3 pb-2 mb-3 border-bottom">
+    <div class="page-title-stack">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-speedometer2"></i>
+            {{ _('Dashboard') }}
+        </h1>
+    </div>
 </div>
 
 <!-- TOP METRICS ROW -->
@@ -357,7 +372,7 @@
 {% set next_qtr = summary_metrics.next_qtr_revenue %}
 <div class="row mb-4">
     <!-- Total Sales Leads -->
-    <div class="col-md-4 col-lg-2">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card metric-card metric-card-1">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Total Leads') }}</p>
@@ -378,7 +393,7 @@
     </div>
     
     <!-- Qualified Leads -->
-    <div class="col-md-4 col-lg-2">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card metric-card metric-card-2">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Qualified Leads') }}</p>
@@ -399,7 +414,7 @@
     </div>
     
     <!-- Pipeline Count -->
-    <div class="col-md-4 col-lg-2">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card metric-card metric-card-3">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Pipeline #') }}</p>
@@ -420,7 +435,7 @@
     </div>
     
     <!-- Total TCV -->
-    <div class="col-md-4 col-lg-2">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card metric-card metric-card-4">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Total TCV') }}</p>
@@ -441,10 +456,10 @@
     </div>
     
     <!-- Current Quarter Revenue -->
-    <div class="col-md-4 col-lg-2">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card metric-card metric-card-5">
             <div class="card-body">
-                <p class="metric-label mb-1">{{ _('Current QTR Revenue') }}</p>
+                <p class="metric-label mb-1">{{ _('Current QTR Revenue')|replace('Revenue', 'Rev.') }}</p>
                 <p class="metric-value">{{ format_currency_short(current_qtr.current) }}</p>
                 {% if current_qtr.pct is not none %}
                 <span class="metric-vs {% if current_qtr.delta >= 0 %}positive{% else %}negative{% endif %}">
@@ -462,10 +477,10 @@
     </div>
     
     <!-- Next Quarter Revenue -->
-    <div class="col-md-4 col-lg-2">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card metric-card metric-card-6">
             <div class="card-body">
-                <p class="metric-label mb-1">{{ _('Next QTR Revenue') }}</p>
+                <p class="metric-label mb-1">{{ _('Next QTR Revenue')|replace('Revenue', 'Rev.') }}</p>
                 <p class="metric-value">{{ format_currency_short(next_qtr.current) }}</p>
                 {% if next_qtr.pct is not none %}
                 <span class="metric-vs {% if next_qtr.delta >= 0 %}positive{% else %}negative{% endif %}">
@@ -490,7 +505,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-white">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="d-flex justify-content-between align-items-center flex-wrap kanban-card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-kanban"></i>
                         {{ _('Sales Pipeline Kanban Board') }}

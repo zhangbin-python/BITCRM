@@ -4,14 +4,7 @@
 
 {% block title %}{{ _('Pipeline Management') }} - BITCRM{% endblock %}
 
-{% block column_settings_btn %}
-<button class="btn btn-outline-secondary me-3 column-settings-btn" type="button" 
-        data-bs-toggle="offcanvas" data-bs-target="#columnSettingsOffcanvas"
-        onclick="initColumnSettingsFromServer('pipeline')">
-    <i class="bi bi-table-columns"></i>
-    {{ _('Fields') }}
-</button>
-{% endblock %}
+{% block column_settings_btn %}{% endblock %}
 
 {% block column_settings_offcanvas %}
 {{ render_column_settings('pipeline', available_columns, default_columns) }}
@@ -42,34 +35,52 @@
 .table-scroll table tbody tr:hover td[style*="background-color: #fff3cd"] {
     background-color: #fdeaea !important;
 }
+
+.pipeline-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 767.98px) {
+    .pipeline-filter-actions,
+    .pipeline-filter-actions > * {
+        width: 100%;
+    }
+
+    .pipeline-filter-actions .btn {
+        width: 100%;
+    }
+}
 </style>
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
+    <div class="page-header mb-4">
+        <div class="page-title-stack">
             <h1 class="h3 mb-0 text-gray-800">{{ _('Pipeline Management') }}</h1>
             <p class="text-muted small">{{ _('Track and manage your sales opportunities') }}</p>
         </div>
-        <div class="col-auto">
-            <div class="btn-group me-2">
+    <div class="page-header-actions">
+            <div class="list-toolbar-group">
                 <a href="{{ url_for('pipeline.export', show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_quarter=est_sign_quarter, est_activate_quarter=est_activate_quarter, sort=sort_by, order=sort_order) }}" class="btn btn-outline-success btn-sm">
-                    <i class="fas fa-file-excel me-1"></i> {{ _('Export') }}
+                    <i class="bi bi-file-earmark-excel"></i> {{ _('Export') }}
                 </a>
                 <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-info btn-sm">
-                    <i class="fas fa-download me-1"></i> {{ _('Template') }}
+                    <i class="bi bi-download"></i> {{ _('Template') }}
                 </a>
             </div>
             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fas fa-file-import me-1"></i> {{ _('Import') }}
+                <i class="bi bi-upload"></i> {{ _('Import') }}
             </button>
-            <a href="{{ url_for('pipeline.add') }}" class="btn btn-success btn-sm ms-2">
-                <i class="fas fa-plus me-1"></i> {{ _('Add Pipeline') }}
+            <a href="{{ url_for('pipeline.add') }}" class="btn btn-success btn-sm">
+                <i class="bi bi-plus-lg"></i> {{ _('Add Pipeline') }}
             </a>
         </div>
     </div>
 
     <!-- Summary Stats -->
     <div class="row mb-4 g-3">
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="card border-primary bg-primary bg-opacity-10 h-100">
                 <div class="card-body py-3 text-center">
                     <h6 class="mb-2 text-primary fw-bold">{{ _('Total Opportunities') }}</h6>
@@ -77,7 +88,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="card border-success bg-success bg-opacity-10 h-100">
                 <div class="card-body py-3 text-center">
                     <h6 class="mb-2 text-success fw-bold">{{ _('Total TCV') }}</h6>
@@ -85,7 +96,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="card border-info bg-info bg-opacity-10 h-100">
                 <div class="card-body py-3 text-center">
                     <h6 class="mb-2 text-info fw-bold">{{ _('Active Deals') }}</h6>
@@ -93,7 +104,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="card border-warning bg-warning bg-opacity-10 h-100">
                 <div class="card-body py-3 text-center">
                     <h6 class="mb-2 text-warning fw-bold">{{ _('Won Deals') }}</h6>
@@ -181,7 +192,7 @@
                     </select>
                 </div>
                 <!-- Show Lost + Clear - Right side -->
-                <div class="col-auto ms-md-auto d-flex align-items-center gap-2">
+                <div class="col-12 col-md-auto ms-md-auto pipeline-filter-actions">
                     <a href="{{ url_for('main.clear_filters', page='pipeline') }}" class="btn btn-outline-secondary btn-sm" title="{{ _('Clear Filters') }}">
                         <i class="bi bi-x-circle me-1"></i>{{ _('Clear') }}
                     </a>
@@ -195,7 +206,7 @@
     </div>
 
     <!-- Status Bar -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-status-bar mb-3">
         <span class="text-muted">
             <i class="bi bi-info-circle"></i>
             {{ _('Filtered %(count)s Opportunities', count=total_count) }}

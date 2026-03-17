@@ -36,6 +36,18 @@
         .nav a { color: #3498db; text-decoration: none; font-size: 0.9em; }
         .nav a:hover { color: #2980b9; text-decoration: underline; }
         .footer { text-align: center; padding: 30px 20px; color: #95a5a6; font-size: 0.85em; border-top: 1px solid #ddd; margin-top: 40px; }
+        @media (max-width: 900px) {
+            body { line-height: 1.65; }
+            .container { margin: 20px auto; padding: 0 14px; }
+            h1 { font-size: 1.8em; padding-bottom: 14px; }
+            h2 { font-size: 1.35em; margin-top: 30px; }
+            h3 { font-size: 1.05em; }
+            .nav { position: static; top: auto; right: auto; max-width: none; margin-bottom: 24px; }
+            table { display: block; overflow-x: auto; white-space: nowrap; }
+            th, td { padding: 8px 10px; }
+            .workflow { padding: 16px; }
+            .workflow li { padding-left: 40px; }
+        }
         @media print { .nav { display: none !important; } body { background: #fff; } .container { max-width: 100%; margin-top: 0; } }
     </style>
 </head>
