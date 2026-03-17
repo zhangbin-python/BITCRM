@@ -4,8 +4,9 @@ Flask application factory and initialization.
 """
 import os
 from datetime import date, datetime
-from flask import Flask, request
+from flask import Flask, request, session, g
 from flask_babel import Babel
+from babel.messages import pofile, mofile
 from extensions import db, login_manager, babel, migrate
 
 # Configure login manager
@@ -14,14 +15,40 @@ login_manager.login_message_category = 'info'
 
 def get_locale():
     """Get user preferred language."""
-    lang = request.cookies.get('lang')
+    lang = request.args.get('lang') or session.get('lang') or request.cookies.get('lang')
     if lang and lang in ['en', 'zh']:
         return lang
-    return request.accept_languages.best_match(['en', 'zh'])
+    return request.accept_languages.best_match(['en', 'zh']) or 'en'
 
 def get_timezone():
     """Get user preferred timezone."""
     return 'UTC'
+
+
+def ensure_translation_catalogs(app):
+    """Compile translation catalogs when `.mo` files are missing or outdated."""
+    translations_dir = os.path.join(app.root_path, 'translations')
+    if not os.path.isdir(translations_dir):
+        return
+
+    for root, _, files in os.walk(translations_dir):
+        if 'messages.po' not in files:
+            continue
+
+        po_path = os.path.join(root, 'messages.po')
+        mo_path = os.path.join(root, 'messages.mo')
+
+        try:
+            if os.path.exists(mo_path) and os.path.getmtime(mo_path) >= os.path.getmtime(po_path):
+                continue
+
+            with open(po_path, 'r', encoding='utf-8') as po_file:
+                catalog = pofile.read_po(po_file)
+
+            with open(mo_path, 'wb') as mo_file:
+                mofile.write_mo(mo_file, catalog)
+        except Exception as exc:
+            app.logger.warning('Failed to compile translations from %s: %s', po_path, exc)
 
 def create_app(config_class=None):
     """Application factory pattern."""
@@ -61,6 +88,11 @@ def create_app(config_class=None):
     # Initialize Flask-Caching
     from extensions import cache
     cache.init_app(app)
+    ensure_translation_catalogs(app)
+
+    @app.before_request
+    def set_current_language():
+        g.lang = get_locale()
     
     # Register HTTP cache headers (must be after app is created)
     @app.after_request

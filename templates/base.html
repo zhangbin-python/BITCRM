@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ g.lang if g.lang else 'en' }}">
 <head>
     <meta charset="UTF-8">
@@ -411,17 +411,17 @@
                                 <a class="btn btn-outline-secondary dropdown-toggle language-switcher"
                                    href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-globe"></i>
-                                    {% if g.lang == 'zh' %}中文{% else %}EN{% endif %}
+                                    {% if g.lang == 'zh' %}涓枃{% else %}EN{% endif %}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" href="{{ url_for('main.set_language', lang='en') }}">
-                                            🇺🇸 English
+                                        <a class="dropdown-item {% if g.lang == 'en' %}active{% endif %}" href="{{ url_for('main.set_language', lang='en', next=request.path) }}">
+                                            English
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ url_for('main.set_language', lang='zh') }}">
-                                            🇨🇳 中文
+                                        <a class="dropdown-item {% if g.lang == 'zh' %}active{% endif %}" href="{{ url_for('main.set_language', lang='zh', next=request.path) }}">
+                                            中文
                                         </a>
                                     </li>
                                 </ul>
@@ -559,6 +559,14 @@
             
             renderColumnLists();
             initSortable();
+        }
+
+        async function initColumnSettingsFromServer(page) {
+            if (window.columnSettingsPage === page && window.columnSettingsAvailable.length > 0) {
+                renderColumnLists();
+                initSortable();
+                return;
+            }
         }
         
         // Render column lists

@@ -397,11 +397,13 @@ def log_login(user, ip_address=None, success=True):
             ip_address=ip_address
         )
     else:
+        if not hasattr(user, 'id'):
+            return None
         return log_activity(
             user=user,
             action_type='System - Failed Login',
             subject_type='account',
-            subject_name=f'Username: {user}' if isinstance(user, str) else user.username if hasattr(user, 'username') else 'Unknown',
+            subject_name=user.username if hasattr(user, 'username') else 'Unknown',
             description='Failed login attempt',
             ip_address=ip_address
         )

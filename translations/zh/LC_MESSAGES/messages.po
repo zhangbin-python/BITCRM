@@ -1307,3 +1307,8 @@ msgstr "无交易"
 msgid "Win"
 msgstr "赢单"
 
+msgid "Incorrect username or password. Please try again."
+msgstr "用户名或密码错误，请重试。"
+
+msgid "Username is not case-sensitive."
+msgstr "用户名不区分大小写。"

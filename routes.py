@@ -13,6 +13,7 @@ from datetime import datetime, date, timedelta
 from io import BytesIO
 import pandas as pd
 import os
+from urllib.parse import urlparse, urljoin
 
 from extensions import db, cache
 from models import User, SalesLead, Pipeline, Task, ActivityLog, disable_metrics_events
@@ -35,6 +36,42 @@ from extensions import cache
 # ============================================================================
 
 main_bp = Blueprint('main', __name__)
+
+
+def _get_safe_redirect_target(default_endpoint):
+    """Return a safe local redirect target."""
+    target = request.args.get('next') or request.referrer
+    if target:
+        host_url = request.host_url
+        parsed_target = urlparse(urljoin(host_url, target))
+        parsed_host = urlparse(host_url)
+        if parsed_target.scheme in ('http', 'https') and parsed_target.netloc == parsed_host.netloc:
+            path = parsed_target.path or '/'
+            if parsed_target.query:
+                path = f'{path}?{parsed_target.query}'
+            return path
+    return url_for(default_endpoint)
+
+
+def build_visible_columns(available_columns, selected_columns, default_columns):
+    """Normalize selected columns and return ordered visible columns."""
+    available_map = {column['key']: column for column in available_columns}
+    normalized_keys = []
+    seen_keys = set()
+
+    for column_key in (selected_columns or default_columns):
+        if column_key in available_map and column_key not in seen_keys:
+            normalized_keys.append(column_key)
+            seen_keys.add(column_key)
+
+    if not normalized_keys:
+        for column_key in default_columns:
+            if column_key in available_map and column_key not in seen_keys:
+                normalized_keys.append(column_key)
+                seen_keys.add(column_key)
+
+    visible_columns = [available_map[column_key] for column_key in normalized_keys]
+    return visible_columns, normalized_keys
 
 
 @main_bp.route('/')
@@ -264,8 +301,10 @@ def set_language(lang):
     if lang not in ['en', 'zh']:
         lang = 'en'
     
-    # Set cookie first
-    response = make_response(redirect(request.referrer or url_for('main.dashboard')))
+    session['lang'] = lang
+    response = make_response(redirect(
+        _get_safe_redirect_target('main.dashboard' if current_user.is_authenticated else 'main.login')
+    ))
     response.set_cookie('lang', lang, max_age=60*60*24*365, path='/', samesite='Lax')
     
     # Log the activity (only for authenticated users)
@@ -438,11 +477,14 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
     
+    entered_username = ''
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        entered_username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
         
-        user = User.query.filter_by(username=username).first()
+        user = None
+        if entered_username:
+            user = User.query.filter(func.lower(User.username) == entered_username.lower()).first()
         
         if user and user.check_password(password):
             login_user(user)
@@ -450,10 +492,10 @@ def login():
             next_page = request.args.get('next')
             return redirect(next_page or url_for('main.dashboard'))
         else:
-            log_login(user or username, request.remote_addr, success=False)
-            flash('Invalid username or password', 'danger')
+            log_login(user or entered_username, request.remote_addr, success=False)
+            flash(_('Incorrect username or password. Please try again.'), 'danger')
     
-    return render_template('login.html')
+    return render_template('login.html', entered_username=entered_username)
 
 
 @main_bp.route('/logout')
@@ -551,7 +593,8 @@ def index():
     
     # Get column preferences
     prefs = current_user.get_column_preferences('leads')
-    selected_columns = prefs.get('columns', ['name', 'company', 'leads_status', 'owner', 'date_added'])
+    default_columns = ['name', 'company', 'leads_status', 'owner', 'source', 'date_added']
+    selected_columns = prefs.get('columns', default_columns)
     
     # Available columns definition
     available_columns = [
@@ -571,22 +614,11 @@ def index():
         {'key': 'created_at', 'label': _('Created'), 'sortable': True},
     ]
     
-    # Default columns keys if none selected
-    default_columns = ['name', 'company', 'leads_status', 'owner', 'date_added']
-    
-    # If preferences exist, use them
-    if selected_columns:
-        default_columns = selected_columns
-    
-    # Build visible_columns as full column objects
-    visible_columns = []
-    visible_column_keys = []
-    for col_key in default_columns:
-        for col in available_columns:
-            if col['key'] == col_key:
-                visible_columns.append(col)
-                visible_column_keys.append(col_key)
-                break
+    visible_columns, visible_column_keys = build_visible_columns(
+        available_columns,
+        selected_columns,
+        default_columns
+    )
     
     return render_template('leads/index.html',
                           SalesLead=SalesLead,
@@ -1186,7 +1218,12 @@ def index():
     
     # Get column preferences
     prefs = current_user.get_column_preferences('pipeline')
-    selected_columns = prefs.get('columns', ['company', 'product', 'owner', 'stage', 'level', 'tcv_usd'])
+    default_columns = [
+        'company', 'product', 'owner', 'stage', 'tcv_usd',
+        'contract_term_yrs', 'est_sign_date', 'est_act_date',
+        'award_date', 'proposal_sent_date', 'follow_up'
+    ]
+    selected_columns = prefs.get('columns', default_columns)
     
     # Available columns definition (all fields from Pipeline model)
     available_columns = [
@@ -1204,7 +1241,7 @@ def index():
         {'key': 'mrc_usd', 'label': _('MRC'), 'sortable': True},
         {'key': 'otc_usd', 'label': _('OTC'), 'sortable': True},
         {'key': 'gp', 'label': _('Gross Profit'), 'sortable': True},
-        {'key': 'contract_term_yrs', 'label': _('Term (Yrs)'), 'sortable': True},
+        {'key': 'contract_term_yrs', 'label': _('Term'), 'sortable': True},
         {'key': 'gp_margin', 'label': _('GP %'), 'sortable': True},
         
         # Ownership & Stage
@@ -1225,22 +1262,11 @@ def index():
         {'key': 'stuckpoint', 'label': _('Current Stuckpoint'), 'sortable': False},
     ]
     
-    # Default columns keys if none selected
-    default_columns = ['company', 'product', 'owner', 'stage', 'tcv_usd']
-    
-    # If preferences exist, use them
-    if selected_columns:
-        default_columns = selected_columns
-    
-    # Build visible_columns as full column objects
-    visible_columns = []
-    visible_column_keys = []
-    for col_key in default_columns:
-        for col in available_columns:
-            if col['key'] == col_key:
-                visible_columns.append(col)
-                visible_column_keys.append(col_key)
-                break
+    visible_columns, visible_column_keys = build_visible_columns(
+        available_columns,
+        selected_columns,
+        default_columns
+    )
     
     return render_template('pipeline/index.html',
                           pipelines=pipelines,
@@ -2192,6 +2218,7 @@ def edit_task(task_id):
         task.owner_id = request.form.get('owner_id')
         due_date = request.form.get('due_date')
         task.due_date = datetime.strptime(due_date, '%Y-%m-%d').date() if due_date else None
+        task.check_overdue()
         
         db.session.commit()
         
@@ -2589,6 +2616,8 @@ PIPELINE_COLUMNS = [
     {'key': 'company', 'label': 'Company', 'sortable': True},
     {'key': 'industry', 'label': 'Industry', 'sortable': True},
     {'key': 'position', 'label': 'Position', 'sortable': True},
+    {'key': 'email', 'label': 'Email', 'sortable': True},
+    {'key': 'mobile_number', 'label': 'Mobile', 'sortable': True},
     {'key': 'owner', 'label': 'Owner', 'sortable': True},
     {'key': 'product', 'label': 'Product', 'sortable': True},
     {'key': 'stage', 'label': 'Stage', 'sortable': True},
@@ -2596,10 +2625,18 @@ PIPELINE_COLUMNS = [
     {'key': 'tcv_usd', 'label': 'TCV', 'sortable': True},
     {'key': 'mrc_usd', 'label': 'MRC', 'sortable': True},
     {'key': 'otc_usd', 'label': 'OTC', 'sortable': True},
+    {'key': 'gp', 'label': 'Gross Profit', 'sortable': True},
+    {'key': 'contract_term_yrs', 'label': 'Term', 'sortable': True},
+    {'key': 'gp_margin', 'label': 'GP %', 'sortable': True},
     {'key': 'win_rate', 'label': 'Win Rate', 'sortable': True},
     {'key': 'est_sign_date', 'label': 'Est. Sign', 'sortable': True},
+    {'key': 'est_act_date', 'label': 'Est. Activate', 'sortable': True},
+    {'key': 'award_date', 'label': 'Award Date', 'sortable': True},
+    {'key': 'proposal_sent_date', 'label': 'Proposal Sent', 'sortable': True},
+    {'key': 'date_added', 'label': 'Date Added', 'sortable': True},
+    {'key': 'follow_up', 'label': 'Follow-up', 'sortable': False},
+    {'key': 'comments', 'label': 'Comments', 'sortable': False},
     {'key': 'stuckpoint', 'label': 'Stuckpoint', 'sortable': False},
-    {'key': 'created_at', 'label': 'Created', 'sortable': True},
 ]
 
 TASKS_COLUMNS = [
