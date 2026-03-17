@@ -252,13 +252,8 @@ def create_app(config_class=None):
     # =========================================================================
     
     from sqlalchemy import event
-    from datetime import timedelta
-    from utils import (
-        calculate_quarter_revenue,
-        get_current_quarter_dates,
-        get_next_quarter_dates
-    )
-    from models import WeeklyMetrics
+    from services.weekly_metrics_service import register_weekly_metrics_hooks
+    register_weekly_metrics_hooks(app)
     
     def get_week_start(ref_date=None):
         """获取本周一日期"""
@@ -368,6 +363,7 @@ def create_app(config_class=None):
     
     @event.listens_for(db.session, 'after_commit')
     def after_commit_update_weekly_metrics(session):
+        return
         """监听数据库提交，自动更新 weekly_metrics"""
         # 跳过非主应用上下文
         if not hasattr(app, 'app_context') or not app.app_context:

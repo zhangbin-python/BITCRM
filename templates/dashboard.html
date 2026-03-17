@@ -349,24 +349,29 @@
 </div>
 
 <!-- TOP METRICS ROW -->
+{% set leads = summary_metrics.leads %}
+{% set qualified = summary_metrics.qualified %}
+{% set pipeline = summary_metrics.pipeline %}
+{% set tcv = summary_metrics.tcv %}
+{% set current_qtr = summary_metrics.current_qtr_revenue %}
+{% set next_qtr = summary_metrics.next_qtr_revenue %}
 <div class="row mb-4">
     <!-- Total Sales Leads -->
     <div class="col-md-4 col-lg-2">
         <div class="card metric-card metric-card-1">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Total Leads') }}</p>
-                <p class="metric-value">{{ total_leads }}</p>
-                {% set leads_diff = total_leads - vs_last_week_leads %}
-                {% if vs_last_week_leads > 0 %}
-                <span class="metric-vs {% if leads_diff >= 0 %}positive{% else %}negative{% endif %}">
-                    {% if leads_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
-                    {{ '%.0f'|format((leads_diff / vs_last_week_leads * 100) if vs_last_week_leads > 0 else 0) }}%
+                <p class="metric-value">{{ leads.current }}</p>
+                {% if leads.pct is not none %}
+                <span class="metric-vs {% if leads.delta >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if leads.delta >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format(leads.pct) }}%
                 </span>
                 {% else %}
                 <span class="metric-vs neutral">—</span>
                 {% endif %}
                 <p class="text-muted small mb-0 mt-1">
-                    vs {{ vs_last_week_leads }} {{ _('last week') }}
+                    vs {{ leads.previous }} {{ _('last week') }}
                 </p>
             </div>
         </div>
@@ -377,18 +382,17 @@
         <div class="card metric-card metric-card-2">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Qualified Leads') }}</p>
-                <p class="metric-value">{{ qualified_leads }}</p>
-                {% set qualified_diff = qualified_leads - vs_last_week_qualified %}
-                {% if vs_last_week_qualified > 0 %}
-                <span class="metric-vs {% if qualified_diff >= 0 %}positive{% else %}negative{% endif %}">
-                    {% if qualified_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
-                    {{ '%.0f'|format((qualified_diff / vs_last_week_qualified * 100) if vs_last_week_qualified > 0 else 0) }}%
+                <p class="metric-value">{{ qualified.current }}</p>
+                {% if qualified.pct is not none %}
+                <span class="metric-vs {% if qualified.delta >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if qualified.delta >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format(qualified.pct) }}%
                 </span>
                 {% else %}
                 <span class="metric-vs neutral">—</span>
                 {% endif %}
                 <p class="text-white-50 small mb-0 mt-1">
-                    vs {{ vs_last_week_qualified }} {{ _('last week') }}
+                    vs {{ qualified.previous }} {{ _('last week') }}
                 </p>
             </div>
         </div>
@@ -399,18 +403,17 @@
         <div class="card metric-card metric-card-3">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Pipeline #') }}</p>
-                <p class="metric-value">{{ pipeline_count }}</p>
-                {% set pipeline_diff = pipeline_count - vs_last_week_pipeline %}
-                {% if vs_last_week_pipeline > 0 %}
-                <span class="metric-vs {% if pipeline_diff >= 0 %}positive{% else %}negative{% endif %}">
-                    {% if pipeline_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
-                    {{ '%.0f'|format((pipeline_diff / vs_last_week_pipeline * 100) if vs_last_week_pipeline > 0 else 0) }}%
+                <p class="metric-value">{{ pipeline.current }}</p>
+                {% if pipeline.pct is not none %}
+                <span class="metric-vs {% if pipeline.delta >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if pipeline.delta >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format(pipeline.pct) }}%
                 </span>
                 {% else %}
                 <span class="metric-vs neutral">—</span>
                 {% endif %}
                 <p class="text-white-50 small mb-0 mt-1">
-                    vs {{ vs_last_week_pipeline }} {{ _('last week') }}
+                    vs {{ pipeline.previous }} {{ _('last week') }}
                 </p>
             </div>
         </div>
@@ -421,18 +424,17 @@
         <div class="card metric-card metric-card-4">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Total TCV') }}</p>
-                <p class="metric-value">{{ format_currency_short(current_tcv) }}</p>
-                {% set tcv_diff = current_tcv - vs_last_week_tcv %}
-                {% if vs_last_week_tcv > 0 %}
-                <span class="metric-vs {% if tcv_diff >= 0 %}positive{% else %}negative{% endif %}">
-                    {% if tcv_diff >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
-                    {{ '%.0f'|format((tcv_diff / vs_last_week_tcv * 100) if vs_last_week_tcv > 0 else 0) }}%
+                <p class="metric-value">{{ format_currency_short(tcv.current) }}</p>
+                {% if tcv.pct is not none %}
+                <span class="metric-vs {% if tcv.delta >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if tcv.delta >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format(tcv.pct) }}%
                 </span>
                 {% else %}
                 <span class="metric-vs neutral">—</span>
                 {% endif %}
                 <p class="text-white-50 small mb-0 mt-1">
-                    vs {{ format_currency_short(vs_last_week_tcv) }}
+                    vs {{ format_currency_short(tcv.previous) }}
                 </p>
             </div>
         </div>
@@ -443,7 +445,18 @@
         <div class="card metric-card metric-card-5">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Current QTR Revenue') }}</p>
-                <p class="metric-value">{{ format_currency_short(current_quarter_revenue) }}</p>
+                <p class="metric-value">{{ format_currency_short(current_qtr.current) }}</p>
+                {% if current_qtr.pct is not none %}
+                <span class="metric-vs {% if current_qtr.delta >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if current_qtr.delta >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format(current_qtr.pct) }}%
+                </span>
+                {% else %}
+                <span class="metric-vs neutral">—</span>
+                {% endif %}
+                <p class="text-white-50 small mb-0 mt-1">
+                    vs {{ format_currency_short(current_qtr.previous) }}
+                </p>
                 <p class="text-white-50 small mb-0">
                     <i class="bi bi-calendar3"></i>
                     {% if now.month in [1,2,3] %}Q1{% elif now.month in [4,5,6] %}Q2{% elif now.month in [7,8,9] %}Q3{% else %}Q4{% endif %}
@@ -457,7 +470,18 @@
         <div class="card metric-card metric-card-6">
             <div class="card-body">
                 <p class="metric-label mb-1">{{ _('Next QTR Revenue') }}</p>
-                <p class="metric-value">{{ format_currency_short(next_quarter_revenue) }}</p>
+                <p class="metric-value">{{ format_currency_short(next_qtr.current) }}</p>
+                {% if next_qtr.pct is not none %}
+                <span class="metric-vs {% if next_qtr.delta >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if next_qtr.delta >= 0 %}<i class="bi bi-arrow-up"></i>{% else %}<i class="bi bi-arrow-down"></i>{% endif %}
+                    {{ '%.0f'|format(next_qtr.pct) }}%
+                </span>
+                {% else %}
+                <span class="metric-vs neutral">—</span>
+                {% endif %}
+                <p class="text-white-50 small mb-0 mt-1">
+                    vs {{ format_currency_short(next_qtr.previous) }}
+                </p>
                 <p class="text-white-50 small mb-0">
                     <i class="bi bi-arrow-right"></i>
                     {% if now.month in [1,2,3] %}Q2{% elif now.month in [4,5,6] %}Q3{% elif now.month in [7,8,9] %}Q4{% else %}Q1{% endif %}

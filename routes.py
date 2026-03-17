@@ -17,6 +17,11 @@ from urllib.parse import urlparse, urljoin
 
 from extensions import db, cache
 from models import User, SalesLead, Pipeline, Task, ActivityLog, disable_metrics_events
+from services.weekly_metrics_service import (
+    get_company_dashboard_summary,
+    get_owner_dashboard_metrics,
+    refresh_weekly_metrics,
+)
 from utils import (
     allowed_file, validate_date, validate_numeric, validate_integer,
     create_excel_template, export_to_excel, import_from_excel,
@@ -105,8 +110,72 @@ def dashboard():
     from sqlalchemy.orm import joinedload
 
     today = date.today()
-    this_monday = today - timedelta(days=today.weekday())
-    last_monday = this_monday - timedelta(weeks=1)
+    summary_metrics = get_company_dashboard_summary(ref_date=today)
+    owner_metrics = get_owner_dashboard_metrics(ref_date=today)
+    users = [metric['user'] for metric in owner_metrics]
+    current_qtr = get_quarter_dates(today)
+    next_qtr = get_next_quarter_dates(today)
+
+    base_query = Pipeline.query.options(joinedload(Pipeline.owner))
+    if not current_user.is_admin():
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).subquery()
+        base_query = base_query.filter(
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.id.in_(supported_pipeline_ids)
+            )
+        )
+
+    all_pipelines = base_query.all()
+    active_pipelines = [p for p in all_pipelines if p.stage != '6b) Deal Lost']
+    deal_lost_pipelines = [p for p in all_pipelines if p.stage == '6b) Deal Lost']
+
+    import re
+    date_pattern = r'(\d{4}-\d{2}-\d{2})'
+
+    pipeline_stages = [{'value': stage, 'label': stage, 'is_lost': False}
+                       for stage in Pipeline.STAGE_OPTIONS if stage != '6b) Deal Lost']
+    pipeline_stages.append({'value': '6b) Deal Lost', 'label': '6b) Deal Lost', 'is_lost': True})
+
+    pipeline_deals = []
+    for pipeline_group, is_lost in ((active_pipelines, False), (deal_lost_pipelines, True)):
+        for pipeline in pipeline_group:
+            latest_followup = None
+            if pipeline.follow_up:
+                dates = re.findall(date_pattern, pipeline.follow_up)
+                if dates:
+                    latest_followup = max(dates)
+
+            pipeline_deals.append({
+                'id': pipeline.id,
+                'company': pipeline.company,
+                'name': pipeline.name,
+                'owner_name': pipeline.owner.username if pipeline.owner else None,
+                'owner_id': pipeline.owner_id,
+                'tcv_usd': pipeline.tcv_usd or 0,
+                'mrc_usd': pipeline.mrc_usd or 0,
+                'win_rate': pipeline.win_rate,
+                'stage': pipeline.stage,
+                'est_sign_date': pipeline.est_sign_date.strftime('%Y-%m-%d') if pipeline.est_sign_date else None,
+                'latest_followup': latest_followup,
+                'level': pipeline.level,
+                'is_lost': is_lost
+            })
+
+    return render_template('dashboard.html',
+                          summary_metrics=summary_metrics,
+                          owner_metrics=owner_metrics,
+                          users=users,
+                          pipeline_stages=pipeline_stages,
+                          pipeline_deals=pipeline_deals,
+                          format_currency=format_currency,
+                          format_currency_thousands=format_currency_thousands,
+                          format_currency_short=format_currency_short,
+                          now=datetime.now(),
+                          get_locale=get_locale)
+    summary_metrics = get_company_dashboard_summary(ref_date=today)
 
     # =========================================================================
     # 获取季度日期
@@ -1040,6 +1109,7 @@ def import_data():
         
         # Import valid rows
         imported_count = 0
+        imported_owner_ids = set()
         with disable_metrics_events():
             for row in valid_rows:
                 try:
@@ -1065,6 +1135,8 @@ def import_data():
                     )
                     
                     db.session.add(lead)
+                    if lead.owner_id:
+                        imported_owner_ids.add(lead.owner_id)
                     imported_count += 1
                     
                 except Exception as e:
@@ -1771,10 +1843,16 @@ def export():
 
     stale_pipelines = [pipeline for pipeline in pipelines if pipeline_forecast_needs_refresh(pipeline, forecast_base_month)]
     if stale_pipelines:
+        stale_owner_ids = {pipeline.owner_id for pipeline in stale_pipelines if pipeline.owner_id}
         with disable_metrics_events():
             for pipeline in stale_pipelines:
                 calculate_pipeline_metrics(pipeline, forecast_base_month)
             db.session.commit()
+        if stale_owner_ids:
+            refresh_weekly_metrics(owner_ids=stale_owner_ids)
+        
+        if imported_owner_ids:
+            refresh_weekly_metrics(owner_ids=imported_owner_ids)
     
     # Prepare data
     data = []
@@ -3083,6 +3161,21 @@ def get_pipeline_kanban_data():
 @login_required
 def get_owner_metrics_data():
     """Get per-owner breakdown metrics for dashboard filtering."""
+    metrics = []
+    for metric in get_owner_dashboard_metrics(ref_date=date.today()):
+        metrics.append({
+            'user_id': metric['user_id'],
+            'username': metric['username'],
+            'role': metric['role'],
+            'leads_count': metric['leads_count'],
+            'qualified_leads_count': metric['qualified_leads_count'],
+            'pipeline_count': metric['pipeline_count'],
+            'customer_count': metric['customer_count'],
+            'tcv': metric['tcv'],
+            'current_qtr_revenue': metric['current_qtr_revenue'],
+            'next_qtr_revenue': metric['next_qtr_revenue']
+        })
+    return jsonify({'metrics': metrics})
     
     # Get all active users
     users = User.query.filter_by(is_active=True).all()
