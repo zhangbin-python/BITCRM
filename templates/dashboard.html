@@ -457,10 +457,6 @@
                 <p class="text-white-50 small mb-0 mt-1">
                     vs {{ format_currency_short(current_qtr.previous) }}
                 </p>
-                <p class="text-white-50 small mb-0">
-                    <i class="bi bi-calendar3"></i>
-                    {% if now.month in [1,2,3] %}Q1{% elif now.month in [4,5,6] %}Q2{% elif now.month in [7,8,9] %}Q3{% else %}Q4{% endif %}
-                </p>
             </div>
         </div>
     </div>
@@ -481,10 +477,6 @@
                 {% endif %}
                 <p class="text-white-50 small mb-0 mt-1">
                     vs {{ format_currency_short(next_qtr.previous) }}
-                </p>
-                <p class="text-white-50 small mb-0">
-                    <i class="bi bi-arrow-right"></i>
-                    {% if now.month in [1,2,3] %}Q2{% elif now.month in [4,5,6] %}Q3{% elif now.month in [7,8,9] %}Q4{% else %}Q1{% endif %}
                 </p>
             </div>
         </div>
