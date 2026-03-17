@@ -146,6 +146,34 @@ The application supports English (en) and Chinese (zh) languages. The language s
 - Validate data before importing
 - Export current filtered view to Excel
 
+## Database Upgrade Notes
+
+### New deployments
+- For a brand new database, no manual migration is required for the rolling forecast fields.
+- On startup, the app creates missing tables and also tries to add `forecast_base_month` automatically.
+- `M1~M12` are stored in the database as rolling 12-month revenue forecast values.
+
+### Existing deployments
+- If you are upgrading an existing database, back it up first.
+- Then run:
+
+```cmd
+python fix_m1_m12_columns.py
+```
+
+- This script supports both `SQLite` and `PostgreSQL`.
+- It will:
+  - add `forecast_base_month` if missing
+  - normalize `m1~m12` to the current schema
+  - recalculate rolling `M1~M12` forecast values for existing pipeline data
+
+### Rolling forecast meaning
+- `M1` means the current month.
+- `M2` means next month.
+- `M12` means the 12th month from the current month.
+- Example: if today is March 2026, then `M1 = 2026-03`, `M2 = 2026-04`, ..., `M12 = 2027-02`.
+- The exported pipeline file includes `Forecast Base Month` so the `M1~M12` values can be interpreted correctly.
+
 ## Troubleshooting
 
 ### Database Issues
@@ -154,6 +182,12 @@ If you encounter database errors:
 2. Run `flask db init` again
 3. Run `flask db migrate -m "Clean migration"`
 4. Run `flask db upgrade`
+
+If you are upgrading an existing database and need to refresh rolling forecast fields, run:
+
+```cmd
+python fix_m1_m12_columns.py
+```
 
 ### Language Not Switching
 - Clear browser cookies for localhost

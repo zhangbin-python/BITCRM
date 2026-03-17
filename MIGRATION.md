@@ -10,6 +10,9 @@ flask db migrate -m "描述修改内容"
 # Apply migration
 flask db upgrade
 
+# If you are upgrading an existing database for rolling forecast fields
+python fix_m1_m12_columns.py
+
 ## 2. Zeabur/Production (using PostgreSQL)
 # Set environment variables first if needed
 # DATABASE_URL is auto-configured by Zeabur
@@ -23,6 +26,15 @@ flask db upgrade
 #
 # Option B: Via CLI (if configured)
 #   heroku run flask db upgrade -a YOUR_APP_NAME
+
+# If the database already contains data, run the rolling forecast upgrade script once:
+#   python fix_m1_m12_columns.py
+
+## Rolling forecast fields
+- `M1~M12` are rolling 12-month revenue forecast fields stored in the `pipeline` table.
+- `M1` always means the current month, `M2` the next month, and so on.
+- The script `fix_m1_m12_columns.py` is the recommended upgrade path for old databases.
+- For a brand new database, normal app startup is enough.
 
 ## Quick check current migration status
 flask db current
