@@ -129,6 +129,7 @@ dmypy.json
 *.swp
 *.swo
 *~
+.playwright-cli/
 
 # OS
 .DS_Store
