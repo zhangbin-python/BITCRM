@@ -19,6 +19,7 @@ from extensions import db, cache
 from models import User, SalesLead, Pipeline, Task, ActivityLog, disable_metrics_events
 from services.weekly_metrics_service import (
     get_company_dashboard_summary,
+    get_owner_dashboard_summary,
     get_owner_dashboard_metrics,
     refresh_weekly_metrics,
 )
@@ -79,6 +80,92 @@ def build_visible_columns(available_columns, selected_columns, default_columns):
     return visible_columns, normalized_keys
 
 
+def _get_pipeline_access_query():
+    """Build pipeline query scoped to the current user's access."""
+    query = Pipeline.query
+    if not current_user.is_admin():
+        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
+            Pipeline.support_team.contains(current_user)
+        ).subquery()
+        query = query.filter(
+            or_(
+                Pipeline.owner_id == current_user.id,
+                Pipeline.id.in_(supported_pipeline_ids)
+            )
+        )
+    return query
+
+
+def _normalize_multi_filter_values(values, caster=None):
+    normalized_values = []
+    seen_values = set()
+
+    raw_values = values if isinstance(values, (list, tuple, set)) else [values]
+
+    for value in raw_values or []:
+        if value in (None, ''):
+            continue
+
+        normalized_value = value
+        if caster:
+            try:
+                normalized_value = caster(value)
+            except (TypeError, ValueError):
+                continue
+
+        if normalized_value in seen_values:
+            continue
+
+        seen_values.add(normalized_value)
+        normalized_values.append(normalized_value)
+
+    return normalized_values
+
+
+def _get_pipeline_filter_values(saved_filters):
+    owner_filter_ids = _normalize_multi_filter_values(
+        request.args.getlist('owner') or saved_filters.get('owner', []),
+        caster=int
+    )
+    est_sign_quarters = _normalize_multi_filter_values(
+        request.args.getlist('est_sign_quarter') or saved_filters.get('est_sign_quarter', [])
+    )
+    est_activate_quarters = _normalize_multi_filter_values(
+        request.args.getlist('est_activate_quarter') or saved_filters.get('est_activate_quarter', [])
+    )
+
+    return {
+        'show_lost': request.args.get('show_lost', saved_filters.get('show_lost', 'false')) == 'true',
+        'stage_filter': request.args.get('stage') or saved_filters.get('stage'),
+        'level_filter': request.args.get('level') or saved_filters.get('level'),
+        'owner_filter_ids': owner_filter_ids,
+        'est_sign_quarters': est_sign_quarters,
+        'est_activate_quarters': est_activate_quarters,
+        'sort_by': request.args.get('sort') or saved_filters.get('sort', 'date_added'),
+        'sort_order': request.args.get('order') or saved_filters.get('order', 'desc')
+    }
+
+
+def _get_owner_users_from_query(model, query, include_user_ids=None):
+    """Return owner users that actually exist in the current query data."""
+    owner_ids = {
+        owner_id
+        for (owner_id,) in query.order_by(None)
+        .with_entities(model.owner_id)
+        .filter(model.owner_id.isnot(None))
+        .distinct()
+        .all()
+        if owner_id
+    }
+
+    owner_ids.update(_normalize_multi_filter_values(include_user_ids, caster=int))
+
+    if not owner_ids:
+        return []
+
+    return User.query.filter(User.id.in_(owner_ids)).order_by(User.username).all()
+
+
 @main_bp.route('/')
 @login_required
 def index():
@@ -110,23 +197,14 @@ def dashboard():
     from sqlalchemy.orm import joinedload
 
     today = date.today()
-    summary_metrics = get_company_dashboard_summary(ref_date=today)
+    summary_metrics = (
+        get_company_dashboard_summary(ref_date=today)
+        if current_user.is_admin()
+        else get_owner_dashboard_summary(current_user.id, ref_date=today)
+    )
     owner_metrics = get_owner_dashboard_metrics(ref_date=today)
-    users = [metric['user'] for metric in owner_metrics]
-    current_qtr = get_quarter_dates(today)
-    next_qtr = get_next_quarter_dates(today)
 
-    base_query = Pipeline.query.options(joinedload(Pipeline.owner))
-    if not current_user.is_admin():
-        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
-            Pipeline.support_team.contains(current_user)
-        ).subquery()
-        base_query = base_query.filter(
-            or_(
-                Pipeline.owner_id == current_user.id,
-                Pipeline.id.in_(supported_pipeline_ids)
-            )
-        )
+    base_query = _get_pipeline_access_query().options(joinedload(Pipeline.owner))
 
     all_pipelines = base_query.all()
     active_pipelines = [p for p in all_pipelines if p.stage != '6b) Deal Lost']
@@ -164,9 +242,25 @@ def dashboard():
                 'is_lost': is_lost
             })
 
+    visible_owner_ids = {deal['owner_id'] for deal in pipeline_deals if deal['owner_id']}
+    users = [metric['user'] for metric in owner_metrics if metric['user_id'] in visible_owner_ids]
+    owner_table_metrics = [
+        metric for metric in owner_metrics
+        if metric['user'].role != 'marketing' and any([
+            metric['leads_count'],
+            metric['qualified_leads_count'],
+            metric['pipeline_count'],
+            metric['customer_count'],
+            metric['tcv'],
+            metric['current_qtr_revenue'],
+            metric['next_qtr_revenue'],
+        ])
+    ]
+
     return render_template('dashboard.html',
                           summary_metrics=summary_metrics,
                           owner_metrics=owner_metrics,
+                          owner_table_metrics=owner_table_metrics,
                           users=users,
                           pipeline_stages=pipeline_stages,
                           pipeline_deals=pipeline_deals,
@@ -643,6 +737,8 @@ def index():
         query = query.filter(SalesLead.leads_status == status_filter)
     if source_filter:
         query = query.filter(SalesLead.source == source_filter)
+
+    owner_options_query = query
     if owner_filter:
         query = query.filter(SalesLead.owner_id == owner_filter)
     
@@ -657,8 +753,11 @@ def index():
     per_page = request.args.get('per_page', 100, type=int)
     leads = query.paginate(page=page, per_page=per_page, error_out=False)
     
-    # Get all active users for owner dropdown
-    users = User.query.filter_by(is_active=True).order_by(User.username).all()
+    users = _get_owner_users_from_query(
+        SalesLead,
+        owner_options_query,
+        include_user_ids=[owner_filter] if owner_filter else None
+    )
     
     # Get column preferences
     prefs = current_user.get_column_preferences('leads')
@@ -1174,9 +1273,9 @@ def index():
         request.args.get('show_lost'),
         request.args.get('stage'),
         request.args.get('level'),
-        request.args.get('owner'),
-        request.args.get('est_sign_quarter'),
-        request.args.get('est_activate_quarter'),
+        request.args.getlist('owner'),
+        request.args.getlist('est_sign_quarter'),
+        request.args.getlist('est_activate_quarter'),
         request.args.get('sort'),
         request.args.get('order')
     ])
@@ -1187,9 +1286,9 @@ def index():
             'show_lost': request.args.get('show_lost', 'false'),
             'stage': request.args.get('stage'),
             'level': request.args.get('level'),
-            'owner': request.args.get('owner'),
-            'est_sign_quarter': request.args.get('est_sign_quarter'),
-            'est_activate_quarter': request.args.get('est_activate_quarter'),
+            'owner': request.args.getlist('owner'),
+            'est_sign_quarter': request.args.getlist('est_sign_quarter'),
+            'est_activate_quarter': request.args.getlist('est_activate_quarter'),
             'sort': request.args.get('sort', 'date_added'),
             'order': request.args.get('order', 'desc')
         }
@@ -1197,15 +1296,15 @@ def index():
     else:
         saved_filters = session.get('pipeline_filters', {})
     
-    # Get filter values (URL param or from session)
-    show_lost = request.args.get('show_lost', saved_filters.get('show_lost', 'false')) == 'true'
-    stage_filter = request.args.get('stage') or saved_filters.get('stage')
-    level_filter = request.args.get('level') or saved_filters.get('level')
-    owner_filter = request.args.get('owner') or saved_filters.get('owner')
-    est_sign_quarter = request.args.get('est_sign_quarter') or saved_filters.get('est_sign_quarter')
-    est_activate_quarter = request.args.get('est_activate_quarter') or saved_filters.get('est_activate_quarter')
-    sort_by = request.args.get('sort') or saved_filters.get('sort', 'date_added')
-    sort_order = request.args.get('order') or saved_filters.get('order', 'desc')
+    filter_values = _get_pipeline_filter_values(saved_filters)
+    show_lost = filter_values['show_lost']
+    stage_filter = filter_values['stage_filter']
+    level_filter = filter_values['level_filter']
+    owner_filter_ids = filter_values['owner_filter_ids']
+    est_sign_quarters = filter_values['est_sign_quarters']
+    est_activate_quarters = filter_values['est_activate_quarters']
+    sort_by = filter_values['sort_by']
+    sort_order = filter_values['sort_order']
     
     # Convert quarter to date range
     current_year = date.today().year
@@ -1216,30 +1315,8 @@ def index():
         'Q4': (f'{current_year}-10-01', f'{current_year}-12-31'),
     }
     
-    est_sign_date_from = est_sign_date_to = None
-    if est_sign_quarter and est_sign_quarter in quarter_ranges:
-        est_sign_date_from, est_sign_date_to = quarter_ranges[est_sign_quarter]
-    
-    est_activate_date_from = est_activate_date_to = None
-    if est_activate_quarter and est_activate_quarter in quarter_ranges:
-        est_activate_date_from, est_activate_date_to = quarter_ranges[est_activate_quarter]
-    sort_order = request.args.get('order', 'desc')  # Default: desc
-    
     # Build base query
-    query = Pipeline.query
-    
-    # Filter by access permissions
-    if not current_user.is_admin():
-        # Get the Pipeline IDs that current_user supports
-        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
-            Pipeline.support_team.contains(current_user)
-        ).subquery()
-        query = query.filter(
-            or_(
-                Pipeline.owner_id == current_user.id,
-                Pipeline.id.in_(supported_pipeline_ids)
-            )
-        )
+    query = _get_pipeline_access_query()
     
     # Filter by lost status
     if not show_lost:
@@ -1250,20 +1327,32 @@ def index():
         query = query.filter(Pipeline.stage == stage_filter)
     if level_filter:
         query = query.filter(func.lower(Pipeline.level) == func.lower(level_filter))
-    if owner_filter:
-        query = query.filter(Pipeline.owner_id == owner_filter)
-    
-    # Filter by Est. Sign Date range
-    if est_sign_date_from:
-        query = query.filter(Pipeline.est_sign_date >= est_sign_date_from)
-    if est_sign_date_to:
-        query = query.filter(Pipeline.est_sign_date <= est_sign_date_to)
-    
-    # Filter by Est. Activate Date range
-    if est_activate_date_from:
-        query = query.filter(Pipeline.est_act_date >= est_activate_date_from)
-    if est_activate_date_to:
-        query = query.filter(Pipeline.est_act_date <= est_activate_date_to)
+
+    owner_options_query = query
+    if owner_filter_ids:
+        query = query.filter(Pipeline.owner_id.in_(owner_filter_ids))
+
+    sign_date_conditions = []
+    for quarter in est_sign_quarters:
+        if quarter in quarter_ranges:
+            est_sign_date_from, est_sign_date_to = quarter_ranges[quarter]
+            sign_date_conditions.append(and_(
+                Pipeline.est_sign_date >= est_sign_date_from,
+                Pipeline.est_sign_date <= est_sign_date_to
+            ))
+    if sign_date_conditions:
+        query = query.filter(or_(*sign_date_conditions))
+
+    activate_date_conditions = []
+    for quarter in est_activate_quarters:
+        if quarter in quarter_ranges:
+            est_activate_date_from, est_activate_date_to = quarter_ranges[quarter]
+            activate_date_conditions.append(and_(
+                Pipeline.est_act_date >= est_activate_date_from,
+                Pipeline.est_act_date <= est_activate_date_to
+            ))
+    if activate_date_conditions:
+        query = query.filter(or_(*activate_date_conditions))
     
     # Apply sorting
     sort_column = getattr(Pipeline, sort_by, Pipeline.date_added)
@@ -1283,10 +1372,11 @@ def index():
     per_page = request.args.get('per_page', 100, type=int)
     pipelines = query.paginate(page=page, per_page=per_page, error_out=False)
     
-    # Get users who have pipelines for owner dropdown (only show users with pipelines)
-    users = db.session.query(User).join(Pipeline).filter(
-        User.is_active == True
-    ).distinct().order_by(User.username).all()
+    users = _get_owner_users_from_query(
+        Pipeline,
+        owner_options_query,
+        include_user_ids=owner_filter_ids
+    )
     
     # Get column preferences
     prefs = current_user.get_column_preferences('pipeline')
@@ -1324,6 +1414,7 @@ def index():
         # Dates
         {'key': 'est_sign_date', 'label': _('Est. Sign'), 'sortable': True},
         {'key': 'est_act_date', 'label': _('Est. Activate'), 'sortable': True},
+        {'key': 'deposit_date', 'label': _('Deposit Date'), 'sortable': True},
         {'key': 'award_date', 'label': _('Award Date'), 'sortable': True},
         {'key': 'proposal_sent_date', 'label': _('Proposal Sent'), 'sortable': True},
         {'key': 'date_added', 'label': _('Date Added'), 'sortable': True},
@@ -1348,9 +1439,9 @@ def index():
                           show_lost=show_lost,
                           stage_filter=stage_filter,
                           level_filter=level_filter,
-                          owner_filter=owner_filter,
-                          est_sign_quarter=est_sign_quarter,
-                          est_activate_quarter=est_activate_quarter,
+                          owner_filter_ids=owner_filter_ids,
+                          est_sign_quarters=est_sign_quarters,
+                          est_activate_quarters=est_activate_quarters,
                           sort_by=sort_by,
                           sort_order=sort_order,
                           format_currency=format_currency,
@@ -1472,6 +1563,7 @@ def add():
                 gp_margin=validate_numeric(request.form.get('gp_margin', 0), 'GP Margin') / 100,
                 est_sign_date=validate_date(request.form.get('est_sign_date')),
                 est_act_date=validate_date(request.form.get('est_act_date')),
+                deposit_date=validate_date(request.form.get('deposit_date')),
                 award_date=validate_date(request.form.get('award_date')),
                 proposal_sent_date=validate_date(request.form.get('proposal_sent_date')),
                 win_rate=validate_numeric(request.form.get('win_rate', 0), 'Win Rate') / 100,
@@ -1546,6 +1638,7 @@ def edit(pipeline_id):
             pipeline.gp_margin = validate_numeric(request.form.get('gp_margin', 0), 'GP Margin') / 100
             pipeline.est_sign_date = validate_date(request.form.get('est_sign_date'))
             pipeline.est_act_date = validate_date(request.form.get('est_act_date'))
+            pipeline.deposit_date = validate_date(request.form.get('deposit_date'))
             pipeline.award_date = validate_date(request.form.get('award_date'))
             pipeline.proposal_sent_date = validate_date(request.form.get('proposal_sent_date'))
             pipeline.win_rate = validate_numeric(request.form.get('win_rate', 0), 'Win Rate') / 100
@@ -1656,8 +1749,8 @@ def get_followup_data(pipeline_id):
     <input type="hidden" name="pipeline_id" value="{pipeline.id}">
     <div class="row g-3">
         <div class="col-12">
-            <label class="form-label">{_('Follow-up Notes')} *</label>
-            <textarea name="followup_text" class="form-control" rows="4" required placeholder="{_('Describe what was discussed...')}"></textarea>
+            <label class="form-label">{_('Follow-up Notes')}</label>
+            <textarea name="followup_text" class="form-control" rows="4" placeholder="{_('Describe what was discussed...')}"></textarea>
         </div>
         <div class="col-md-6">
             <label class="form-label">{_('Current Stuckpoint')}</label>
@@ -1703,28 +1796,42 @@ def add_followup(pipeline_id):
         stuckpoint_text = request.form.get('stuckpoint_text', '').strip()
         todo_text = request.form.get('todo_text', '').strip()
         todo_due_date = request.form.get('todo_due_date', '').strip()
+        new_stage = request.form.get('stage') or pipeline.stage
+        old_stage = pipeline.stage
+        stage_changed = new_stage in Pipeline.STAGE_OPTIONS and new_stage != old_stage
+        stuckpoint_changed = stuckpoint_text != (pipeline.stuckpoint or '')
         
         print(f"[DEBUG] followup_text: {followup_text[:50]}...")
         
-        if not followup_text:
-            print("[DEBUG] No followup text provided")
-            return jsonify({'success': False, 'error': 'Follow-up text is required'})
+        if todo_text and not todo_due_date:
+            return jsonify({'success': False, 'error': 'To-do Due Date is required when Next Steps / To-do is filled'})
+
+        has_updates = bool(followup_text or todo_text or stage_changed or stuckpoint_changed)
+        if not has_updates:
+            print("[DEBUG] No follow-up updates provided")
+            return jsonify({'success': False, 'error': 'Please update notes, stage, stuckpoint, or next steps before saving'})
         
         # Add follow-up
         print("[DEBUG] Calling pipeline.add_followup()...")
         pipeline.add_followup(
-            followup_text=followup_text,
+            followup_text=followup_text or None,
             stuckpoint_text=stuckpoint_text,
             todo_text=todo_text if todo_text else None,
             todo_due_date=validate_date(todo_due_date) if todo_text else None,
             user_id=current_user.id
         )
+
+        if stage_changed:
+            pipeline.stage = new_stage
+            calculate_pipeline_metrics(pipeline)
         
         print("[DEBUG] Committing to database...")
         db.session.commit()
         
-        # Log the activity
-        log_followup_created(current_user, pipeline, request.remote_addr)
+        if followup_text or todo_text or stuckpoint_changed:
+            log_followup_created(current_user, pipeline, request.remote_addr)
+        if stage_changed:
+            log_pipeline_stage_changed(current_user, pipeline, old_stage, new_stage, request.remote_addr)
         
         print("[DEBUG] Success!")
         
@@ -1745,7 +1852,7 @@ def import_template():
     columns = ['Name', 'Company', 'Industry', 'Position', 'Email', 'Mobile Number',
               'Owner', 'Support', 'Product', 'TCV USD', 'Contract Term (Yrs)',
               'MRC USD', 'OTC USD', 'GP Margin', 'Est. Sign Date', 'Est. Act. Date',
-              'Win Rate', 'Stage', 'Award Date', 'Proposal Sent Date', 'Level', 'Comments']
+              'Deposit Date', 'Win Rate', 'Stage', 'Award Date', 'Proposal Sent Date', 'Level', 'Comments']
     
     output = create_excel_template(columns, 'pipeline_template.xlsx')
     
@@ -1764,18 +1871,15 @@ def export():
     # Get saved filters from session
     saved_filters = session.get('pipeline_filters', {})
     
-    # Get filter parameters from URL or session
-    show_lost = request.args.get('show_lost') or saved_filters.get('show_lost', 'false')
-    stage_filter = request.args.get('stage') or saved_filters.get('stage')
-    level_filter = request.args.get('level') or saved_filters.get('level')
-    owner_filter = request.args.get('owner') or saved_filters.get('owner')
-    est_sign_quarter = request.args.get('est_sign_quarter') or saved_filters.get('est_sign_quarter')
-    est_activate_quarter = request.args.get('est_activate_quarter') or saved_filters.get('est_activate_quarter')
-    sort_by = request.args.get('sort') or saved_filters.get('sort', 'date_added')
-    sort_order = request.args.get('order') or saved_filters.get('order', 'desc')
-    
-    # Convert to booleans
-    show_lost = show_lost == 'true'
+    filter_values = _get_pipeline_filter_values(saved_filters)
+    show_lost = filter_values['show_lost']
+    stage_filter = filter_values['stage_filter']
+    level_filter = filter_values['level_filter']
+    owner_filter_ids = filter_values['owner_filter_ids']
+    est_sign_quarters = filter_values['est_sign_quarters']
+    est_activate_quarters = filter_values['est_activate_quarters']
+    sort_by = filter_values['sort_by']
+    sort_order = filter_values['sort_order']
     
     # Convert quarter to date range
     current_year = date.today().year
@@ -1786,28 +1890,8 @@ def export():
         'Q4': (f'{current_year}-10-01', f'{current_year}-12-31'),
     }
     
-    est_sign_date_from = est_sign_date_to = None
-    if est_sign_quarter and est_sign_quarter in quarter_ranges:
-        est_sign_date_from, est_sign_date_to = quarter_ranges[est_sign_quarter]
-    
-    est_activate_date_from = est_activate_date_to = None
-    if est_activate_quarter and est_activate_quarter in quarter_ranges:
-        est_activate_date_from, est_activate_date_to = quarter_ranges[est_activate_quarter]
-    
     # Get filtered pipelines
-    query = Pipeline.query
-    
-    if not current_user.is_admin():
-        # Get the Pipeline IDs that current_user supports
-        supported_pipeline_ids = db.session.query(Pipeline.id).filter(
-            Pipeline.support_team.contains(current_user)
-        ).subquery()
-        query = query.filter(
-            or_(
-                Pipeline.owner_id == current_user.id,
-                Pipeline.id.in_(supported_pipeline_ids)
-            )
-        )
+    query = _get_pipeline_access_query()
     
     # Apply filters (same as index view)
     if not show_lost:
@@ -1819,14 +1903,30 @@ def export():
     if level_filter:
         query = query.filter(Pipeline.level == level_filter)
     
-    if owner_filter:
-        query = query.filter(Pipeline.owner_id == int(owner_filter))
-    
-    if est_sign_date_from:
-        query = query.filter(Pipeline.est_sign_date >= datetime.strptime(est_sign_date_from, '%Y-%m-%d').date())
-    
-    if est_sign_date_to:
-        query = query.filter(Pipeline.est_sign_date <= datetime.strptime(est_sign_date_to, '%Y-%m-%d').date())
+    if owner_filter_ids:
+        query = query.filter(Pipeline.owner_id.in_(owner_filter_ids))
+
+    sign_date_conditions = []
+    for quarter in est_sign_quarters:
+        if quarter in quarter_ranges:
+            est_sign_date_from, est_sign_date_to = quarter_ranges[quarter]
+            sign_date_conditions.append(and_(
+                Pipeline.est_sign_date >= datetime.strptime(est_sign_date_from, '%Y-%m-%d').date(),
+                Pipeline.est_sign_date <= datetime.strptime(est_sign_date_to, '%Y-%m-%d').date()
+            ))
+    if sign_date_conditions:
+        query = query.filter(or_(*sign_date_conditions))
+
+    activate_date_conditions = []
+    for quarter in est_activate_quarters:
+        if quarter in quarter_ranges:
+            est_activate_date_from, est_activate_date_to = quarter_ranges[quarter]
+            activate_date_conditions.append(and_(
+                Pipeline.est_act_date >= datetime.strptime(est_activate_date_from, '%Y-%m-%d').date(),
+                Pipeline.est_act_date <= datetime.strptime(est_activate_date_to, '%Y-%m-%d').date()
+            ))
+    if activate_date_conditions:
+        query = query.filter(or_(*activate_date_conditions))
     
     # Apply sorting
     sort_column = getattr(Pipeline, sort_by, None)
@@ -1850,9 +1950,6 @@ def export():
             db.session.commit()
         if stale_owner_ids:
             refresh_weekly_metrics(owner_ids=stale_owner_ids)
-        
-        if imported_owner_ids:
-            refresh_weekly_metrics(owner_ids=imported_owner_ids)
     
     # Prepare data
     data = []
@@ -1887,6 +1984,7 @@ def export():
             'MG': p.mg,
             'Est. Sign Date': p.est_sign_date.strftime('%Y-%m-%d') if p.est_sign_date else '',
             'Est. Act. Date': p.est_act_date.strftime('%Y-%m-%d') if p.est_act_date else '',
+            'Deposit Date': p.deposit_date.strftime('%Y-%m-%d') if p.deposit_date else '',
             'Win Rate': f"{p.win_rate * 100:.0f}%",
             'Stage': p.stage,
             'Award Date': p.award_date.strftime('%Y-%m-%d') if p.award_date else '',
@@ -1917,6 +2015,7 @@ def export():
                        'Mobile Number', 'Owner', 'Support', 'Product', 
                        'TCV USD', 'Contract Term (Yrs)', 'MRC USD', 'OTC USD',
                        'GP Margin', 'GP', 'MG', 'Est. Sign Date', 'Est. Act. Date',
+                       'Deposit Date',
                        'Win Rate', 'Stage', 'Award Date', 'Proposal Sent Date', 'Level', 
                        'Stuckpoint', 'Follow-up', 'Comments', 'Forecast Base Month', 'Date Added', 
                        'Created At', 'Updated At']
@@ -1975,7 +2074,7 @@ def import_data():
         numeric_fields = ['tcv_usd', 'mrc_usd', 'otc_usd', 'gp_margin', 'win_rate', 'gp', 
                          'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12']
         integer_fields = ['contract_term_yrs', 'id', 'owner_id', 'sales_lead_id']
-        date_fields = ['est_sign_date', 'est_act_date', 'award_date', 'proposal_sent_date', 'date_added']
+        date_fields = ['est_sign_date', 'est_act_date', 'deposit_date', 'award_date', 'proposal_sent_date', 'date_added']
         
         for idx, row in df.iterrows():
             row_dict = row.to_dict()
@@ -2108,6 +2207,7 @@ def import_data():
                     gp_margin=row.get('gp_margin', 0),
                     est_sign_date=row.get('est_sign_date'),
                     est_act_date=row.get('est_act_date'),
+                    deposit_date=row.get('deposit_date'),
                     award_date=row.get('award_date'),
                     proposal_sent_date=row.get('proposal_sent_date'),
                     win_rate=row.get('win_rate', 0),
@@ -2180,14 +2280,19 @@ def index():
     in_progress_tasks = [t for t in tasks if t.status == 'In Progress']
     completed_tasks = [t for t in tasks if t.status == 'Completed']
     
-    # Get all users for owner dropdown
-    users = User.query.filter_by(is_active=True).order_by(User.username).all()
+    owner_filter_users = _get_owner_users_from_query(
+        Task,
+        query,
+        include_user_ids=[current_user.id]
+    )
+    assignable_users = User.query.filter_by(is_active=True).order_by(User.username).all()
     
     return render_template('tasks.html',
                           overdue_tasks=overdue_tasks,
                           in_progress_tasks=in_progress_tasks,
                           completed_tasks=completed_tasks,
-                          users=users,
+                          users=owner_filter_users,
+                          assignable_users=assignable_users,
                           current_user=current_user)
 
 
@@ -2200,6 +2305,7 @@ def add():
         content = request.form.get('content', '').strip()
         company = request.form.get('company', '').strip()
         due_date = validate_date(request.form.get('due_date'))
+        selected_owner_id = request.form.get('owner_id')
         
         if not content:
             flash('Task content is required', 'danger')
@@ -2209,7 +2315,7 @@ def add():
             content=content,
             company=company if company else None,
             due_date=due_date,
-            owner_id=current_user.id,
+            owner_id=(selected_owner_id or current_user.id) if current_user.is_admin() else current_user.id,
             status='In Progress'
         )
         
@@ -2297,7 +2403,7 @@ def edit_task(task_id):
     try:
         task.content = request.form.get('content')
         task.company = request.form.get('company')
-        task.owner_id = request.form.get('owner_id')
+        task.owner_id = request.form.get('owner_id') if current_user.is_admin() else current_user.id
         due_date = request.form.get('due_date')
         task.due_date = datetime.strptime(due_date, '%Y-%m-%d').date() if due_date else None
         task.check_overdue()
@@ -2713,6 +2819,7 @@ PIPELINE_COLUMNS = [
     {'key': 'win_rate', 'label': 'Win Rate', 'sortable': True},
     {'key': 'est_sign_date', 'label': 'Est. Sign', 'sortable': True},
     {'key': 'est_act_date', 'label': 'Est. Activate', 'sortable': True},
+    {'key': 'deposit_date', 'label': 'Deposit Date', 'sortable': True},
     {'key': 'award_date', 'label': 'Award Date', 'sortable': True},
     {'key': 'proposal_sent_date', 'label': 'Proposal Sent', 'sortable': True},
     {'key': 'date_added', 'label': 'Date Added', 'sortable': True},

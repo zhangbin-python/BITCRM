@@ -43,6 +43,41 @@
     flex-wrap: wrap;
 }
 
+.pipeline-filter-card,
+.pipeline-filter-card .card-body {
+    position: relative;
+    overflow: visible;
+    z-index: 20;
+}
+
+.pipeline-multi-filter {
+    position: relative;
+}
+
+.pipeline-multi-filter .dropdown-menu {
+    min-width: 220px;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 1085;
+}
+
+.pipeline-multi-filter .dropdown-toggle {
+    min-width: 160px;
+    justify-content: space-between;
+}
+
+.pipeline-multi-filter .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.pipeline-multi-filter .form-check:last-child {
+    margin-bottom: 0;
+}
+
+.table-scroll {
+    z-index: 1;
+}
+
 @media (max-width: 767.98px) {
     .pipeline-filter-actions,
     .pipeline-filter-actions > * {
@@ -62,7 +97,7 @@
         </div>
     <div class="page-header-actions">
             <div class="list-toolbar-group">
-                <a href="{{ url_for('pipeline.export', show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_quarter=est_sign_quarter, est_activate_quarter=est_activate_quarter, sort=sort_by, order=sort_order) }}" class="btn btn-outline-success btn-sm">
+                <a href="{{ url_for('pipeline.export', show_lost='true' if show_lost else 'false', stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}" class="btn btn-outline-success btn-sm">
                     <i class="bi bi-file-earmark-excel"></i> {{ _('Export') }}
                 </a>
                 <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-info btn-sm">
@@ -115,30 +150,72 @@
     </div>
 
     <!-- Filters -->
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 pipeline-filter-card">
         <div class="card-body py-3">
             <form method="GET" class="row g-2 g-md-3 align-items-end">
                 <!-- Est. Sign Date Quarter -->
                 <div class="col-6 col-md-auto">
                     <label class="form-label small mb-1">{{ _('Sign Date') }}</label>
-                    <select name="est_sign_quarter" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">{{ _('All') }}</option>
-                        <option value="Q1" {% if est_sign_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }}</option>
-                        <option value="Q2" {% if est_sign_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }}</option>
-                        <option value="Q3" {% if est_sign_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }}</option>
-                        <option value="Q4" {% if est_sign_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }}</option>
-                    </select>
+                    <div class="dropdown pipeline-multi-filter" data-default-label="{{ _('All') }}">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
+                                type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <span class="multi-filter-label">{{ _('All') }}</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3">
+                            <div class="form-check border-bottom pb-2 mb-2">
+                                <input class="form-check-input pipeline-filter-all" type="checkbox" id="est_sign_quarter_all" {% if not est_sign_quarters %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="est_sign_quarter_all">{{ _('All') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_sign_quarter" id="est_sign_quarter_q1" value="Q1" data-label="{{ _('Q1') }}" {% if 'Q1' in est_sign_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_sign_quarter_q1">{{ _('Q1') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_sign_quarter" id="est_sign_quarter_q2" value="Q2" data-label="{{ _('Q2') }}" {% if 'Q2' in est_sign_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_sign_quarter_q2">{{ _('Q2') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_sign_quarter" id="est_sign_quarter_q3" value="Q3" data-label="{{ _('Q3') }}" {% if 'Q3' in est_sign_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_sign_quarter_q3">{{ _('Q3') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_sign_quarter" id="est_sign_quarter_q4" value="Q4" data-label="{{ _('Q4') }}" {% if 'Q4' in est_sign_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_sign_quarter_q4">{{ _('Q4') }}</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Est. Activate Date Quarter -->
                 <div class="col-6 col-md-auto">
                     <label class="form-label small mb-1">{{ _('Activate Date') }}</label>
-                    <select name="est_activate_quarter" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">{{ _('All') }}</option>
-                        <option value="Q1" {% if est_activate_quarter == 'Q1' %}selected{% endif %}>{{ _('Q1') }}</option>
-                        <option value="Q2" {% if est_activate_quarter == 'Q2' %}selected{% endif %}>{{ _('Q2') }}</option>
-                        <option value="Q3" {% if est_activate_quarter == 'Q3' %}selected{% endif %}>{{ _('Q3') }}</option>
-                        <option value="Q4" {% if est_activate_quarter == 'Q4' %}selected{% endif %}>{{ _('Q4') }}</option>
-                    </select>
+                    <div class="dropdown pipeline-multi-filter" data-default-label="{{ _('All') }}">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
+                                type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <span class="multi-filter-label">{{ _('All') }}</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3">
+                            <div class="form-check border-bottom pb-2 mb-2">
+                                <input class="form-check-input pipeline-filter-all" type="checkbox" id="est_activate_quarter_all" {% if not est_activate_quarters %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="est_activate_quarter_all">{{ _('All') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_activate_quarter" id="est_activate_quarter_q1" value="Q1" data-label="{{ _('Q1') }}" {% if 'Q1' in est_activate_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_activate_quarter_q1">{{ _('Q1') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_activate_quarter" id="est_activate_quarter_q2" value="Q2" data-label="{{ _('Q2') }}" {% if 'Q2' in est_activate_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_activate_quarter_q2">{{ _('Q2') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_activate_quarter" id="est_activate_quarter_q3" value="Q3" data-label="{{ _('Q3') }}" {% if 'Q3' in est_activate_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_activate_quarter_q3">{{ _('Q3') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="est_activate_quarter" id="est_activate_quarter_q4" value="Q4" data-label="{{ _('Q4') }}" {% if 'Q4' in est_activate_quarters %}checked{% endif %}>
+                                <label class="form-check-label" for="est_activate_quarter_q4">{{ _('Q4') }}</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Stage -->
                 <div class="col-6 col-md-auto">
@@ -162,12 +239,24 @@
                 <!-- Owner -->
                 <div class="col-6 col-md-auto">
                     <label class="form-label small mb-1">{{ _('Owner') }}</label>
-                    <select name="owner" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">{{ _('All') }}</option>
-                        {% for user in users %}
-                        <option value="{{ user.id }}" {% if owner_filter|int == user.id %}selected{% endif %}>{{ user.username }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="dropdown pipeline-multi-filter" data-default-label="{{ _('All Owners') }}">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
+                                type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <span class="multi-filter-label">{{ _('All Owners') }}</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3">
+                            <div class="form-check border-bottom pb-2 mb-2">
+                                <input class="form-check-input pipeline-filter-all" type="checkbox" id="owner_all" {% if not owner_filter_ids %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="owner_all">{{ _('All Owners') }}</label>
+                            </div>
+                            {% for user in users %}
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="owner" id="owner_{{ user.id }}" value="{{ user.id }}" data-label="{{ user.username }}" {% if user.id in owner_filter_ids %}checked{% endif %}>
+                                <label class="form-check-label" for="owner_{{ user.id }}">{{ user.username }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 <!-- Sort By -->
                 <div class="col-6 col-md-auto">
@@ -298,6 +387,8 @@
                                 <td {% if pipeline.est_act_date and pipeline.stage != '7) Activated' and pipeline.est_act_date < date.today() %}style="background-color: #fdeaea;"{% endif %}>
                                     {{ pipeline.est_act_date.strftime('%Y-%m-%d') if pipeline.est_act_date else '-' }}
                                 </td>
+                                {% elif col_key == 'deposit_date' %}
+                                <td>{{ pipeline.deposit_date.strftime('%Y-%m-%d') if pipeline.deposit_date else '-' }}</td>
                                 {% elif col_key == 'award_date' %}
                                 <td>{{ pipeline.award_date.strftime('%Y-%m-%d') if pipeline.award_date else '-' }}</td>
                                 {% elif col_key == 'proposal_sent_date' %}
@@ -410,7 +501,7 @@
             {% if page_num == pipelines.page %}
             <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
             {% else %}
-            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost=show_lost, stage=stage_filter, level=level_filter, owner=owner_filter, est_sign_quarter=est_sign_quarter, est_activate_quarter=est_activate_quarter, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost='true' if show_lost else 'false', stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
             {% endif %}
             {% else %}
             <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -596,6 +687,61 @@ function showFullText(element) {
     var modal = new bootstrap.Modal(document.getElementById('fullTextModal'));
     modal.show();
 }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.querySelector('.card.shadow-sm.mb-4.pipeline-filter-card form');
+
+    document.querySelectorAll('.pipeline-multi-filter').forEach(function(filterEl) {
+        const defaultLabel = filterEl.dataset.defaultLabel || 'All';
+        const labelEl = filterEl.querySelector('.multi-filter-label');
+        const allCheckbox = filterEl.querySelector('.pipeline-filter-all');
+        const optionCheckboxes = Array.from(filterEl.querySelectorAll('.pipeline-filter-option'));
+
+        function updateLabel() {
+            const checked = optionCheckboxes.filter(cb => cb.checked);
+            if (checked.length === 0) {
+                labelEl.textContent = defaultLabel;
+            } else if (checked.length === 1) {
+                labelEl.textContent = checked[0].dataset.label || checked[0].value;
+            } else {
+                labelEl.textContent = `${checked.length} {{ _('selected') }}`;
+            }
+        }
+
+        function syncAllCheckbox() {
+            allCheckbox.checked = optionCheckboxes.every(cb => !cb.checked);
+        }
+
+        allCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                optionCheckboxes.forEach(cb => cb.checked = false);
+            }
+            updateLabel();
+            if (filterForm) {
+                filterForm.requestSubmit();
+            }
+        });
+
+        optionCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    allCheckbox.checked = false;
+                } else {
+                    syncAllCheckbox();
+                }
+                updateLabel();
+                if (filterForm) {
+                    filterForm.requestSubmit();
+                }
+            });
+        });
+
+        syncAllCheckbox();
+        updateLabel();
+    });
+});
 </script>
 
 {% endblock %}

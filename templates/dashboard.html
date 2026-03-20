@@ -629,8 +629,7 @@
                                 </div>
                             </li>
                             <li><hr class="dropdown-divider"></li>
-                            {% for metric in owner_metrics %}
-                            {% if metric.user.role != 'marketing' %}
+                            {% for metric in owner_table_metrics %}
                             <li>
                                 <div class="form-check">
                                     <input class="form-check-input owner-table-checkbox" type="checkbox" 
@@ -641,7 +640,6 @@
                                     </label>
                                 </div>
                             </li>
-                            {% endif %}
                             {% endfor %}
                         </ul>
                     </div>
@@ -663,8 +661,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for metric in owner_metrics %}
-                            {% if metric.user.role != 'marketing' %}
+                            {% for metric in owner_table_metrics %}
                             <tr class="owner-table-row" data-owner-id="{{ metric.user_id }}">
                                 <td>
                                     <div class="d-flex align-items-center">
@@ -695,7 +692,6 @@
                                 <td class="text-end">{{ format_currency_thousands(metric.current_qtr_revenue) }}</td>
                                 <td class="text-end">{{ format_currency_thousands(metric.next_qtr_revenue) }}</td>
                             </tr>
-                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>

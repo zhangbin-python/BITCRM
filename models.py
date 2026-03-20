@@ -382,6 +382,7 @@ class Pipeline(db.Model):
     # Dates
     est_sign_date = db.Column(db.Date, nullable=True, index=True)
     est_act_date = db.Column(db.Date, nullable=True)  # Estimated Activation Date
+    deposit_date = db.Column(db.Date, nullable=True)  # Deposit date
     award_date = db.Column(db.Date, nullable=True)  # Award date
     proposal_sent_date = db.Column(db.Date, nullable=True)  # Proposal Sent Date
     
@@ -559,7 +560,7 @@ class Pipeline(db.Model):
         }
         return stage_colors.get(self.stage, 'secondary')
     
-    def add_followup(self, followup_text, stuckpoint_text=None, todo_text=None, 
+    def add_followup(self, followup_text=None, stuckpoint_text=None, todo_text=None,
                      todo_due_date=None, user_id=None):
         """Add follow-up entry."""
         from datetime import datetime
@@ -567,14 +568,15 @@ class Pipeline(db.Model):
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
         
         # Append to follow-up field
-        if self.follow_up:
-            self.follow_up += f"\nFollow-up, {timestamp}: {followup_text}"
-        else:
-            self.follow_up = f"Follow-up, {timestamp}: {followup_text}"
+        if followup_text:
+            if self.follow_up:
+                self.follow_up += f"\nFollow-up, {timestamp}: {followup_text}"
+            else:
+                self.follow_up = f"Follow-up, {timestamp}: {followup_text}"
         
-        # Update stuckpoint if provided
-        if stuckpoint_text:
-            self.stuckpoint = stuckpoint_text
+        # Update stuckpoint, allowing explicit clear
+        if stuckpoint_text is not None:
+            self.stuckpoint = stuckpoint_text or None
         
         # Create task if todo provided
         if todo_text and todo_due_date and user_id:
@@ -588,7 +590,11 @@ class Pipeline(db.Model):
             db.session.add(task)
             # Append to follow-up
             todo_timestamp = datetime.now().strftime('%Y-%m-%d')
-            self.follow_up += f"\nTo-do, {todo_timestamp}: {todo_text} by {todo_due_date}"
+            todo_entry = f"To-do, {todo_timestamp}: {todo_text} by {todo_due_date}"
+            if self.follow_up:
+                self.follow_up += f"\n{todo_entry}"
+            else:
+                self.follow_up = todo_entry
     
     def __repr__(self):
         return f'<Pipeline {self.name}>'

@@ -297,6 +297,40 @@ def get_company_dashboard_summary(ref_date: date | None = None) -> dict:
     }
 
 
+def get_owner_dashboard_summary(owner_id: int, ref_date: date | None = None) -> dict:
+    models = _get_models()
+    WeeklyMetrics = models["WeeklyMetrics"]
+
+    ref_date = ref_date or date.today()
+    week_start = get_week_start(ref_date)
+    last_week_start = get_last_week_start(ref_date)
+
+    ensure_current_week_snapshots(ref_date=ref_date)
+
+    current_record = (
+        WeeklyMetrics.query.filter_by(owner_id=owner_id, week_start=week_start)
+        .order_by(WeeklyMetrics.id.asc())
+        .first()
+    )
+    previous_record = (
+        WeeklyMetrics.query.filter_by(owner_id=owner_id, week_start=last_week_start)
+        .order_by(WeeklyMetrics.id.asc())
+        .first()
+    )
+
+    current_record = current_record or WeeklyMetrics(owner_id=owner_id, week_start=week_start)
+    previous_record = previous_record or WeeklyMetrics(owner_id=owner_id, week_start=last_week_start)
+
+    return {
+        "leads": build_summary_metric(current_record.leads_count or 0, previous_record.leads_count or 0),
+        "qualified": build_summary_metric(current_record.qualified_leads_count or 0, previous_record.qualified_leads_count or 0),
+        "pipeline": build_summary_metric(current_record.pipeline_count or 0, previous_record.pipeline_count or 0),
+        "tcv": build_summary_metric(current_record.tcv or 0, previous_record.tcv or 0),
+        "current_qtr_revenue": build_summary_metric(current_record.current_qtr_revenue or 0, previous_record.current_qtr_revenue or 0),
+        "next_qtr_revenue": build_summary_metric(current_record.next_qtr_revenue or 0, previous_record.next_qtr_revenue or 0),
+    }
+
+
 def get_owner_dashboard_metrics(ref_date: date | None = None) -> list[dict]:
     models = _get_models()
     User = models["User"]

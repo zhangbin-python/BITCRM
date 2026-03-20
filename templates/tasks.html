@@ -467,7 +467,7 @@
                         <label class="form-label">{{ _('Owner') }}</label>
                         <select name="owner_id" class="form-select">
                             <option value="">{{ _('Select Owner') }}</option>
-                            {% for user in users %}
+                            {% for user in assignable_users %}
                             <option value="{{ user.id }}" {% if user.id == current_user.id %}selected{% endif %}>
                                 {{ user.username }}
                             </option>
@@ -511,7 +511,7 @@
                         <label class="form-label">{{ _('Owner') }}</label>
                         <select name="owner_id" class="form-select">
                             <option value="">{{ _('Select Owner') }}</option>
-                            {% for user in users %}
+                            {% for user in assignable_users %}
                             <option value="{{ user.id }}" {% if task.owner_id == user.id %}selected{% endif %}>
                                 {{ user.username }}
                             </option>

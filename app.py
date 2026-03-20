@@ -162,6 +162,14 @@ def create_app(config_class=None):
         except Exception:
             db.session.rollback()
             print("[INFO] forecast_base_month column might already exist")
+
+        try:
+            db.session.execute(text('ALTER TABLE pipeline ADD COLUMN deposit_date DATE'))
+            db.session.commit()
+            print("[OK] Added deposit_date column")
+        except Exception:
+            db.session.rollback()
+            print("[INFO] deposit_date column might already exist")
         
         # 3.2 Create all tables
         db.create_all()
