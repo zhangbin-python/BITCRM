@@ -140,8 +140,9 @@ Thumbs.db
 *.sqlite3
 
 # Keep migrations
+!migrations/
 !migrations/__init__.py
-migrations/*.py
+!migrations/*.py
 
 # Logs
 *.log
