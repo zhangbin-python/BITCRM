@@ -123,26 +123,61 @@ def _normalize_multi_filter_values(values, caster=None):
 
 
 def _get_pipeline_filter_values(saved_filters):
+    owner_values = request.args.getlist('owner') if 'owner' in request.args else saved_filters.get('owner', [])
+    est_sign_quarter_values = (
+        request.args.getlist('est_sign_quarter')
+        if 'est_sign_quarter' in request.args
+        else saved_filters.get('est_sign_quarter', [])
+    )
+    est_activate_quarter_values = (
+        request.args.getlist('est_activate_quarter')
+        if 'est_activate_quarter' in request.args
+        else saved_filters.get('est_activate_quarter', [])
+    )
+
     owner_filter_ids = _normalize_multi_filter_values(
-        request.args.getlist('owner') or saved_filters.get('owner', []),
+        owner_values,
         caster=int
     )
     est_sign_quarters = _normalize_multi_filter_values(
-        request.args.getlist('est_sign_quarter') or saved_filters.get('est_sign_quarter', [])
+        est_sign_quarter_values
     )
     est_activate_quarters = _normalize_multi_filter_values(
-        request.args.getlist('est_activate_quarter') or saved_filters.get('est_activate_quarter', [])
+        est_activate_quarter_values
     )
 
     return {
-        'show_lost': request.args.get('show_lost', saved_filters.get('show_lost', 'false')) == 'true',
-        'stage_filter': request.args.get('stage') or saved_filters.get('stage'),
-        'level_filter': request.args.get('level') or saved_filters.get('level'),
+        'show_lost': (
+            request.args.get('show_lost', 'false')
+            if 'show_lost' in request.args
+            else saved_filters.get('show_lost', 'false')
+        ) == 'true',
+        'stage_filter': request.args.get('stage') if 'stage' in request.args else saved_filters.get('stage'),
+        'level_filter': request.args.get('level') if 'level' in request.args else saved_filters.get('level'),
         'owner_filter_ids': owner_filter_ids,
         'est_sign_quarters': est_sign_quarters,
         'est_activate_quarters': est_activate_quarters,
-        'sort_by': request.args.get('sort') or saved_filters.get('sort', 'date_added'),
-        'sort_order': request.args.get('order') or saved_filters.get('order', 'desc')
+        'sort_by': request.args.get('sort') if 'sort' in request.args else saved_filters.get('sort', 'date_added'),
+        'sort_order': request.args.get('order') if 'order' in request.args else saved_filters.get('order', 'desc')
+    }
+
+
+def _get_leads_filter_values(saved_filters):
+    sort_by = saved_filters.get('sort', 'date_added')
+    if sort_by not in {'date_added', 'created_at'}:
+        sort_by = 'date_added'
+
+    sort_order = saved_filters.get('order', 'desc')
+    if sort_order not in {'asc', 'desc'}:
+        sort_order = 'desc'
+
+    return {
+        'show_unqualified': saved_filters.get('show_unqualified', 'false') == 'true',
+        'status_filters': _normalize_multi_filter_values(saved_filters.get('status', [])),
+        'source_filters': _normalize_multi_filter_values(saved_filters.get('source', [])),
+        'owner_filter_ids': _normalize_multi_filter_values(saved_filters.get('owner', []), caster=int),
+        'sort_by': sort_by,
+        'sort_order': sort_order,
     }
 
 
@@ -687,32 +722,32 @@ def index():
         flash('You do not have permission to access Sales Leads.', 'danger')
         return redirect(url_for('main.dashboard'))
     
-    # Get filter parameters from URL or session
-    has_url_filters = any([
-        request.args.get('show_unqualified'),
-        request.args.get('status'),
-        request.args.get('source'),
-        request.args.get('owner')
-    ])
+    # Get filter parameters from URL or session.
+    # The leads page auto-submits filters, so any presence in the URL should
+    # replace the saved session state, including empty multi-select groups.
+    filter_keys = ('show_unqualified', 'status', 'source', 'owner', 'sort', 'order')
+    has_url_filters = any(key in request.args for key in filter_keys)
     
     if has_url_filters:
         session['leads_filters'] = {
             'show_unqualified': request.args.get('show_unqualified', 'false'),
-            'status': request.args.get('status'),
-            'source': request.args.get('source'),
-            'owner': request.args.get('owner')
+            'status': request.args.getlist('status'),
+            'source': request.args.getlist('source'),
+            'owner': request.args.getlist('owner'),
+            'sort': request.args.get('sort', 'date_added'),
+            'order': request.args.get('order', 'desc'),
         }
         saved_filters = session['leads_filters']
     else:
         saved_filters = session.get('leads_filters', {})
     
-    # Get filter values (URL param or from session)
-    show_unqualified = request.args.get('show_unqualified') or saved_filters.get('show_unqualified', 'false')
-    status_filter = request.args.get('status') or saved_filters.get('status')
-    source_filter = request.args.get('source') or saved_filters.get('source')
-    owner_filter = request.args.get('owner') or saved_filters.get('owner')
-    
-    show_unqualified = show_unqualified == 'true'
+    filter_values = _get_leads_filter_values(saved_filters)
+    show_unqualified = filter_values['show_unqualified']
+    status_filters = filter_values['status_filters']
+    source_filters = filter_values['source_filters']
+    owner_filter_ids = filter_values['owner_filter_ids']
+    sort_by = filter_values['sort_by']
+    sort_order = filter_values['sort_order']
     
     # Build query
     query = SalesLead.query
@@ -727,23 +762,80 @@ def index():
                 SalesLead.owner_id.in_(marketing_ids)
             )
         )
+
+    summary_query = query
+    if source_filters:
+        summary_query = summary_query.filter(SalesLead.source.in_(source_filters))
+    if owner_filter_ids:
+        summary_query = summary_query.filter(SalesLead.owner_id.in_(owner_filter_ids))
+
+    summary_counts_raw = dict(
+        summary_query
+        .with_entities(SalesLead.leads_status, func.count(SalesLead.id))
+        .group_by(SalesLead.leads_status)
+        .all()
+    )
+    summary_total = sum(summary_counts_raw.values())
+    leads_summary_cards = [
+        {
+            'key': 'total',
+            'label': _('Total Leads'),
+            'count': summary_total,
+            'status': None,
+            'class_name': 'summary-total',
+            'icon': 'bi-people-fill',
+            'share_text': _('All statuses'),
+            'is_active': not status_filters,
+            'show_unqualified': True,
+        }
+    ]
+
+    for status_name, class_name, icon_name in [
+        ('Qualified', 'summary-qualified', 'bi-check-circle-fill'),
+        ('Waiting for Response', 'summary-response', 'bi-reply-fill'),
+        ('Waiting to be Contacted', 'summary-contact', 'bi-telephone-fill'),
+        ('Unqualified', 'summary-unqualified', 'bi-x-octagon-fill'),
+    ]:
+        count = summary_counts_raw.get(status_name, 0)
+        percentage = round((count / summary_total) * 100) if summary_total else 0
+        leads_summary_cards.append(
+            {
+                'key': status_name,
+                'label': _(status_name),
+                'count': count,
+                'status': status_name,
+                'class_name': class_name,
+                'icon': icon_name,
+                'share_text': _('%(percent)s%% of total', percent=percentage),
+                'is_active': status_name in status_filters,
+                'show_unqualified': True if status_name == 'Unqualified' else show_unqualified,
+            }
+        )
     
     # Filter by unqualified status
     if not show_unqualified:
         query = query.filter(SalesLead.leads_status != 'Unqualified')
     
     # Apply filters
-    if status_filter:
-        query = query.filter(SalesLead.leads_status == status_filter)
-    if source_filter:
-        query = query.filter(SalesLead.source == source_filter)
+    if status_filters:
+        query = query.filter(SalesLead.leads_status.in_(status_filters))
+    if source_filters:
+        query = query.filter(SalesLead.source.in_(source_filters))
 
     owner_options_query = query
-    if owner_filter:
-        query = query.filter(SalesLead.owner_id == owner_filter)
+    if owner_filter_ids:
+        query = query.filter(SalesLead.owner_id.in_(owner_filter_ids))
     
-    # Order by date_added descending, then by name
-    query = query.order_by(SalesLead.date_added.desc(), SalesLead.name)
+    # Apply sorting
+    sort_column = {
+        'date_added': SalesLead.date_added,
+        'created_at': SalesLead.created_at,
+    }.get(sort_by, SalesLead.date_added)
+
+    if sort_order == 'asc':
+        query = query.order_by(sort_column.asc().nullslast(), SalesLead.name.asc())
+    else:
+        query = query.order_by(sort_column.desc().nullslast(), SalesLead.name.asc())
     
     # Get total count before pagination
     total_count = query.count()
@@ -756,7 +848,7 @@ def index():
     users = _get_owner_users_from_query(
         SalesLead,
         owner_options_query,
-        include_user_ids=[owner_filter] if owner_filter else None
+        include_user_ids=owner_filter_ids
     )
     
     # Get column preferences
@@ -793,9 +885,12 @@ def index():
                           leads=leads,
                           total_count=total_count,
                           show_unqualified=show_unqualified,
-                          status_filter=status_filter,
-                          source_filter=source_filter,
-                          owner_filter=owner_filter,
+                          status_filters=status_filters,
+                          source_filters=source_filters,
+                          owner_filter_ids=owner_filter_ids,
+                          sort_by=sort_by,
+                          sort_order=sort_order,
+                          leads_summary_cards=leads_summary_cards,
                           available_columns=available_columns,
                           default_columns=default_columns,
                           visible_columns=visible_columns,
@@ -1055,12 +1150,43 @@ def export():
             )
         )
     
-    # Apply current filters
-    show_unqualified = request.args.get('show_unqualified', 'false') == 'true'
+    filter_values = _get_leads_filter_values({
+        'show_unqualified': request.args.get('show_unqualified', 'false'),
+        'status': request.args.getlist('status'),
+        'source': request.args.getlist('source'),
+        'owner': request.args.getlist('owner'),
+        'sort': request.args.get('sort', 'date_added'),
+        'order': request.args.get('order', 'desc'),
+    })
+
+    show_unqualified = filter_values['show_unqualified']
+    status_filters = filter_values['status_filters']
+    source_filters = filter_values['source_filters']
+    owner_filter_ids = filter_values['owner_filter_ids']
+    sort_by = filter_values['sort_by']
+    sort_order = filter_values['sort_order']
+
     if not show_unqualified:
         query = query.filter(SalesLead.leads_status != 'Unqualified')
-    
-    leads = query.order_by(SalesLead.date_added.desc()).all()
+
+    if status_filters:
+        query = query.filter(SalesLead.leads_status.in_(status_filters))
+    if source_filters:
+        query = query.filter(SalesLead.source.in_(source_filters))
+    if owner_filter_ids:
+        query = query.filter(SalesLead.owner_id.in_(owner_filter_ids))
+
+    sort_column = {
+        'date_added': SalesLead.date_added,
+        'created_at': SalesLead.created_at,
+    }.get(sort_by, SalesLead.date_added)
+
+    if sort_order == 'asc':
+        query = query.order_by(sort_column.asc().nullslast(), SalesLead.name.asc())
+    else:
+        query = query.order_by(sort_column.desc().nullslast(), SalesLead.name.asc())
+
+    leads = query.all()
     
     # Prepare data
     data = []
@@ -1269,16 +1395,17 @@ def index():
     
     # Get filter parameters from URL or session
     # Check if filters are in URL (user is setting new filters)
-    has_url_filters = any([
-        request.args.get('show_lost'),
-        request.args.get('stage'),
-        request.args.get('level'),
-        request.args.getlist('owner'),
-        request.args.getlist('est_sign_quarter'),
-        request.args.getlist('est_activate_quarter'),
-        request.args.get('sort'),
-        request.args.get('order')
-    ])
+    filter_keys = (
+        'show_lost',
+        'stage',
+        'level',
+        'owner',
+        'est_sign_quarter',
+        'est_activate_quarter',
+        'sort',
+        'order',
+    )
+    has_url_filters = any(key in request.args for key in filter_keys)
     
     # If URL has filters, save to session; otherwise load from session
     if has_url_filters:

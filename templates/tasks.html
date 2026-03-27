@@ -130,6 +130,68 @@
     max-height: none;
 }
 
+.task-summary-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.task-summary-card .card {
+    border: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-summary-card:hover .card {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.task-summary-card .card-body {
+    color: white;
+    padding: 1rem 1.1rem;
+}
+
+.task-summary-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 1rem;
+}
+
+.task-summary-label {
+    font-size: 0.85rem;
+    opacity: 0.92;
+}
+
+.task-summary-value {
+    font-size: 1.9rem;
+    line-height: 1.1;
+    font-weight: 700;
+}
+
+.task-summary-meta {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.task-summary-overdue .card-body {
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+}
+
+.task-summary-progress .card-body {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+}
+
+.task-summary-completed .card-body {
+    background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+}
+
 /* Mobile specific */
 @media (max-width: 768px) {
     .table-scroll-touch {
@@ -200,48 +262,45 @@
     </div>
 
     <!-- Task Stats -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card border-danger">
-                <div class="card-body py-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
+    <div class="row mb-4 g-3">
+        <div class="col-12 col-md-4">
+            <div class="task-summary-card task-summary-overdue">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="task-summary-label">{{ _('Overdue') }}</div>
+                            <span class="task-summary-icon"><i class="bi bi-exclamation-octagon-fill"></i></span>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0 text-danger">{{ _('Overdue') }}</h6>
-                            <h4 class="mb-0" id="overdueCount">{{ overdue_tasks|length }}</h4>
-                        </div>
+                        <div class="task-summary-value" id="overdueCount">{{ overdue_tasks|length }}</div>
+                        <div class="task-summary-meta mt-2">{{ _('Tasks needing immediate action') }}</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-success">
-                <div class="card-body py-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-spinner fa-2x text-success"></i>
+        <div class="col-12 col-md-4">
+            <div class="task-summary-card task-summary-progress">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="task-summary-label">{{ _('In Progress') }}</div>
+                            <span class="task-summary-icon"><i class="bi bi-arrow-repeat"></i></span>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0 text-success">{{ _('In Progress') }}</h6>
-                            <h4 class="mb-0" id="inProgressCount">{{ in_progress_tasks|length }}</h4>
-                        </div>
+                        <div class="task-summary-value" id="inProgressCount">{{ in_progress_tasks|length }}</div>
+                        <div class="task-summary-meta mt-2">{{ _('Open tasks currently being worked') }}</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-secondary">
-                <div class="card-body py-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-check-circle fa-2x text-secondary"></i>
+        <div class="col-12 col-md-4">
+            <div class="task-summary-card task-summary-completed">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="task-summary-label">{{ _('Completed') }}</div>
+                            <span class="task-summary-icon"><i class="bi bi-check-circle-fill"></i></span>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0 text-secondary">{{ _('Completed') }}</h6>
-                            <h4 class="mb-0" id="completedCount">{{ completed_tasks|length }}</h4>
-                        </div>
+                        <div class="task-summary-value" id="completedCount">{{ completed_tasks|length }}</div>
+                        <div class="task-summary-meta mt-2">{{ _('Finished tasks in the current view') }}</div>
                     </div>
                 </div>
             </div>

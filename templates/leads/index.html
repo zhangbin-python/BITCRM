@@ -25,13 +25,153 @@
 
 .lead-filter-actions {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
 }
 
-.lead-filter-actions .show-unqualified-toggle {
-    width: 120px;
+.leads-summary-grid {
+    margin-bottom: 1.5rem;
+}
+
+.leads-summary-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.leads-summary-card .card {
+    border: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.leads-summary-card:hover .card {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.leads-summary-card .card-body {
+    color: white;
+    padding: 1rem 1.1rem;
+}
+
+.leads-summary-card.is-active .card {
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+
+.leads-summary-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 1rem;
+}
+
+.leads-summary-label {
+    font-size: 0.85rem;
+    opacity: 0.92;
+}
+
+.leads-summary-value {
+    font-size: 1.9rem;
+    line-height: 1.1;
+    font-weight: 700;
+}
+
+.leads-summary-meta {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.lead-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.38rem 0.72rem;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.lead-status-badge.status-qualified {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+}
+
+.lead-status-badge.status-response {
+    background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+}
+
+.lead-status-badge.status-contact {
+    background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+}
+
+.lead-status-badge.status-unqualified {
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+}
+
+.lead-status-badge.status-default {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
+.summary-total .card-body {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+.summary-qualified .card-body {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+}
+
+.summary-response .card-body {
+    background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+}
+
+.summary-contact .card-body {
+    background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+}
+
+.summary-unqualified .card-body {
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+}
+
+.lead-filter-card,
+.lead-filter-card .card-body {
+    position: relative;
+    overflow: visible;
+    z-index: 20;
+}
+
+.lead-multi-filter {
+    position: relative;
+}
+
+.lead-multi-filter .dropdown-menu {
+    min-width: 220px;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 1085;
+}
+
+.lead-multi-filter .dropdown-toggle {
+    min-width: 170px;
+    justify-content: space-between;
+}
+
+.lead-multi-filter .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.lead-multi-filter .form-check:last-child {
+    margin-bottom: 0;
+}
+
+.table-scroll {
+    z-index: 1;
 }
 
 @media (max-width: 767.98px) {
@@ -40,8 +180,7 @@
         width: 100%;
     }
 
-    .lead-filter-actions .btn,
-    .lead-filter-actions .show-unqualified-toggle {
+    .lead-filter-actions .btn {
         width: 100%;
         margin-left: 0 !important;
     }
@@ -65,7 +204,7 @@
                 <i class="bi bi-upload"></i>
                 {{ _('Import') }}
             </button>
-            <a href="{{ url_for('leads.export', show_unqualified=show_unqualified) }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ url_for('leads.export', show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel"></i>
                 {{ _('Export') }}
             </a>
@@ -77,69 +216,136 @@
     </div>
 </div>
 
+<div class="row g-3 leads-summary-grid">
+    {% for card in leads_summary_cards %}
+    <div class="col-12 col-sm-6 col-xl">
+        {% if card.status %}
+        <a href="{{ url_for('leads.index', show_unqualified='true' if card.show_unqualified else 'false', status=[card.status], source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}"
+           class="leads-summary-card {{ card.class_name }} {% if card.is_active %}is-active{% endif %}">
+        {% else %}
+        <a href="{{ url_for('leads.index', show_unqualified='true' if card.show_unqualified else 'false', source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}"
+           class="leads-summary-card {{ card.class_name }} {% if card.is_active %}is-active{% endif %}">
+        {% endif %}
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="leads-summary-label">{{ card.label }}</div>
+                        <span class="leads-summary-icon"><i class="bi {{ card.icon }}"></i></span>
+                    </div>
+                    <div class="leads-summary-value">{{ card.count }}</div>
+                    <div class="leads-summary-meta mt-2">{{ card.share_text }}</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<p class="text-muted small mb-3">
+    {{ _('Summary cards follow the current Owner and Source filters, but ignore Status.') }}
+</p>
+
 <!-- Filters -->
-<div class="card mb-4">
+<div class="card mb-4 lead-filter-card">
     <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-3">
-                <label for="status" class="form-label">{{ _('Status') }}</label>
-                <select class="form-select" id="status" name="status">
-                    <option value="">{{ _('All Statuses') }}</option>
-                    {% for status in ['Qualified', 'Waiting for Response', 'Unqualified', 'Waiting to be Contacted'] %}
-                    <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>
-                        {{ _(status) }}
-                    </option>
-                    {% endfor %}
-                </select>
+        <form method="GET" class="row g-3 align-items-end" id="leadsFilterForm">
+            <div class="col-12 col-md-auto">
+                <label class="form-label small mb-1">{{ _('Status') }}</label>
+                <div class="dropdown lead-multi-filter" data-default-label="{{ _('All Statuses') }}">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
+                            type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <span class="multi-filter-label">{{ _('All Statuses') }}</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3">
+                        <div class="form-check border-bottom pb-2 mb-2">
+                            <input class="form-check-input lead-filter-all" type="checkbox" id="status_all" {% if not status_filters %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="status_all">{{ _('All Statuses') }}</label>
+                        </div>
+                        {% for status in ['Qualified', 'Waiting for Response', 'Unqualified', 'Waiting to be Contacted'] %}
+                        <div class="form-check">
+                            <input class="form-check-input lead-filter-option" type="checkbox" name="status" id="status_{{ loop.index }}" value="{{ status }}" data-label="{{ _(status) }}" {% if status in status_filters %}checked{% endif %}>
+                            <label class="form-check-label" for="status_{{ loop.index }}">{{ _(status) }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             
-            <div class="col-md-3">
-                <label for="source" class="form-label">{{ _('Source') }}</label>
-                <select class="form-select" id="source" name="source">
-                    <option value="">{{ _('All Sources') }}</option>
+            <div class="col-12 col-md-auto">
+                <label class="form-label small mb-1">{{ _('Source') }}</label>
+                <div class="dropdown lead-multi-filter" data-default-label="{{ _('All Sources') }}">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
+                            type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <span class="multi-filter-label">{{ _('All Sources') }}</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3">
+                        <div class="form-check border-bottom pb-2 mb-2">
+                            <input class="form-check-input lead-filter-all" type="checkbox" id="source_all" {% if not source_filters %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="source_all">{{ _('All Sources') }}</label>
+                        </div>
                     {% for source in ['Website', 'Referral', 'Email Campaign', 'Social Media', 'Event', 'Trade Show', 'Advertisement', 'Partner', 'Direct Inquiry', 'BFSI', 'Channel', 'Others'] %}
-                    <option value="{{ source }}" {% if source_filter == source %}selected{% endif %}>
-                        {{ _(source) }}
-                    </option>
+                        <div class="form-check">
+                            <input class="form-check-input lead-filter-option" type="checkbox" name="source" id="source_{{ loop.index }}" value="{{ source }}" data-label="{{ _(source) }}" {% if source in source_filters %}checked{% endif %}>
+                            <label class="form-check-label" for="source_{{ loop.index }}">{{ _(source) }}</label>
+                        </div>
                     {% endfor %}
-                </select>
+                    </div>
+                </div>
             </div>
             
-            <div class="col-md-3">
-                <label for="owner" class="form-label">{{ _('Owner') }}</label>
-                <select class="form-select" id="owner" name="owner">
-                    <option value="">{{ _('All Owners') }}</option>
+            <div class="col-12 col-md-auto">
+                <label class="form-label small mb-1">{{ _('Owner') }}</label>
+                <div class="dropdown lead-multi-filter" data-default-label="{{ _('All Owners') }}">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
+                            type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <span class="multi-filter-label">{{ _('All Owners') }}</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3">
+                        <div class="form-check border-bottom pb-2 mb-2">
+                            <input class="form-check-input lead-filter-all" type="checkbox" id="owner_all" {% if not owner_filter_ids %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="owner_all">{{ _('All Owners') }}</label>
+                        </div>
                     {% for user in users %}
-                    <option value="{{ user.id }}" {% if owner_filter|int == user.id %}selected{% endif %}>
-                        {{ user.username }}
-                    </option>
+                        <div class="form-check">
+                            <input class="form-check-input lead-filter-option" type="checkbox" name="owner" id="owner_{{ user.id }}" value="{{ user.id }}" data-label="{{ user.username }}" {% if user.id in owner_filter_ids %}checked{% endif %}>
+                            <label class="form-check-label" for="owner_{{ user.id }}">{{ user.username }}</label>
+                        </div>
                     {% endfor %}
-                </select>
+                    </div>
+                </div>
             </div>
             
-            <div class="col-12 col-xl-4">
+            <div class="col-6 col-md-auto">
+                <label for="sort" class="form-label small mb-1">{{ _('Sort') }}</label>
+                <select class="form-select form-select-sm" id="sort" name="sort" onchange="this.form.submit()">
+                    <option value="date_added" {% if sort_by == 'date_added' %}selected{% endif %}>{{ _('Date Added') }}</option>
+                    <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>{{ _('Created') }}</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-md-auto">
+                <label for="order" class="form-label small mb-1">{{ _('Order') }}</label>
+                <select class="form-select form-select-sm" id="order" name="order" onchange="this.form.submit()">
+                    <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>{{ _('↓ New') }}</option>
+                    <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>{{ _('↑ Old') }}</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-auto ms-md-auto">
                 <div class="lead-filter-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i>
-                    {{ _('Filter') }}
-                </button>
-                <a href="{{ url_for('leads.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ url_for('main.clear_filters', page='leads') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-x-circle"></i>
                     {{ _('Clear') }}
                 </a>
                 
-                <!-- Show Unqualified Switch - inside form -->
-                <div class="d-flex flex-column show-unqualified-toggle">
+                <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="showUnqualified" name="show_unqualified" value="true"
                            {% if show_unqualified %}checked{% endif %}
                            onchange="this.form.submit()">
-                    <label class="form-check-label small mt-1" for="showUnqualified">
+                    <label class="form-check-label small" for="showUnqualified">
                         {{ _('Show Unqualified') }}
                     </label>
                 </div>
-                <a href="{{ url_for('main.clear_filters', page='leads') }}" class="btn btn-outline-secondary btn-sm" title="{{ _('Clear Filters') }}">
-                    <i class="bi bi-x-circle"></i>
-                </a>
                 </div>
             </div>
         </form>
@@ -195,7 +401,7 @@
                     <td data-field="mobile_number" onclick="startEdit(this, {{ lead.id }}, 'mobile_number')">{{ lead.mobile_number or '-' }}</td>
                     {% elif col_key == 'leads_status' %}
                     <td data-field="leads_status" onclick="startEdit(this, {{ lead.id }}, 'leads_status')">
-                        <span class="badge bg-{{ lead.get_status_color() }}">
+                        <span class="lead-status-badge status-{{ lead.get_status_color() }}">
                             {{ _(lead.leads_status) }}
                         </span>
                     </td>
@@ -270,14 +476,14 @@
 <nav aria-label="Page navigation" class="mt-4">
     <ul class="pagination justify-content-center">
         <li class="page-item {% if not leads.has_prev %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('leads.index', page=leads.prev_num, show_unqualified=show_unqualified, status=status_filter, source=source_filter, owner=owner_filter) }}">
+            <a class="page-link" href="{{ url_for('leads.index', page=leads.prev_num, show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
                 {{ _('Previous') }}
             </a>
         </li>
         {% for page_num in leads.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
         {% if page_num %}
         <li class="page-item {% if page_num == leads.page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('leads.index', page=page_num, show_unqualified=show_unqualified, status=status_filter, source=source_filter, owner=owner_filter) }}">
+            <a class="page-link" href="{{ url_for('leads.index', page=page_num, show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
                 {{ page_num }}
             </a>
         </li>
@@ -286,7 +492,7 @@
         {% endif %}
         {% endfor %}
         <li class="page-item {% if not leads.has_next %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('leads.index', page=leads.next_num, show_unqualified=show_unqualified, status=status_filter, source=source_filter, owner=owner_filter) }}">
+            <a class="page-link" href="{{ url_for('leads.index', page=leads.next_num, show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
                 {{ _('Next') }}
             </a>
         </li>
@@ -367,7 +573,7 @@
 <script>
 // Inline Edit JavaScript
 const STATUS_OPTIONS = ["Qualified", "Waiting for Response", "Unqualified", "Waiting to be Contacted"];
-const SOURCE_OPTIONS = ["Website", "Referral", "Email Campaign", "Social Media", "Event", "Trade Show", "Advertisement", "Partner", "Direct Inquiry"];
+const SOURCE_OPTIONS = ["Website", "Referral", "Email Campaign", "Social Media", "Event", "Trade Show", "Advertisement", "Partner", "Direct Inquiry", "BFSI", "Channel", "Others"];
 const USERS_DATA = [
     {% for user in users %}
     {id: {{ user.id }}, username: "{{ user.username }}"}{% if not loop.last %},{% endif %}
@@ -439,7 +645,60 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    });
+
+    const filterForm = document.getElementById('leadsFilterForm');
+
+    document.querySelectorAll('.lead-multi-filter').forEach(function(filterEl) {
+        const defaultLabel = filterEl.dataset.defaultLabel || 'All';
+        const labelEl = filterEl.querySelector('.multi-filter-label');
+        const allCheckbox = filterEl.querySelector('.lead-filter-all');
+        const optionCheckboxes = Array.from(filterEl.querySelectorAll('.lead-filter-option'));
+
+        function updateLabel() {
+            const checked = optionCheckboxes.filter(cb => cb.checked);
+            if (checked.length === 0) {
+                labelEl.textContent = defaultLabel;
+            } else if (checked.length === 1) {
+                labelEl.textContent = checked[0].dataset.label || checked[0].value;
+            } else {
+                labelEl.textContent = `${checked.length} {{ _('selected') }}`;
+            }
+        }
+
+        function syncAllCheckbox() {
+            allCheckbox.checked = optionCheckboxes.every(cb => !cb.checked);
+        }
+
+        allCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                optionCheckboxes.forEach(cb => cb.checked = false);
+                updateLabel();
+                if (filterForm) {
+                    filterForm.requestSubmit();
+                }
+            } else if (optionCheckboxes.every(cb => !cb.checked)) {
+                this.checked = true;
+            }
+        });
+
+        optionCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    allCheckbox.checked = false;
+                } else {
+                    syncAllCheckbox();
+                }
+                updateLabel();
+                if (filterForm) {
+                    filterForm.requestSubmit();
+                }
+            });
+        });
+
+        syncAllCheckbox();
+        updateLabel();
+    });
 });
 </script>
 {% endblock %}

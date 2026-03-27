@@ -233,14 +233,14 @@ class SalesLead(db.Model):
     ]
     
     def get_status_color(self):
-        """Return Bootstrap color class based on status."""
+        """Return theme class suffix based on lead status."""
         status_colors = {
-            'Qualified': 'success',
-            'Waiting for Response': 'warning',
-            'Unqualified': 'danger',
-            'Waiting to be Contacted': 'secondary'
+            'Qualified': 'qualified',
+            'Waiting for Response': 'response',
+            'Unqualified': 'unqualified',
+            'Waiting to be Contacted': 'contact'
         }
-        return status_colors.get(self.leads_status, 'secondary')
+        return status_colors.get(self.leads_status, 'default')
     
     def validate_field(self, field_name, value):
         """
