@@ -1,16 +1,18 @@
 [Unit]
-Description=BITCRM Flask Application
-After=network]
-User.target
+Description=BITCRM Gunicorn Service
+After=network.target
 
-[Service=www-data
-Group=www-data
-WorkingDirectory=/var/www/bitcrm
-Environment="PATH=/var/www/bitcrm/venv/bin"
-Environment="FLASK_APP=app.py"
-Environment="SECRET_KEY=change-this-to-secure-key"
-ExecStart=/var/www/bitcrm/venv/bin/python app.py
+[Service]
+Type=simple
+User=bitcrm
+Group=bitcrm
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=__APP_DIR__/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PATH=__APP_DIR__/venv/bin
+ExecStart=__APP_DIR__/venv/bin/gunicorn -c __APP_DIR__/gunicorn.conf.py run_app:app
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

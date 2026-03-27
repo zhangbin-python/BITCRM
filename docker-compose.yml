@@ -1,19 +1,20 @@
-version: '3.8'
-
 services:
   bitcrm:
     build: .
-    ports:
-      - "5000:5000"
-    volumes:
-      - .:/app
-      - bitcrm_data:/app/data
+    container_name: bitcrm
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      - SECRET_KEY=dev-secret-key
-      - FLASK_ENV=development
-      - DATABASE_URL=sqlite:///data/bitcrm.db
+      PORT: ${PORT:-8080}
+      FLASK_CONFIG_CLASS: ${FLASK_CONFIG_CLASS:-config.ProductionConfig}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///instance/bitcrm.db}
+    ports:
+      - "${BITCRM_PORT:-8080}:${PORT:-8080}"
     volumes:
-      - bitcrm_data:/app/data
+      - bitcrm_instance:/app/instance
+      - bitcrm_logs:/app/logs
 
 volumes:
-  bitcrm_data:
+  bitcrm_instance:
+  bitcrm_logs:
