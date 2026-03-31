@@ -162,6 +162,10 @@
     justify-content: space-between;
 }
 
+.lead-company-filter .form-control {
+    min-width: 220px;
+}
+
 .lead-multi-filter .form-check {
     margin-bottom: 0.5rem;
 }
@@ -204,7 +208,7 @@
                 <i class="bi bi-upload"></i>
                 {{ _('Import') }}
             </button>
-            <a href="{{ url_for('leads.export', show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ url_for('leads.export', show_unqualified='true' if show_unqualified else 'false', company=company_filter or None, status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel"></i>
                 {{ _('Export') }}
             </a>
@@ -220,10 +224,10 @@
     {% for card in leads_summary_cards %}
     <div class="col-12 col-sm-6 col-xl">
         {% if card.status %}
-        <a href="{{ url_for('leads.index', show_unqualified='true' if card.show_unqualified else 'false', status=[card.status], source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}"
+        <a href="{{ url_for('leads.index', show_unqualified='true' if card.show_unqualified else 'false', company=company_filter or None, status=[card.status], source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}"
            class="leads-summary-card {{ card.class_name }} {% if card.is_active %}is-active{% endif %}">
         {% else %}
-        <a href="{{ url_for('leads.index', show_unqualified='true' if card.show_unqualified else 'false', source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}"
+        <a href="{{ url_for('leads.index', show_unqualified='true' if card.show_unqualified else 'false', company=company_filter or None, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}"
            class="leads-summary-card {{ card.class_name }} {% if card.is_active %}is-active{% endif %}">
         {% endif %}
             <div class="card h-100">
@@ -242,13 +246,24 @@
 </div>
 
 <p class="text-muted small mb-3">
-    {{ _('Summary cards follow the current Owner and Source filters, but ignore Status.') }}
+    {{ _('Summary cards follow the current Company, Owner, and Source filters, but ignore Status.') }}
 </p>
 
 <!-- Filters -->
 <div class="card mb-4 lead-filter-card">
     <div class="card-body">
         <form method="GET" class="row g-3 align-items-end" id="leadsFilterForm">
+            <div class="col-12 col-md-3 lead-company-filter">
+                <label for="company" class="form-label small mb-1">{{ _('Company') }}</label>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       id="company"
+                       name="company"
+                       value="{{ company_filter }}"
+                       placeholder="{{ _('Search company') }}"
+                       onchange="this.form.requestSubmit()">
+            </div>
+
             <div class="col-12 col-md-auto">
                 <label class="form-label small mb-1">{{ _('Status') }}</label>
                 <div class="dropdown lead-multi-filter" data-default-label="{{ _('All Statuses') }}">
@@ -294,6 +309,7 @@
             </div>
             
             <div class="col-12 col-md-auto">
+                <input type="hidden" name="owner" value="">
                 <label class="form-label small mb-1">{{ _('Owner') }}</label>
                 <div class="dropdown lead-multi-filter" data-default-label="{{ _('All Owners') }}">
                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
@@ -476,14 +492,14 @@
 <nav aria-label="Page navigation" class="mt-4">
     <ul class="pagination justify-content-center">
         <li class="page-item {% if not leads.has_prev %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('leads.index', page=leads.prev_num, show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
+            <a class="page-link" href="{{ url_for('leads.index', page=leads.prev_num, show_unqualified='true' if show_unqualified else 'false', company=company_filter or None, status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
                 {{ _('Previous') }}
             </a>
         </li>
         {% for page_num in leads.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
         {% if page_num %}
         <li class="page-item {% if page_num == leads.page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('leads.index', page=page_num, show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
+            <a class="page-link" href="{{ url_for('leads.index', page=page_num, show_unqualified='true' if show_unqualified else 'false', company=company_filter or None, status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
                 {{ page_num }}
             </a>
         </li>
@@ -492,7 +508,7 @@
         {% endif %}
         {% endfor %}
         <li class="page-item {% if not leads.has_next %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('leads.index', page=leads.next_num, show_unqualified='true' if show_unqualified else 'false', status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
+            <a class="page-link" href="{{ url_for('leads.index', page=leads.next_num, show_unqualified='true' if show_unqualified else 'false', company=company_filter or None, status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}">
                 {{ _('Next') }}
             </a>
         </li>

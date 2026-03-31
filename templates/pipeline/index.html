@@ -132,6 +132,10 @@
     justify-content: space-between;
 }
 
+.pipeline-company-filter .form-control {
+    min-width: 220px;
+}
+
 .pipeline-multi-filter .form-check {
     margin-bottom: 0.5rem;
 }
@@ -155,26 +159,31 @@
     }
 }
 </style>
-<div class="container-fluid py-4">
-    <div class="page-header mb-4">
+<div class="page-header pt-3 pb-2 mb-3 border-bottom">
         <div class="page-title-stack">
-            <h1 class="h3 mb-0 text-gray-800">{{ _('Pipeline Management') }}</h1>
-            <p class="text-muted small">{{ _('Track and manage your sales opportunities') }}</p>
+            <h1 class="h2 mb-0">
+                <i class="bi bi-diagram-3"></i>
+                {{ _('Pipeline Management') }}
+            </h1>
         </div>
-    <div class="page-header-actions">
+        <div class="page-header-actions">
             <div class="list-toolbar-group">
-                <a href="{{ url_for('pipeline.export', show_lost='true' if show_lost else 'false', stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}" class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-file-earmark-excel"></i> {{ _('Export') }}
+                <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-download"></i>
+                    {{ _('Download Template') }}
                 </a>
-                <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-info btn-sm">
-                    <i class="bi bi-download"></i> {{ _('Template') }}
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="bi bi-upload"></i>
+                    {{ _('Import') }}
+                </button>
+                <a href="{{ url_for('pipeline.export', show_lost='true' if show_lost else 'false', company=company_filter or None, stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    {{ _('Export') }}
                 </a>
             </div>
-            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="bi bi-upload"></i> {{ _('Import') }}
-            </button>
-            <a href="{{ url_for('pipeline.add') }}" class="btn btn-success btn-sm">
-                <i class="bi bi-plus-lg"></i> {{ _('Add Pipeline') }}
+            <a href="{{ url_for('pipeline.add') }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i>
+                {{ _('Add Pipeline') }}
             </a>
         </div>
     </div>
@@ -242,7 +251,18 @@
     <!-- Filters -->
     <div class="card shadow-sm mb-4 pipeline-filter-card">
         <div class="card-body py-3">
-            <form method="GET" class="row g-2 g-md-3 align-items-end">
+            <form method="GET" class="row g-2 g-md-3 align-items-end" id="pipelineFilterForm">
+                <div class="col-12 col-md-3 pipeline-company-filter">
+                    <label for="pipelineCompany" class="form-label small mb-1">{{ _('Company') }}</label>
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           id="pipelineCompany"
+                           name="company"
+                           value="{{ company_filter }}"
+                           placeholder="{{ _('Search company') }}"
+                           onchange="this.form.requestSubmit()">
+                </div>
+
                 <!-- Est. Sign Date Quarter -->
                 <div class="col-6 col-md-auto">
                     <label class="form-label small mb-1">{{ _('Sign Date') }}</label>
@@ -328,6 +348,7 @@
                 </div>
                 <!-- Owner -->
                 <div class="col-6 col-md-auto">
+                    <input type="hidden" name="owner" value="">
                     <label class="form-label small mb-1">{{ _('Owner') }}</label>
                     <div class="dropdown pipeline-multi-filter" data-default-label="{{ _('All Owners') }}">
                         <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
@@ -591,7 +612,7 @@
             {% if page_num == pipelines.page %}
             <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
             {% else %}
-            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost='true' if show_lost else 'false', stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost='true' if show_lost else 'false', company=company_filter or None, stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
             {% endif %}
             {% else %}
             <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -600,7 +621,6 @@
         </ul>
     </nav>
     {% endif %}
-</div>
 
 <!-- Import Modal -->
 <div class="modal fade" id="importModal" tabindex="-1">
@@ -781,7 +801,7 @@ function showFullText(element) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const filterForm = document.querySelector('.card.shadow-sm.mb-4.pipeline-filter-card form');
+    const filterForm = document.getElementById('pipelineFilterForm');
 
     document.querySelectorAll('.pipeline-multi-filter').forEach(function(filterEl) {
         const defaultLabel = filterEl.dataset.defaultLabel || 'All';

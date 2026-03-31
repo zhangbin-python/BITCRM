@@ -3,7 +3,7 @@ BITCRM Route Definitions
 All Flask routes for the application.
 """
 import pandas as pd
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response, session, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response, session
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_babel import gettext as _, get_locale
 from werkzeug.security import generate_password_hash
@@ -80,6 +80,154 @@ def build_visible_columns(available_columns, selected_columns, default_columns):
     return visible_columns, normalized_keys
 
 
+def _build_quarter_ranges(reference_date=None):
+    """Return quarter date ranges for the given year."""
+    current_year = (reference_date or date.today()).year
+    return {
+        'Q1': (date(current_year, 1, 1), date(current_year, 3, 31)),
+        'Q2': (date(current_year, 4, 1), date(current_year, 6, 30)),
+        'Q3': (date(current_year, 7, 1), date(current_year, 9, 30)),
+        'Q4': (date(current_year, 10, 1), date(current_year, 12, 31)),
+    }
+
+
+def _get_leads_column_settings():
+    default_columns = ['name', 'company', 'leads_status', 'owner', 'source', 'date_added']
+    available_columns = [
+        {'key': 'name', 'label': _('Name'), 'sortable': True},
+        {'key': 'company', 'label': _('Company'), 'sortable': True},
+        {'key': 'industry', 'label': _('Industry'), 'sortable': True},
+        {'key': 'position', 'label': _('Position'), 'sortable': True},
+        {'key': 'email', 'label': _('Email'), 'sortable': True},
+        {'key': 'mobile_number', 'label': _('Mobile'), 'sortable': False},
+        {'key': 'leads_status', 'label': _('Status'), 'sortable': True},
+        {'key': 'source', 'label': _('Source'), 'sortable': True},
+        {'key': 'event', 'label': _('Event'), 'sortable': False},
+        {'key': 'date_added', 'label': _('Date Added'), 'sortable': True},
+        {'key': 'owner', 'label': _('Owner'), 'sortable': True},
+        {'key': 'requirements', 'label': _('Requirements'), 'sortable': False},
+        {'key': 'note', 'label': _('Notes'), 'sortable': False},
+        {'key': 'created_at', 'label': _('Created'), 'sortable': True},
+    ]
+    return available_columns, default_columns
+
+
+def _get_pipeline_column_settings():
+    default_columns = [
+        'company', 'product', 'owner', 'stage', 'tcv_usd',
+        'contract_term_yrs', 'est_sign_date', 'est_act_date',
+        'award_date', 'proposal_sent_date', 'follow_up'
+    ]
+    available_columns = [
+        {'key': 'company', 'label': _('Company'), 'sortable': True},
+        {'key': 'name', 'label': _('Contact'), 'sortable': True},
+        {'key': 'industry', 'label': _('Industry'), 'sortable': True},
+        {'key': 'position', 'label': _('Position'), 'sortable': True},
+        {'key': 'email', 'label': _('Email'), 'sortable': True},
+        {'key': 'mobile_number', 'label': _('Mobile'), 'sortable': True},
+        {'key': 'product', 'label': _('Product'), 'sortable': True},
+        {'key': 'tcv_usd', 'label': _('TCV'), 'sortable': True},
+        {'key': 'mrc_usd', 'label': _('MRC'), 'sortable': True},
+        {'key': 'otc_usd', 'label': _('OTC'), 'sortable': True},
+        {'key': 'gp', 'label': _('Gross Profit'), 'sortable': True},
+        {'key': 'contract_term_yrs', 'label': _('Term'), 'sortable': True},
+        {'key': 'gp_margin', 'label': _('GP %'), 'sortable': True},
+        {'key': 'owner', 'label': _('Owner'), 'sortable': True},
+        {'key': 'stage', 'label': _('Stage'), 'sortable': True},
+        {'key': 'win_rate', 'label': _('Win Rate'), 'sortable': True},
+        {'key': 'est_sign_date', 'label': _('Est. Sign'), 'sortable': True},
+        {'key': 'est_act_date', 'label': _('Est. Activate'), 'sortable': True},
+        {'key': 'deposit_date', 'label': _('Deposit Date'), 'sortable': True},
+        {'key': 'award_date', 'label': _('Award Date'), 'sortable': True},
+        {'key': 'proposal_sent_date', 'label': _('Proposal Sent'), 'sortable': True},
+        {'key': 'date_added', 'label': _('Date Added'), 'sortable': True},
+        {'key': 'follow_up', 'label': _('Follow-up'), 'sortable': False},
+        {'key': 'comments', 'label': _('Comments'), 'sortable': False},
+        {'key': 'stuckpoint', 'label': _('Current Stuckpoint'), 'sortable': False},
+    ]
+    return available_columns, default_columns
+
+
+def _get_visible_columns_for_page(page, available_columns, default_columns):
+    prefs = current_user.get_column_preferences(page)
+    selected_columns = prefs.get('columns', default_columns)
+    return build_visible_columns(available_columns, selected_columns, default_columns)
+
+
+def _get_leads_export_value(lead, column_key):
+    date_only_fields = {'date_added', 'created_at'}
+    raw_value = {
+        'name': lead.name,
+        'company': lead.company,
+        'industry': lead.industry,
+        'position': lead.position,
+        'email': lead.email,
+        'mobile_number': lead.mobile_number,
+        'leads_status': lead.leads_status,
+        'source': lead.source,
+        'event': lead.event,
+        'owner': lead.owner.username if lead.owner else '',
+        'requirements': lead.requirements,
+        'note': lead.note,
+    }.get(column_key)
+
+    if column_key in date_only_fields:
+        field_value = getattr(lead, column_key, None)
+        if not field_value:
+            return ''
+        return field_value.strftime('%Y-%m-%d')
+
+    return raw_value or ''
+
+
+def _get_pipeline_export_value(pipeline, column_key):
+    date_fields = {
+        'est_sign_date', 'est_act_date', 'deposit_date',
+        'award_date', 'proposal_sent_date', 'date_added'
+    }
+    raw_value = {
+        'company': pipeline.company,
+        'name': pipeline.name,
+        'industry': pipeline.industry,
+        'position': pipeline.position,
+        'email': pipeline.email,
+        'mobile_number': pipeline.mobile_number,
+        'product': pipeline.product,
+        'tcv_usd': pipeline.tcv_usd,
+        'mrc_usd': pipeline.mrc_usd,
+        'otc_usd': pipeline.otc_usd,
+        'gp': pipeline.gp,
+        'contract_term_yrs': pipeline.contract_term_yrs,
+        'gp_margin': f"{(pipeline.gp_margin or 0) * 100:.1f}%",
+        'owner': pipeline.owner.username if pipeline.owner else '',
+        'stage': pipeline.stage,
+        'win_rate': f"{(pipeline.win_rate or 0) * 100:.0f}%",
+        'follow_up': pipeline.follow_up,
+        'comments': pipeline.comments,
+        'stuckpoint': pipeline.stuckpoint,
+    }.get(column_key)
+
+    if column_key in date_fields:
+        field_value = getattr(pipeline, column_key, None)
+        if not field_value:
+            return ''
+        return field_value.strftime('%Y-%m-%d')
+
+    return raw_value if raw_value is not None else ''
+
+
+def _build_export_dataframe(items, visible_columns, value_getter):
+    columns = [column['label'] for column in visible_columns]
+    data = [
+        {
+            column['label']: value_getter(item, column['key'])
+            for column in visible_columns
+        }
+        for item in items
+    ]
+    return pd.DataFrame(data, columns=columns)
+
+
 def _get_pipeline_access_query():
     """Build pipeline query scoped to the current user's access."""
     query = Pipeline.query
@@ -123,17 +271,22 @@ def _normalize_multi_filter_values(values, caster=None):
 
 
 def _get_pipeline_filter_values(saved_filters):
-    owner_values = request.args.getlist('owner') if 'owner' in request.args else saved_filters.get('owner', [])
-    est_sign_quarter_values = (
-        request.args.getlist('est_sign_quarter')
-        if 'est_sign_quarter' in request.args
-        else saved_filters.get('est_sign_quarter', [])
-    )
-    est_activate_quarter_values = (
-        request.args.getlist('est_activate_quarter')
-        if 'est_activate_quarter' in request.args
-        else saved_filters.get('est_activate_quarter', [])
-    )
+    filter_keys = {
+        'show_lost',
+        'company',
+        'stage',
+        'level',
+        'owner',
+        'est_sign_quarter',
+        'est_activate_quarter',
+        'sort',
+        'order',
+    }
+    use_request_values = any(key in request.args for key in filter_keys)
+
+    owner_values = request.args.getlist('owner') if use_request_values else saved_filters.get('owner', [])
+    est_sign_quarter_values = request.args.getlist('est_sign_quarter') if use_request_values else saved_filters.get('est_sign_quarter', [])
+    est_activate_quarter_values = request.args.getlist('est_activate_quarter') if use_request_values else saved_filters.get('est_activate_quarter', [])
 
     owner_filter_ids = _normalize_multi_filter_values(
         owner_values,
@@ -146,39 +299,144 @@ def _get_pipeline_filter_values(saved_filters):
         est_activate_quarter_values
     )
 
-    return {
-        'show_lost': (
-            request.args.get('show_lost', 'false')
-            if 'show_lost' in request.args
-            else saved_filters.get('show_lost', 'false')
-        ) == 'true',
-        'stage_filter': request.args.get('stage') if 'stage' in request.args else saved_filters.get('stage'),
-        'level_filter': request.args.get('level') if 'level' in request.args else saved_filters.get('level'),
-        'owner_filter_ids': owner_filter_ids,
-        'est_sign_quarters': est_sign_quarters,
-        'est_activate_quarters': est_activate_quarters,
-        'sort_by': request.args.get('sort') if 'sort' in request.args else saved_filters.get('sort', 'date_added'),
-        'sort_order': request.args.get('order') if 'order' in request.args else saved_filters.get('order', 'desc')
-    }
-
-
-def _get_leads_filter_values(saved_filters):
-    sort_by = saved_filters.get('sort', 'date_added')
-    if sort_by not in {'date_added', 'created_at'}:
+    sort_by = request.args.get('sort', 'date_added') if use_request_values else saved_filters.get('sort', 'date_added')
+    if sort_by not in {'date_added', 'est_sign_date', 'est_act_date', 'tcv_usd'}:
         sort_by = 'date_added'
 
-    sort_order = saved_filters.get('order', 'desc')
+    sort_order = request.args.get('order', 'desc') if use_request_values else saved_filters.get('order', 'desc')
     if sort_order not in {'asc', 'desc'}:
         sort_order = 'desc'
 
     return {
-        'show_unqualified': saved_filters.get('show_unqualified', 'false') == 'true',
-        'status_filters': _normalize_multi_filter_values(saved_filters.get('status', [])),
-        'source_filters': _normalize_multi_filter_values(saved_filters.get('source', [])),
-        'owner_filter_ids': _normalize_multi_filter_values(saved_filters.get('owner', []), caster=int),
+        'show_lost': (request.args.get('show_lost', 'false') if use_request_values else saved_filters.get('show_lost', 'false')) == 'true',
+        'company_filter': (request.args.get('company', '') if use_request_values else saved_filters.get('company', '')).strip(),
+        'stage_filter': (request.args.get('stage') if use_request_values else saved_filters.get('stage')) or None,
+        'level_filter': (request.args.get('level') if use_request_values else saved_filters.get('level')) or None,
+        'owner_filter_ids': owner_filter_ids,
+        'est_sign_quarters': est_sign_quarters,
+        'est_activate_quarters': est_activate_quarters,
+        'sort_by': sort_by,
+        'sort_order': sort_order
+    }
+
+
+def _get_leads_filter_values(saved_filters):
+    filter_keys = {'show_unqualified', 'company', 'status', 'source', 'owner', 'sort', 'order'}
+    use_request_values = any(key in request.args for key in filter_keys)
+
+    sort_by = request.args.get('sort', 'date_added') if use_request_values else saved_filters.get('sort', 'date_added')
+    if sort_by not in {'date_added', 'created_at'}:
+        sort_by = 'date_added'
+
+    sort_order = request.args.get('order', 'desc') if use_request_values else saved_filters.get('order', 'desc')
+    if sort_order not in {'asc', 'desc'}:
+        sort_order = 'desc'
+
+    return {
+        'show_unqualified': (request.args.get('show_unqualified', 'false') if use_request_values else saved_filters.get('show_unqualified', 'false')) == 'true',
+        'company_filter': (request.args.get('company', '') if use_request_values else saved_filters.get('company', '')).strip(),
+        'status_filters': _normalize_multi_filter_values(request.args.getlist('status') if use_request_values else saved_filters.get('status', [])),
+        'source_filters': _normalize_multi_filter_values(request.args.getlist('source') if use_request_values else saved_filters.get('source', [])),
+        'owner_filter_ids': _normalize_multi_filter_values(request.args.getlist('owner') if use_request_values else saved_filters.get('owner', []), caster=int),
         'sort_by': sort_by,
         'sort_order': sort_order,
     }
+
+
+def _apply_leads_filters(query, filter_values):
+    if not filter_values['show_unqualified']:
+        query = query.filter(SalesLead.leads_status != 'Unqualified')
+
+    if filter_values['company_filter']:
+        query = query.filter(SalesLead.company.ilike(f"%{filter_values['company_filter']}%"))
+
+    if filter_values['status_filters']:
+        query = query.filter(SalesLead.leads_status.in_(filter_values['status_filters']))
+
+    if filter_values['source_filters']:
+        query = query.filter(SalesLead.source.in_(filter_values['source_filters']))
+
+    if filter_values['owner_filter_ids']:
+        query = query.filter(SalesLead.owner_id.in_(filter_values['owner_filter_ids']))
+
+    return query
+
+
+def _apply_leads_sort(query, sort_by, sort_order):
+    sort_column = {
+        'date_added': SalesLead.date_added,
+        'created_at': SalesLead.created_at,
+    }.get(sort_by, SalesLead.date_added)
+
+    if sort_order == 'asc':
+        return query.order_by(sort_column.asc().nullslast(), SalesLead.name.asc())
+
+    return query.order_by(sort_column.desc().nullslast(), SalesLead.name.asc())
+
+
+def _apply_pipeline_filters(query, filter_values):
+    if not filter_values['show_lost']:
+        query = query.filter(Pipeline.stage != '6b) Deal Lost')
+
+    if filter_values['company_filter']:
+        query = query.filter(Pipeline.company.ilike(f"%{filter_values['company_filter']}%"))
+
+    if filter_values['stage_filter']:
+        query = query.filter(Pipeline.stage == filter_values['stage_filter'])
+
+    if filter_values['level_filter']:
+        query = query.filter(func.lower(Pipeline.level) == func.lower(filter_values['level_filter']))
+
+    if filter_values['owner_filter_ids']:
+        query = query.filter(Pipeline.owner_id.in_(filter_values['owner_filter_ids']))
+
+    quarter_ranges = _build_quarter_ranges()
+
+    sign_date_conditions = []
+    for quarter in filter_values['est_sign_quarters']:
+        if quarter in quarter_ranges:
+            est_sign_date_from, est_sign_date_to = quarter_ranges[quarter]
+            sign_date_conditions.append(and_(
+                Pipeline.est_sign_date >= est_sign_date_from,
+                Pipeline.est_sign_date <= est_sign_date_to
+            ))
+    if sign_date_conditions:
+        query = query.filter(or_(*sign_date_conditions))
+
+    activate_date_conditions = []
+    for quarter in filter_values['est_activate_quarters']:
+        if quarter in quarter_ranges:
+            est_activate_date_from, est_activate_date_to = quarter_ranges[quarter]
+            activate_date_conditions.append(and_(
+                Pipeline.est_act_date >= est_activate_date_from,
+                Pipeline.est_act_date <= est_activate_date_to
+            ))
+    if activate_date_conditions:
+        query = query.filter(or_(*activate_date_conditions))
+
+    return query
+
+
+def _apply_pipeline_sort(query, sort_by, sort_order):
+    sort_column = {
+        'date_added': Pipeline.date_added,
+        'est_sign_date': Pipeline.est_sign_date,
+        'est_act_date': Pipeline.est_act_date,
+        'tcv_usd': Pipeline.tcv_usd,
+    }.get(sort_by, Pipeline.date_added)
+
+    if sort_order == 'asc':
+        return query.order_by(
+            sort_column.asc().nullslast(),
+            Pipeline.company.asc().nullslast(),
+            Pipeline.name.asc()
+        )
+
+    return query.order_by(
+        sort_column.desc().nullslast(),
+        Pipeline.company.asc().nullslast(),
+        Pipeline.name.asc()
+    )
 
 
 def _get_owner_users_from_query(model, query, include_user_ids=None):
@@ -725,12 +983,13 @@ def index():
     # Get filter parameters from URL or session.
     # The leads page auto-submits filters, so any presence in the URL should
     # replace the saved session state, including empty multi-select groups.
-    filter_keys = ('show_unqualified', 'status', 'source', 'owner', 'sort', 'order')
+    filter_keys = ('show_unqualified', 'company', 'status', 'source', 'owner', 'sort', 'order')
     has_url_filters = any(key in request.args for key in filter_keys)
     
     if has_url_filters:
         session['leads_filters'] = {
             'show_unqualified': request.args.get('show_unqualified', 'false'),
+            'company': request.args.get('company', ''),
             'status': request.args.getlist('status'),
             'source': request.args.getlist('source'),
             'owner': request.args.getlist('owner'),
@@ -743,6 +1002,7 @@ def index():
     
     filter_values = _get_leads_filter_values(saved_filters)
     show_unqualified = filter_values['show_unqualified']
+    company_filter = filter_values['company_filter']
     status_filters = filter_values['status_filters']
     source_filters = filter_values['source_filters']
     owner_filter_ids = filter_values['owner_filter_ids']
@@ -764,6 +1024,8 @@ def index():
         )
 
     summary_query = query
+    if company_filter:
+        summary_query = summary_query.filter(SalesLead.company.ilike(f"%{company_filter}%"))
     if source_filters:
         summary_query = summary_query.filter(SalesLead.source.in_(source_filters))
     if owner_filter_ids:
@@ -812,30 +1074,21 @@ def index():
             }
         )
     
-    # Filter by unqualified status
+    filtered_query = query
     if not show_unqualified:
-        query = query.filter(SalesLead.leads_status != 'Unqualified')
-    
-    # Apply filters
+        filtered_query = filtered_query.filter(SalesLead.leads_status != 'Unqualified')
+    if company_filter:
+        filtered_query = filtered_query.filter(SalesLead.company.ilike(f"%{company_filter}%"))
     if status_filters:
-        query = query.filter(SalesLead.leads_status.in_(status_filters))
+        filtered_query = filtered_query.filter(SalesLead.leads_status.in_(status_filters))
     if source_filters:
-        query = query.filter(SalesLead.source.in_(source_filters))
+        filtered_query = filtered_query.filter(SalesLead.source.in_(source_filters))
 
-    owner_options_query = query
+    owner_options_query = filtered_query
     if owner_filter_ids:
-        query = query.filter(SalesLead.owner_id.in_(owner_filter_ids))
-    
-    # Apply sorting
-    sort_column = {
-        'date_added': SalesLead.date_added,
-        'created_at': SalesLead.created_at,
-    }.get(sort_by, SalesLead.date_added)
+        filtered_query = filtered_query.filter(SalesLead.owner_id.in_(owner_filter_ids))
 
-    if sort_order == 'asc':
-        query = query.order_by(sort_column.asc().nullslast(), SalesLead.name.asc())
-    else:
-        query = query.order_by(sort_column.desc().nullslast(), SalesLead.name.asc())
+    query = _apply_leads_sort(filtered_query, sort_by, sort_order)
     
     # Get total count before pagination
     total_count = query.count()
@@ -851,32 +1104,10 @@ def index():
         include_user_ids=owner_filter_ids
     )
     
-    # Get column preferences
-    prefs = current_user.get_column_preferences('leads')
-    default_columns = ['name', 'company', 'leads_status', 'owner', 'source', 'date_added']
-    selected_columns = prefs.get('columns', default_columns)
-    
-    # Available columns definition
-    available_columns = [
-        {'key': 'name', 'label': _('Name'), 'sortable': True},
-        {'key': 'company', 'label': _('Company'), 'sortable': True},
-        {'key': 'industry', 'label': _('Industry'), 'sortable': True},
-        {'key': 'position', 'label': _('Position'), 'sortable': True},
-        {'key': 'email', 'label': _('Email'), 'sortable': True},
-        {'key': 'mobile_number', 'label': _('Mobile'), 'sortable': False},
-        {'key': 'leads_status', 'label': _('Status'), 'sortable': True},
-        {'key': 'source', 'label': _('Source'), 'sortable': True},
-        {'key': 'event', 'label': _('Event'), 'sortable': False},
-        {'key': 'date_added', 'label': _('Date Added'), 'sortable': True},
-        {'key': 'owner', 'label': _('Owner'), 'sortable': True},
-        {'key': 'requirements', 'label': _('Requirements'), 'sortable': False},
-        {'key': 'note', 'label': _('Notes'), 'sortable': False},
-        {'key': 'created_at', 'label': _('Created'), 'sortable': True},
-    ]
-    
-    visible_columns, visible_column_keys = build_visible_columns(
+    available_columns, default_columns = _get_leads_column_settings()
+    visible_columns, visible_column_keys = _get_visible_columns_for_page(
+        'leads',
         available_columns,
-        selected_columns,
         default_columns
     )
     
@@ -885,6 +1116,7 @@ def index():
                           leads=leads,
                           total_count=total_count,
                           show_unqualified=show_unqualified,
+                          company_filter=company_filter,
                           status_filters=status_filters,
                           source_filters=source_filters,
                           owner_filter_ids=owner_filter_ids,
@@ -1150,16 +1382,11 @@ def export():
             )
         )
     
-    filter_values = _get_leads_filter_values({
-        'show_unqualified': request.args.get('show_unqualified', 'false'),
-        'status': request.args.getlist('status'),
-        'source': request.args.getlist('source'),
-        'owner': request.args.getlist('owner'),
-        'sort': request.args.get('sort', 'date_added'),
-        'order': request.args.get('order', 'desc'),
-    })
+    saved_filters = session.get('leads_filters', {})
+    filter_values = _get_leads_filter_values(saved_filters)
 
     show_unqualified = filter_values['show_unqualified']
+    company_filter = filter_values['company_filter']
     status_filters = filter_values['status_filters']
     source_filters = filter_values['source_filters']
     owner_filter_ids = filter_values['owner_filter_ids']
@@ -1168,7 +1395,8 @@ def export():
 
     if not show_unqualified:
         query = query.filter(SalesLead.leads_status != 'Unqualified')
-
+    if company_filter:
+        query = query.filter(SalesLead.company.ilike(f"%{company_filter}%"))
     if status_filters:
         query = query.filter(SalesLead.leads_status.in_(status_filters))
     if source_filters:
@@ -1176,43 +1404,13 @@ def export():
     if owner_filter_ids:
         query = query.filter(SalesLead.owner_id.in_(owner_filter_ids))
 
-    sort_column = {
-        'date_added': SalesLead.date_added,
-        'created_at': SalesLead.created_at,
-    }.get(sort_by, SalesLead.date_added)
-
-    if sort_order == 'asc':
-        query = query.order_by(sort_column.asc().nullslast(), SalesLead.name.asc())
-    else:
-        query = query.order_by(sort_column.desc().nullslast(), SalesLead.name.asc())
+    query = _apply_leads_sort(query, sort_by, sort_order)
 
     leads = query.all()
-    
-    # Prepare data
-    data = []
-    for lead in leads:
-        data.append({
-            'Name': lead.name,
-            'Company': lead.company,
-            'Industry': lead.industry,
-            'Position': lead.position,
-            'Email': lead.email,
-            'Mobile Number': lead.mobile_number,
-            'Requirements': lead.requirements,
-            'Leads Status': lead.leads_status,
-            'Source': lead.source,
-            'Event': lead.event,
-            'Date Added': str(lead.date_added) if lead.date_added else '',
-            'Owner': lead.owner.username if lead.owner else '',
-            'Note': lead.note
-        })
-    
-    if data:
-        df = pd.DataFrame(data)
-    else:
-        df = pd.DataFrame(columns=['Name', 'Company', 'Industry', 'Position', 'Email',
-                                   'Mobile Number', 'Requirements', 'Leads Status', 
-                                   'Source', 'Event', 'Date Added', 'Owner', 'Note'])
+
+    available_columns, default_columns = _get_leads_column_settings()
+    visible_columns, _ = _get_visible_columns_for_page('leads', available_columns, default_columns)
+    df = _build_export_dataframe(leads, visible_columns, _get_leads_export_value)
     
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -1397,6 +1595,7 @@ def index():
     # Check if filters are in URL (user is setting new filters)
     filter_keys = (
         'show_lost',
+        'company',
         'stage',
         'level',
         'owner',
@@ -1411,6 +1610,7 @@ def index():
     if has_url_filters:
         session['pipeline_filters'] = {
             'show_lost': request.args.get('show_lost', 'false'),
+            'company': request.args.get('company', ''),
             'stage': request.args.get('stage'),
             'level': request.args.get('level'),
             'owner': request.args.getlist('owner'),
@@ -1425,6 +1625,7 @@ def index():
     
     filter_values = _get_pipeline_filter_values(saved_filters)
     show_lost = filter_values['show_lost']
+    company_filter = filter_values['company_filter']
     stage_filter = filter_values['stage_filter']
     level_filter = filter_values['level_filter']
     owner_filter_ids = filter_values['owner_filter_ids']
@@ -1433,32 +1634,20 @@ def index():
     sort_by = filter_values['sort_by']
     sort_order = filter_values['sort_order']
     
-    # Convert quarter to date range
-    current_year = date.today().year
-    quarter_ranges = {
-        'Q1': (f'{current_year}-01-01', f'{current_year}-03-31'),
-        'Q2': (f'{current_year}-04-01', f'{current_year}-06-30'),
-        'Q3': (f'{current_year}-07-01', f'{current_year}-09-30'),
-        'Q4': (f'{current_year}-10-01', f'{current_year}-12-31'),
-    }
-    
     # Build base query
     query = _get_pipeline_access_query()
-    
-    # Filter by lost status
+
+    base_filtered_query = query
     if not show_lost:
-        query = query.filter(Pipeline.stage != '6b) Deal Lost')
-    
-    # Apply filters
+        base_filtered_query = base_filtered_query.filter(Pipeline.stage != '6b) Deal Lost')
+    if company_filter:
+        base_filtered_query = base_filtered_query.filter(Pipeline.company.ilike(f"%{company_filter}%"))
     if stage_filter:
-        query = query.filter(Pipeline.stage == stage_filter)
+        base_filtered_query = base_filtered_query.filter(Pipeline.stage == stage_filter)
     if level_filter:
-        query = query.filter(func.lower(Pipeline.level) == func.lower(level_filter))
+        base_filtered_query = base_filtered_query.filter(func.lower(Pipeline.level) == func.lower(level_filter))
 
-    owner_options_query = query
-    if owner_filter_ids:
-        query = query.filter(Pipeline.owner_id.in_(owner_filter_ids))
-
+    quarter_ranges = _build_quarter_ranges()
     sign_date_conditions = []
     for quarter in est_sign_quarters:
         if quarter in quarter_ranges:
@@ -1468,7 +1657,7 @@ def index():
                 Pipeline.est_sign_date <= est_sign_date_to
             ))
     if sign_date_conditions:
-        query = query.filter(or_(*sign_date_conditions))
+        base_filtered_query = base_filtered_query.filter(or_(*sign_date_conditions))
 
     activate_date_conditions = []
     for quarter in est_activate_quarters:
@@ -1479,14 +1668,13 @@ def index():
                 Pipeline.est_act_date <= est_activate_date_to
             ))
     if activate_date_conditions:
-        query = query.filter(or_(*activate_date_conditions))
-    
-    # Apply sorting
-    sort_column = getattr(Pipeline, sort_by, Pipeline.date_added)
-    if sort_order == 'asc':
-        query = query.order_by(sort_column.asc().nullslast())
-    else:
-        query = query.order_by(sort_column.desc().nullslast())
+        base_filtered_query = base_filtered_query.filter(or_(*activate_date_conditions))
+
+    owner_options_query = base_filtered_query
+    if owner_filter_ids:
+        base_filtered_query = base_filtered_query.filter(Pipeline.owner_id.in_(owner_filter_ids))
+
+    query = _apply_pipeline_sort(base_filtered_query, sort_by, sort_order)
     
     # Get total count
     total_count = query.count()
@@ -1505,56 +1693,10 @@ def index():
         include_user_ids=owner_filter_ids
     )
     
-    # Get column preferences
-    prefs = current_user.get_column_preferences('pipeline')
-    default_columns = [
-        'company', 'product', 'owner', 'stage', 'tcv_usd',
-        'contract_term_yrs', 'est_sign_date', 'est_act_date',
-        'award_date', 'proposal_sent_date', 'follow_up'
-    ]
-    selected_columns = prefs.get('columns', default_columns)
-    
-    # Available columns definition (all fields from Pipeline model)
-    available_columns = [
-        # Basic info
-        {'key': 'company', 'label': _('Company'), 'sortable': True},
-        {'key': 'name', 'label': _('Contact'), 'sortable': True},
-        {'key': 'industry', 'label': _('Industry'), 'sortable': True},
-        {'key': 'position', 'label': _('Position'), 'sortable': True},
-        {'key': 'email', 'label': _('Email'), 'sortable': True},
-        {'key': 'mobile_number', 'label': _('Mobile'), 'sortable': True},
-        
-        # Product & Value
-        {'key': 'product', 'label': _('Product'), 'sortable': True},
-        {'key': 'tcv_usd', 'label': _('TCV'), 'sortable': True},
-        {'key': 'mrc_usd', 'label': _('MRC'), 'sortable': True},
-        {'key': 'otc_usd', 'label': _('OTC'), 'sortable': True},
-        {'key': 'gp', 'label': _('Gross Profit'), 'sortable': True},
-        {'key': 'contract_term_yrs', 'label': _('Term'), 'sortable': True},
-        {'key': 'gp_margin', 'label': _('GP %'), 'sortable': True},
-        
-        # Ownership & Stage
-        {'key': 'owner', 'label': _('Owner'), 'sortable': True},
-        {'key': 'stage', 'label': _('Stage'), 'sortable': True},
-        {'key': 'win_rate', 'label': _('Win Rate'), 'sortable': True},
-        
-        # Dates
-        {'key': 'est_sign_date', 'label': _('Est. Sign'), 'sortable': True},
-        {'key': 'est_act_date', 'label': _('Est. Activate'), 'sortable': True},
-        {'key': 'deposit_date', 'label': _('Deposit Date'), 'sortable': True},
-        {'key': 'award_date', 'label': _('Award Date'), 'sortable': True},
-        {'key': 'proposal_sent_date', 'label': _('Proposal Sent'), 'sortable': True},
-        {'key': 'date_added', 'label': _('Date Added'), 'sortable': True},
-        
-        # Additional
-        {'key': 'follow_up', 'label': _('Follow-up'), 'sortable': False},
-        {'key': 'comments', 'label': _('Comments'), 'sortable': False},
-        {'key': 'stuckpoint', 'label': _('Current Stuckpoint'), 'sortable': False},
-    ]
-    
-    visible_columns, visible_column_keys = build_visible_columns(
+    available_columns, default_columns = _get_pipeline_column_settings()
+    visible_columns, visible_column_keys = _get_visible_columns_for_page(
+        'pipeline',
         available_columns,
-        selected_columns,
         default_columns
     )
     
@@ -1564,6 +1706,7 @@ def index():
                           total_tcv=total_tcv,
                           users=users,
                           show_lost=show_lost,
+                          company_filter=company_filter,
                           stage_filter=stage_filter,
                           level_filter=level_filter,
                           owner_filter_ids=owner_filter_ids,
@@ -2000,6 +2143,7 @@ def export():
     
     filter_values = _get_pipeline_filter_values(saved_filters)
     show_lost = filter_values['show_lost']
+    company_filter = filter_values['company_filter']
     stage_filter = filter_values['stage_filter']
     level_filter = filter_values['level_filter']
     owner_filter_ids = filter_values['owner_filter_ids']
@@ -2008,38 +2152,27 @@ def export():
     sort_by = filter_values['sort_by']
     sort_order = filter_values['sort_order']
     
-    # Convert quarter to date range
-    current_year = date.today().year
-    quarter_ranges = {
-        'Q1': (f'{current_year}-01-01', f'{current_year}-03-31'),
-        'Q2': (f'{current_year}-04-01', f'{current_year}-06-30'),
-        'Q3': (f'{current_year}-07-01', f'{current_year}-09-30'),
-        'Q4': (f'{current_year}-10-01', f'{current_year}-12-31'),
-    }
-    
     # Get filtered pipelines
     query = _get_pipeline_access_query()
-    
-    # Apply filters (same as index view)
     if not show_lost:
         query = query.filter(Pipeline.stage != '6b) Deal Lost')
-    
+    if company_filter:
+        query = query.filter(Pipeline.company.ilike(f"%{company_filter}%"))
     if stage_filter:
         query = query.filter(Pipeline.stage == stage_filter)
-    
     if level_filter:
-        query = query.filter(Pipeline.level == level_filter)
-    
+        query = query.filter(func.lower(Pipeline.level) == func.lower(level_filter))
     if owner_filter_ids:
         query = query.filter(Pipeline.owner_id.in_(owner_filter_ids))
 
+    quarter_ranges = _build_quarter_ranges()
     sign_date_conditions = []
     for quarter in est_sign_quarters:
         if quarter in quarter_ranges:
             est_sign_date_from, est_sign_date_to = quarter_ranges[quarter]
             sign_date_conditions.append(and_(
-                Pipeline.est_sign_date >= datetime.strptime(est_sign_date_from, '%Y-%m-%d').date(),
-                Pipeline.est_sign_date <= datetime.strptime(est_sign_date_to, '%Y-%m-%d').date()
+                Pipeline.est_sign_date >= est_sign_date_from,
+                Pipeline.est_sign_date <= est_sign_date_to
             ))
     if sign_date_conditions:
         query = query.filter(or_(*sign_date_conditions))
@@ -2049,20 +2182,13 @@ def export():
         if quarter in quarter_ranges:
             est_activate_date_from, est_activate_date_to = quarter_ranges[quarter]
             activate_date_conditions.append(and_(
-                Pipeline.est_act_date >= datetime.strptime(est_activate_date_from, '%Y-%m-%d').date(),
-                Pipeline.est_act_date <= datetime.strptime(est_activate_date_to, '%Y-%m-%d').date()
+                Pipeline.est_act_date >= est_activate_date_from,
+                Pipeline.est_act_date <= est_activate_date_to
             ))
     if activate_date_conditions:
         query = query.filter(or_(*activate_date_conditions))
-    
-    # Apply sorting
-    sort_column = getattr(Pipeline, sort_by, None)
-    if sort_column is None:
-        sort_column = Pipeline.date_added
-    if sort_order == 'asc':
-        query = query.order_by(sort_column.asc().nullslast())
-    else:
-        query = query.order_by(sort_column.desc().nullslast())
+
+    query = _apply_pipeline_sort(query, sort_by, sort_order)
     
     # Eagerly load relationships to avoid lazy loading issues
     pipelines = query.options(db.joinedload(Pipeline.owner), db.joinedload(Pipeline.support_team)).all()
@@ -2078,87 +2204,20 @@ def export():
         if stale_owner_ids:
             refresh_weekly_metrics(owner_ids=stale_owner_ids)
     
-    # Prepare data
-    data = []
-    for p in pipelines:
-        try:
-            # Force evaluation of support_team query and handle None owner
-            support_list = list(p.support_team)
-            support_names = '/'.join([u.username for u in support_list]) if support_list else ''
-            owner_name = p.owner.username if p.owner else ''
-        except Exception as e:
-            # Log the error and continue with empty values
-            current_app.logger.error(f"Error processing pipeline {p.id}: {str(e)}")
-            support_names = ''
-            owner_name = ''
-        
-        row_data = {
-            'Name': p.name,
-            'Company': p.company,
-            'Industry': p.industry,
-            'Position': p.position,
-            'Email': p.email,
-            'Mobile Number': p.mobile_number,
-            'Owner': owner_name,
-            'Support': support_names,
-            'Product': p.product,
-            'TCV USD': p.tcv_usd,
-            'Contract Term (Yrs)': p.contract_term_yrs,
-            'MRC USD': p.mrc_usd,
-            'OTC USD': p.otc_usd,
-            'GP Margin': f"{p.gp_margin * 100:.0f}%",
-            'GP': p.get_gp(),
-            'MG': p.mg,
-            'Est. Sign Date': p.est_sign_date.strftime('%Y-%m-%d') if p.est_sign_date else '',
-            'Est. Act. Date': p.est_act_date.strftime('%Y-%m-%d') if p.est_act_date else '',
-            'Deposit Date': p.deposit_date.strftime('%Y-%m-%d') if p.deposit_date else '',
-            'Win Rate': f"{p.win_rate * 100:.0f}%",
-            'Stage': p.stage,
-            'Award Date': p.award_date.strftime('%Y-%m-%d') if p.award_date else '',
-            'Proposal Sent Date': p.proposal_sent_date.strftime('%Y-%m-%d') if p.proposal_sent_date else '',
-            'Level': p.level,
-            'Stuckpoint': p.stuckpoint or '',
-            'Follow-up': p.follow_up or '',
-            'Comments': p.comments or '',
-            'Forecast Base Month': p.forecast_base_month.strftime('%Y-%m-%d') if p.forecast_base_month else '',
-            'Date Added': p.date_added.strftime('%Y-%m-%d') if p.date_added else '',
-            'Created At': p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '',
-            'Updated At': p.updated_at.strftime('%Y-%m-%d %H:%M') if p.updated_at else ''
-        }
-        
-        # Keep fixed M1-M12 headers so exported files remain round-trip compatible
-        # with the import logic and avoid cross-row month misalignment.
-        for i in range(1, 13):
-            monthly_value = getattr(p, f'm{i}')
-            row_data[f'M{i}'] = round(float(monthly_value or 0), 4)
-        
-        data.append(row_data)
-    
-    if data:
-        df = pd.DataFrame(data)
-    else:
-        # Create empty dataframe with proper column names
-        base_columns = ['Name', 'Company', 'Industry', 'Position', 'Email',
-                       'Mobile Number', 'Owner', 'Support', 'Product', 
-                       'TCV USD', 'Contract Term (Yrs)', 'MRC USD', 'OTC USD',
-                       'GP Margin', 'GP', 'MG', 'Est. Sign Date', 'Est. Act. Date',
-                       'Deposit Date',
-                       'Win Rate', 'Stage', 'Award Date', 'Proposal Sent Date', 'Level', 
-                       'Stuckpoint', 'Follow-up', 'Comments', 'Forecast Base Month', 'Date Added', 
-                       'Created At', 'Updated At']
-        df = pd.DataFrame(columns=base_columns + [f'M{i}' for i in range(1, 13)])
+    available_columns, default_columns = _get_pipeline_column_settings()
+    visible_columns, _ = _get_visible_columns_for_page('pipeline', available_columns, default_columns)
+    df = _build_export_dataframe(pipelines, visible_columns, _get_pipeline_export_value)
     
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Pipeline')
         worksheet = writer.sheets['Pipeline']
-
-        numeric_columns = {'TCV USD', 'MRC USD', 'OTC USD', 'GP'}
-        numeric_columns.update({f'M{i}' for i in range(1, 13)})
+        header_to_key = {column['label']: column['key'] for column in visible_columns}
+        numeric_keys = {'tcv_usd', 'mrc_usd', 'otc_usd', 'gp'}
 
         for column_cells in worksheet.iter_cols(1, worksheet.max_column):
             header = column_cells[0].value
-            if header in numeric_columns:
+            if header_to_key.get(header) in numeric_keys:
                 for cell in column_cells[1:]:
                     cell.number_format = '#,##0.0000'
     
