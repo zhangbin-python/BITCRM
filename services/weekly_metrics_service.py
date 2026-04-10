@@ -52,7 +52,7 @@ def _tracked_owner_ids(obj) -> set[int]:
         history = None
 
     if history:
-        for owner_id in history.added + history.deleted:
+        for owner_id in list(history.added) + list(history.deleted):
             if owner_id:
                 owner_ids.add(int(owner_id))
 
