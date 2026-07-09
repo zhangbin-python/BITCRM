@@ -325,6 +325,7 @@ def _get_pipeline_filter_values(saved_filters):
 
 
 DEFAULT_HIDDEN_PIPELINE_STAGES = ('6b) Deal Lost', '7) Activated')
+WON_PIPELINE_STAGES = ('6a) Deal Won', '7) Activated')
 DEFAULT_HIDDEN_LEAD_STATUSES = ('Qualified', 'Unqualified')
 
 
@@ -1702,6 +1703,7 @@ def index():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 100, type=int)
     pipelines = query.paginate(page=page, per_page=per_page, error_out=False)
+    won_deals_count = sum(1 for pipeline in pipelines.items if pipeline.stage in WON_PIPELINE_STAGES)
     
     users = _get_owner_users_from_query(
         Pipeline,
@@ -1720,6 +1722,7 @@ def index():
                           pipelines=pipelines,
                           total_count=total_count,
                           total_tcv=total_tcv,
+                          won_deals_count=won_deals_count,
                           users=users,
                           show_lost=show_lost,
                           company_filter=company_filter,

@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 import unittest
 from datetime import date
@@ -167,6 +168,16 @@ class FilterAndExportTests(unittest.TestCase):
         rows = list(sheet.iter_rows(min_row=2, values_only=True))
         return headers, rows
 
+    def _summary_value(self, html, label):
+        match = re.search(
+            rf'<div class="pipeline-summary-label">{re.escape(label)}</div>.*?'
+            r'<div class="pipeline-summary-value">([^<]+)</div>',
+            html,
+            re.S,
+        )
+        self.assertIsNotNone(match, f'Missing summary card for {label}')
+        return match.group(1).strip()
+
     def test_leads_company_filter_and_owner_can_reset_to_all(self):
         filtered = self.client.get(
             f'/leads/?company=Acme&owner={self.anthony_id}&sort=date_added&order=desc'
@@ -254,6 +265,7 @@ class FilterAndExportTests(unittest.TestCase):
         show_all_html = show_all_page.get_data(as_text=True)
         self.assertIn('Globex Systems', show_all_html)
         self.assertIn('Acme Activated', show_all_html)
+        self.assertEqual(self._summary_value(show_all_html, 'Won Deals'), '1')
 
         multi_stage_query = [
             ('stage', '1) Prospecting'),

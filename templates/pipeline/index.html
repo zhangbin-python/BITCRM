@@ -240,7 +240,7 @@
                             <div class="pipeline-summary-label">{{ _('Won Deals') }}</div>
                             <span class="pipeline-summary-icon"><i class="bi bi-trophy-fill"></i></span>
                         </div>
-                        <div class="pipeline-summary-value">{{ pipelines.items|selectattr('stage', 'equalto', '6a) Deal Won')|list|length }}</div>
+                        <div class="pipeline-summary-value">{{ won_deals_count }}</div>
                         <div class="pipeline-summary-meta mt-2">{{ _('Won deals on this page') }}</div>
                     </div>
                 </div>
