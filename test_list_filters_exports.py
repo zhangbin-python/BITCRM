@@ -78,6 +78,14 @@ class FilterAndExportTests(unittest.TestCase):
                     owner_id=cls.anthony_id,
                     date_added=date(2026, 3, 3),
                 ),
+                SalesLead(
+                    name='Lead Lost',
+                    company='Acme Lost',
+                    leads_status='Unqualified',
+                    source='Website',
+                    owner_id=cls.bruce_id,
+                    date_added=date(2026, 3, 4),
+                ),
                 Pipeline(
                     name='Contact Bruce',
                     company='Acme Telecom',
@@ -153,13 +161,34 @@ class FilterAndExportTests(unittest.TestCase):
         filtered_html = filtered.get_data(as_text=True)
         self.assertIn('Acme Korea', filtered_html)
         self.assertNotIn('Acme China', filtered_html)
+        self.assertNotIn('Acme Lost', filtered_html)
 
         reset = self.client.get('/leads/?company=Acme&sort=date_added&order=desc')
         self.assertEqual(reset.status_code, 200)
         reset_html = reset.get_data(as_text=True)
         self.assertIn('Acme Korea', reset_html)
-        self.assertIn('Acme China', reset_html)
+        self.assertNotIn('Acme China', reset_html)
+        self.assertNotIn('Acme Lost', reset_html)
         self.assertLess(reset_html.index('name="company"'), reset_html.index('All Statuses'))
+
+    def test_leads_default_hides_qualified_and_unqualified_until_show_all(self):
+        default_page = self.client.get('/leads/?sort=date_added&order=desc')
+        self.assertEqual(default_page.status_code, 200)
+        default_html = default_page.get_data(as_text=True)
+        self.assertIn('Acme Korea', default_html)
+        self.assertNotIn('Acme China', default_html)
+        self.assertNotIn('Globex', default_html)
+        self.assertNotIn('Acme Lost', default_html)
+        self.assertIn('Show All', default_html)
+        self.assertNotIn('Show Unqualified', default_html)
+
+        show_all_page = self.client.get('/leads/?show_unqualified=true&sort=date_added&order=desc')
+        self.assertEqual(show_all_page.status_code, 200)
+        show_all_html = show_all_page.get_data(as_text=True)
+        self.assertIn('Acme Korea', show_all_html)
+        self.assertIn('Acme China', show_all_html)
+        self.assertIn('Globex', show_all_html)
+        self.assertIn('Acme Lost', show_all_html)
 
     def test_leads_export_matches_visible_columns_and_filters(self):
         response = self.client.get(
@@ -169,7 +198,7 @@ class FilterAndExportTests(unittest.TestCase):
 
         headers, rows = self._read_workbook(response)
         self.assertEqual(headers, ['Company', 'Owner'])
-        self.assertEqual(rows, [('Acme China', 'Bruce')])
+        self.assertEqual(rows, [])
 
     def test_pipeline_company_filter_and_export_match_page_state(self):
         page = self.client.get('/pipeline/?company=Acme&sort=date_added&order=desc')

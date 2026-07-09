@@ -320,6 +320,13 @@ def _get_pipeline_filter_values(saved_filters):
     }
 
 
+DEFAULT_HIDDEN_LEAD_STATUSES = ('Qualified', 'Unqualified')
+
+
+def _hide_default_lead_statuses(query):
+    return query.filter(SalesLead.leads_status.notin_(DEFAULT_HIDDEN_LEAD_STATUSES))
+
+
 def _get_leads_filter_values(saved_filters):
     filter_keys = {'show_unqualified', 'company', 'status', 'source', 'owner', 'sort', 'order'}
     use_request_values = any(key in request.args for key in filter_keys)
@@ -345,7 +352,7 @@ def _get_leads_filter_values(saved_filters):
 
 def _apply_leads_filters(query, filter_values):
     if not filter_values['show_unqualified']:
-        query = query.filter(SalesLead.leads_status != 'Unqualified')
+        query = _hide_default_lead_statuses(query)
 
     if filter_values['company_filter']:
         query = query.filter(SalesLead.company.ilike(f"%{filter_values['company_filter']}%"))
@@ -1070,13 +1077,13 @@ def index():
                 'icon': icon_name,
                 'share_text': _('%(percent)s%% of total', percent=percentage),
                 'is_active': status_name in status_filters,
-                'show_unqualified': True if status_name == 'Unqualified' else show_unqualified,
+                'show_unqualified': True if status_name in DEFAULT_HIDDEN_LEAD_STATUSES else show_unqualified,
             }
         )
     
     filtered_query = query
     if not show_unqualified:
-        filtered_query = filtered_query.filter(SalesLead.leads_status != 'Unqualified')
+        filtered_query = _hide_default_lead_statuses(filtered_query)
     if company_filter:
         filtered_query = filtered_query.filter(SalesLead.company.ilike(f"%{company_filter}%"))
     if status_filters:
@@ -1394,7 +1401,7 @@ def export():
     sort_order = filter_values['sort_order']
 
     if not show_unqualified:
-        query = query.filter(SalesLead.leads_status != 'Unqualified')
+        query = _hide_default_lead_statuses(query)
     if company_filter:
         query = query.filter(SalesLead.company.ilike(f"%{company_filter}%"))
     if status_filters:

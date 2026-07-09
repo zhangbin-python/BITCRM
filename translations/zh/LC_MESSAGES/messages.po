@@ -751,6 +751,10 @@ msgstr "赢单交易"
 msgid "Show Lost"
 msgstr "显示输单"
 
+#: templates/leads/index.html:362
+msgid "Show All"
+msgstr "显示全部"
+
 #: templates/pipeline/index.html:73
 msgid "No"
 msgstr "否"
