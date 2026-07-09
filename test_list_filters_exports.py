@@ -128,6 +128,20 @@ class FilterAndExportTests(unittest.TestCase):
                     level='Stretch',
                     date_added=date(2026, 3, 3),
                 ),
+                Pipeline(
+                    name='Contact Activated',
+                    company='Acme Activated',
+                    owner_id=cls.bruce_id,
+                    product='Managed Service',
+                    mrc_usd=100,
+                    otc_usd=0,
+                    contract_term_yrs=3,
+                    gp_margin=0.5,
+                    win_rate=1,
+                    stage='7) Activated',
+                    level='Committed',
+                    date_added=date(2026, 3, 4),
+                ),
             ])
             db.session.commit()
 
@@ -206,12 +220,57 @@ class FilterAndExportTests(unittest.TestCase):
         html = page.get_data(as_text=True)
         self.assertIn('Acme Telecom', html)
         self.assertIn('Acme Networks', html)
+        self.assertNotIn('Acme Activated', html)
         self.assertNotIn('Globex Systems', html)
         self.assertLess(html.index('name="company"'), html.index('Sign Date'))
 
         export = self.client.get('/pipeline/export?company=Acme&sort=date_added&order=desc')
         self.assertEqual(export.status_code, 200)
 
+        headers, rows = self._read_workbook(export)
+        self.assertEqual(headers, ['Company', 'Stage', 'TCV'])
+        self.assertEqual(
+            rows,
+            [
+                ('Acme Networks', '2) Lead Qualified', 2400),
+                ('Acme Telecom', '1) Prospecting', 1200),
+            ],
+        )
+
+    def test_pipeline_stage_filter_is_multi_select_and_show_all_reveals_hidden_stages(self):
+        default_page = self.client.get('/pipeline/?sort=date_added&order=desc')
+        self.assertEqual(default_page.status_code, 200)
+        default_html = default_page.get_data(as_text=True)
+        self.assertIn('Acme Telecom', default_html)
+        self.assertIn('Acme Networks', default_html)
+        self.assertNotIn('Globex Systems', default_html)
+        self.assertNotIn('Acme Activated', default_html)
+        self.assertIn('Show All', default_html)
+        self.assertNotIn('Show Lost', default_html)
+        self.assertIn('type="checkbox" name="stage"', default_html)
+
+        show_all_page = self.client.get('/pipeline/?show_lost=true&sort=date_added&order=desc')
+        self.assertEqual(show_all_page.status_code, 200)
+        show_all_html = show_all_page.get_data(as_text=True)
+        self.assertIn('Globex Systems', show_all_html)
+        self.assertIn('Acme Activated', show_all_html)
+
+        multi_stage_query = [
+            ('stage', '1) Prospecting'),
+            ('stage', '2) Lead Qualified'),
+            ('sort', 'date_added'),
+            ('order', 'desc'),
+        ]
+        multi_stage_page = self.client.get('/pipeline/', query_string=multi_stage_query)
+        self.assertEqual(multi_stage_page.status_code, 200)
+        multi_stage_html = multi_stage_page.get_data(as_text=True)
+        self.assertIn('Acme Telecom', multi_stage_html)
+        self.assertIn('Acme Networks', multi_stage_html)
+        self.assertNotIn('Globex Systems', multi_stage_html)
+        self.assertNotIn('Acme Activated', multi_stage_html)
+
+        export = self.client.get('/pipeline/export', query_string=multi_stage_query)
+        self.assertEqual(export.status_code, 200)
         headers, rows = self._read_workbook(export)
         self.assertEqual(headers, ['Company', 'Stage', 'TCV'])
         self.assertEqual(

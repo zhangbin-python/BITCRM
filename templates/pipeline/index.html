@@ -176,7 +176,7 @@
                     <i class="bi bi-upload"></i>
                     {{ _('Import') }}
                 </button>
-                <a href="{{ url_for('pipeline.export', show_lost='true' if show_lost else 'false', company=company_filter or None, stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
+                <a href="{{ url_for('pipeline.export', show_lost='true' if show_lost else 'false', company=company_filter or None, stage=stage_filters, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-file-earmark-excel"></i>
                     {{ _('Export') }}
                 </a>
@@ -329,13 +329,26 @@
                 </div>
                 <!-- Stage -->
                 <div class="col-6 col-md-auto">
+                    <input type="hidden" name="stage" value="">
                     <label class="form-label small mb-1">{{ _('Stage') }}</label>
-                    <select name="stage" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">{{ _('All') }}</option>
+                    <div class="dropdown pipeline-multi-filter" data-default-label="{{ _('All Stages') }}">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center w-100"
+                                type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <span class="multi-filter-label">{{ _('All Stages') }}</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3">
+                            <div class="form-check border-bottom pb-2 mb-2">
+                                <input class="form-check-input pipeline-filter-all" type="checkbox" id="stage_all" {% if not stage_filters %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="stage_all">{{ _('All Stages') }}</label>
+                            </div>
                         {% for stage in ['1) Prospecting', '2) Lead Qualified', '3) Demo/Meeting', '4) Proposal Submitted', '5) Negotiation', '6a) Deal Won', '6b) Deal Lost', '7) Activated'] %}
-                        <option value="{{ stage }}" {% if stage_filter == stage %}selected{% endif %}>{{ _(stage) }}</option>
+                            <div class="form-check">
+                                <input class="form-check-input pipeline-filter-option" type="checkbox" name="stage" id="stage_{{ loop.index }}" value="{{ stage }}" data-label="{{ _(stage) }}" {% if stage in stage_filters %}checked{% endif %}>
+                                <label class="form-check-label" for="stage_{{ loop.index }}">{{ _(stage) }}</label>
+                            </div>
                         {% endfor %}
-                    </select>
+                        </div>
+                    </div>
                 </div>
                 <!-- Level -->
                 <div class="col-6 col-md-auto">
@@ -391,14 +404,14 @@
                         </option>
                     </select>
                 </div>
-                <!-- Show Lost + Clear - Right side -->
+                <!-- Show All + Clear - Right side -->
                 <div class="col-12 col-md-auto ms-md-auto pipeline-filter-actions">
                     <a href="{{ url_for('main.clear_filters', page='pipeline') }}" class="btn btn-outline-secondary btn-sm" title="{{ _('Clear Filters') }}">
                         <i class="bi bi-x-circle me-1"></i>{{ _('Clear') }}
                     </a>
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" id="showLost" name="show_lost" value="true" {% if show_lost %}checked{% endif %} onchange="this.form.submit()">
-                        <label class="form-check-label small" for="showLost">{{ _('Show Lost') }}</label>
+                        <label class="form-check-label small" for="showLost">{{ _('Show All') }}</label>
                     </div>
                 </div>
             </form>
@@ -612,7 +625,7 @@
             {% if page_num == pipelines.page %}
             <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
             {% else %}
-            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost='true' if show_lost else 'false', company=company_filter or None, stage=stage_filter, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('pipeline.index', page=page_num, show_lost='true' if show_lost else 'false', company=company_filter or None, stage=stage_filters, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}">{{ page_num }}</a></li>
             {% endif %}
             {% else %}
             <li class="page-item disabled"><span class="page-link">...</span></li>

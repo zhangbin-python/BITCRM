@@ -285,12 +285,16 @@ def _get_pipeline_filter_values(saved_filters):
     use_request_values = any(key in request.args for key in filter_keys)
 
     owner_values = request.args.getlist('owner') if use_request_values else saved_filters.get('owner', [])
+    stage_values = request.args.getlist('stage') if use_request_values else saved_filters.get('stage', [])
     est_sign_quarter_values = request.args.getlist('est_sign_quarter') if use_request_values else saved_filters.get('est_sign_quarter', [])
     est_activate_quarter_values = request.args.getlist('est_activate_quarter') if use_request_values else saved_filters.get('est_activate_quarter', [])
 
     owner_filter_ids = _normalize_multi_filter_values(
         owner_values,
         caster=int
+    )
+    stage_filters = _normalize_multi_filter_values(
+        stage_values
     )
     est_sign_quarters = _normalize_multi_filter_values(
         est_sign_quarter_values
@@ -310,7 +314,7 @@ def _get_pipeline_filter_values(saved_filters):
     return {
         'show_lost': (request.args.get('show_lost', 'false') if use_request_values else saved_filters.get('show_lost', 'false')) == 'true',
         'company_filter': (request.args.get('company', '') if use_request_values else saved_filters.get('company', '')).strip(),
-        'stage_filter': (request.args.get('stage') if use_request_values else saved_filters.get('stage')) or None,
+        'stage_filters': stage_filters,
         'level_filter': (request.args.get('level') if use_request_values else saved_filters.get('level')) or None,
         'owner_filter_ids': owner_filter_ids,
         'est_sign_quarters': est_sign_quarters,
@@ -320,7 +324,12 @@ def _get_pipeline_filter_values(saved_filters):
     }
 
 
+DEFAULT_HIDDEN_PIPELINE_STAGES = ('6b) Deal Lost', '7) Activated')
 DEFAULT_HIDDEN_LEAD_STATUSES = ('Qualified', 'Unqualified')
+
+
+def _hide_default_pipeline_stages(query):
+    return query.filter(Pipeline.stage.notin_(DEFAULT_HIDDEN_PIPELINE_STAGES))
 
 
 def _hide_default_lead_statuses(query):
@@ -383,13 +392,13 @@ def _apply_leads_sort(query, sort_by, sort_order):
 
 def _apply_pipeline_filters(query, filter_values):
     if not filter_values['show_lost']:
-        query = query.filter(Pipeline.stage != '6b) Deal Lost')
+        query = _hide_default_pipeline_stages(query)
 
     if filter_values['company_filter']:
         query = query.filter(Pipeline.company.ilike(f"%{filter_values['company_filter']}%"))
 
-    if filter_values['stage_filter']:
-        query = query.filter(Pipeline.stage == filter_values['stage_filter'])
+    if filter_values['stage_filters']:
+        query = query.filter(Pipeline.stage.in_(filter_values['stage_filters']))
 
     if filter_values['level_filter']:
         query = query.filter(func.lower(Pipeline.level) == func.lower(filter_values['level_filter']))
@@ -1618,7 +1627,7 @@ def index():
         session['pipeline_filters'] = {
             'show_lost': request.args.get('show_lost', 'false'),
             'company': request.args.get('company', ''),
-            'stage': request.args.get('stage'),
+            'stage': request.args.getlist('stage'),
             'level': request.args.get('level'),
             'owner': request.args.getlist('owner'),
             'est_sign_quarter': request.args.getlist('est_sign_quarter'),
@@ -1633,7 +1642,7 @@ def index():
     filter_values = _get_pipeline_filter_values(saved_filters)
     show_lost = filter_values['show_lost']
     company_filter = filter_values['company_filter']
-    stage_filter = filter_values['stage_filter']
+    stage_filters = filter_values['stage_filters']
     level_filter = filter_values['level_filter']
     owner_filter_ids = filter_values['owner_filter_ids']
     est_sign_quarters = filter_values['est_sign_quarters']
@@ -1646,11 +1655,11 @@ def index():
 
     base_filtered_query = query
     if not show_lost:
-        base_filtered_query = base_filtered_query.filter(Pipeline.stage != '6b) Deal Lost')
+        base_filtered_query = _hide_default_pipeline_stages(base_filtered_query)
     if company_filter:
         base_filtered_query = base_filtered_query.filter(Pipeline.company.ilike(f"%{company_filter}%"))
-    if stage_filter:
-        base_filtered_query = base_filtered_query.filter(Pipeline.stage == stage_filter)
+    if stage_filters:
+        base_filtered_query = base_filtered_query.filter(Pipeline.stage.in_(stage_filters))
     if level_filter:
         base_filtered_query = base_filtered_query.filter(func.lower(Pipeline.level) == func.lower(level_filter))
 
@@ -1714,7 +1723,7 @@ def index():
                           users=users,
                           show_lost=show_lost,
                           company_filter=company_filter,
-                          stage_filter=stage_filter,
+                          stage_filters=stage_filters,
                           level_filter=level_filter,
                           owner_filter_ids=owner_filter_ids,
                           est_sign_quarters=est_sign_quarters,
@@ -2151,7 +2160,7 @@ def export():
     filter_values = _get_pipeline_filter_values(saved_filters)
     show_lost = filter_values['show_lost']
     company_filter = filter_values['company_filter']
-    stage_filter = filter_values['stage_filter']
+    stage_filters = filter_values['stage_filters']
     level_filter = filter_values['level_filter']
     owner_filter_ids = filter_values['owner_filter_ids']
     est_sign_quarters = filter_values['est_sign_quarters']
@@ -2162,11 +2171,11 @@ def export():
     # Get filtered pipelines
     query = _get_pipeline_access_query()
     if not show_lost:
-        query = query.filter(Pipeline.stage != '6b) Deal Lost')
+        query = _hide_default_pipeline_stages(query)
     if company_filter:
         query = query.filter(Pipeline.company.ilike(f"%{company_filter}%"))
-    if stage_filter:
-        query = query.filter(Pipeline.stage == stage_filter)
+    if stage_filters:
+        query = query.filter(Pipeline.stage.in_(stage_filters))
     if level_filter:
         query = query.filter(func.lower(Pipeline.level) == func.lower(level_filter))
     if owner_filter_ids:
