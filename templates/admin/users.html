@@ -74,19 +74,26 @@
                             </td>
                             <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
-                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
+                                <span class="d-inline-block" data-bs-toggle="tooltip" title="{{ _('Edit User') }}">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}" aria-label="{{ _('Edit User') }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </span>
                                 {% if user.id != current_user.id %}
                                 <form action="{{ url_for('admin.toggle_user', user_id=user.id) }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn {% if user.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} btn-sm" title="{{ _('Toggle Status') }}">
-                                        <i class="fas fa-power-off"></i>
-                                    </button>
+                                    {% set status_action_label = _('Deactivate User') if user.is_active else _('Activate User') %}
+                                    <span class="d-inline-block" data-bs-toggle="tooltip" title="{{ status_action_label }}">
+                                        <button type="submit" class="btn {% if user.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} btn-sm" aria-label="{{ status_action_label }}">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                    </span>
                                 </form>
                                 <form action="{{ url_for('admin.reset_password', user_id=user.id) }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-info btn-sm" title="{{ _('Reset Password') }}" onclick="return confirm('{{ _('Reset password to default?') }}')">
-                                        <i class="fas fa-key"></i>
-                                    </button>
+                                    <span class="d-inline-block" data-bs-toggle="tooltip" title="{{ _('Reset Password') }}">
+                                        <button type="submit" class="btn btn-outline-info btn-sm" aria-label="{{ _('Reset Password') }}" onclick="return confirm('{{ _('Reset password to default?') }}')">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                    </span>
                                 </form>
                                 {% endif %}
                             </td>
@@ -178,4 +185,15 @@
 </div>
 {% endfor %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 {% endblock %}
