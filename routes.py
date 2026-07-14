@@ -2954,7 +2954,7 @@ def api_quick_update(lead_id):
             return jsonify({'success': False, 'error': f'Field {field} is not editable'}), 400
         
         # Handle status changes - log to pipeline comments
-        if field == 'leads_status' and lead.leads_status != value:
+        if field == 'leads_status' and value == 'Qualified' and lead.leads_status != 'Qualified':
             # Get or create pipeline
             if not lead.pipeline:
                 pipeline = lead.convert_to_pipeline()
