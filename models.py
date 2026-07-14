@@ -464,12 +464,24 @@ class Pipeline(db.Model):
         if latest_date:
             return (date.today() - latest_date).days
         return None
+
+    def get_no_followup_age_days(self):
+        """Return inclusive days since creation when no follow-up exists."""
+        from datetime import date
+
+        start_date = self.date_added
+        if not start_date and self.created_at:
+            start_date = self.created_at.date()
+        if not start_date:
+            return None
+
+        return max((date.today() - start_date).days + 1, 1)
     
     def get_followup_color_class(self):
         """Return background color class based on days since follow-up.
 
         Rules:
-        - No follow-up: red (bg-danger), display "无跟进"
+        - No follow-up: use inclusive days since pipeline creation
         - <=10 days: green (bg-success)
         - 11-30 days: yellow (bg-warning)
         - >30 days: red (bg-danger)
@@ -478,7 +490,9 @@ class Pipeline(db.Model):
         """
         days = self.get_followup_days_ago()
         if days is None:
-            return 'bg-danger'  # No follow-up: red
+            days = self.get_no_followup_age_days()
+        if days is None:
+            return 'bg-danger'
         elif days <= 10:
             return 'bg-success'  # Green
         elif days <= 30:
@@ -489,11 +503,14 @@ class Pipeline(db.Model):
     def get_followup_display(self):
         """Return display text for follow-up.
 
-        Returns: "N days ago" for follow-ups, or "No follow-up" if none.
+        Returns follow-up recency or inclusive pipeline age when none exists.
         """
         days = self.get_followup_days_ago()
         if days is None:
-            return 'No follow-up'
+            age_days = self.get_no_followup_age_days()
+            if age_days is None:
+                return 'No follow-up'
+            return f'No follow-up · Day {age_days}'
         elif days == 0:
             return 'Today'
         elif days == 1:

@@ -1859,9 +1859,14 @@ def add():
                 stage=request.form.get('stage', 'Prospecting'),
                 level=request.form.get('level', 'Stretch'),
                 comments=request.form.get('comments'),
+                stuckpoint=request.form.get('stuckpoint'),
                 owner_id=request.form.get('owner_id', current_user.id),
                 date_added=date.today()
             )
+
+            initial_followup = request.form.get('follow_up', '').strip()
+            if initial_followup:
+                pipeline.add_followup(followup_text=initial_followup)
             
             # Calculate TCV and GP
             calculate_pipeline_metrics(pipeline)
