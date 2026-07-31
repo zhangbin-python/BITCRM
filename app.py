@@ -131,10 +131,12 @@ def create_app(config_class=None):
     with app.app_context():
         # 1. Register blueprints
         from routes import main_bp, leads_bp, pipeline_bp, tasks_bp, admin_bp, api_bp
+        from sales_activities_routes import sales_activities_bp
         app.register_blueprint(main_bp)
         app.register_blueprint(leads_bp, url_prefix='/leads')
         app.register_blueprint(pipeline_bp, url_prefix='/pipeline')
         app.register_blueprint(tasks_bp, url_prefix='/tasks')
+        app.register_blueprint(sales_activities_bp, url_prefix='/sales-activities')
         app.register_blueprint(admin_bp, url_prefix='/admin')
         app.register_blueprint(api_bp)
         
@@ -145,7 +147,11 @@ def create_app(config_class=None):
         # 3. Create database tables (import models to register them)
         from models import User, Pipeline, disable_metrics_events
         
-        # 3.1 Add dashboard_filters column if it doesn't exist
+        # 3.1 Add backward-compatible columns required by current models
+        from schema_updates import ensure_sales_activity_columns
+        ensure_sales_activity_columns()
+
+        # 3.2 Add legacy compatibility columns if they do not exist
         from sqlalchemy import text
         try:
             db.session.execute(text('ALTER TABLE users ADD COLUMN dashboard_filters TEXT'))
@@ -171,7 +177,7 @@ def create_app(config_class=None):
             db.session.rollback()
             print("[INFO] deposit_date column might already exist")
         
-        # 3.2 Create all tables
+        # 3.3 Create all tables
         db.create_all()
         
         # 4. Handle existing users - add default dashboard_filters value
@@ -185,6 +191,7 @@ def create_app(config_class=None):
         from utils import calculate_pipeline_metrics, get_forecast_base_month
         current_forecast_month = get_forecast_base_month()
         stale_pipelines = Pipeline.query.filter(
+            Pipeline.is_deleted.is_(False),
             (Pipeline.forecast_base_month.is_(None)) |
             (Pipeline.forecast_base_month != current_forecast_month)
         ).all()
@@ -316,16 +323,19 @@ def create_app(config_class=None):
         from models import Pipeline, SalesLead
         pipelines = Pipeline.query.filter(
             Pipeline.owner_id == owner_id,
+            Pipeline.is_deleted.is_(False),
             Pipeline.stage != '6b) Deal Lost'
         ).all()
         
         leads_count = SalesLead.query.filter(
             SalesLead.owner_id == owner_id,
+            SalesLead.is_deleted.is_(False),
             SalesLead.leads_status != 'Unqualified'
         ).count()
         
         qualified_leads_count = SalesLead.query.filter(
             SalesLead.owner_id == owner_id,
+            SalesLead.is_deleted.is_(False),
             SalesLead.leads_status == 'Qualified'
         ).count()
         

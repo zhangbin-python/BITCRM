@@ -97,6 +97,7 @@ def compute_owner_metrics(owner_id: int, session: Session, ref_date: date | None
         session.query(Pipeline)
         .filter(
             Pipeline.owner_id == owner_id,
+            Pipeline.is_deleted.is_(False),
             Pipeline.stage != "6b) Deal Lost",
         )
         .all()
@@ -106,6 +107,7 @@ def compute_owner_metrics(owner_id: int, session: Session, ref_date: date | None
         session.query(SalesLead)
         .filter(
             SalesLead.owner_id == owner_id,
+            SalesLead.is_deleted.is_(False),
             SalesLead.leads_status != "Unqualified",
         )
         .count()
@@ -115,6 +117,7 @@ def compute_owner_metrics(owner_id: int, session: Session, ref_date: date | None
         session.query(SalesLead)
         .filter(
             SalesLead.owner_id == owner_id,
+            SalesLead.is_deleted.is_(False),
             SalesLead.leads_status == "Qualified",
         )
         .count()
@@ -140,10 +143,10 @@ def compute_company_metrics(session: Session, ref_date: date | None = None) -> d
     current_qtr = get_quarter_dates(ref_date)
     next_qtr = get_next_quarter_dates(ref_date)
 
-    pipelines = session.query(Pipeline).filter(Pipeline.stage != "6b) Deal Lost").all()
+    pipelines = session.query(Pipeline).filter(Pipeline.is_deleted.is_(False), Pipeline.stage != "6b) Deal Lost").all()
 
-    leads_count = session.query(SalesLead).filter(SalesLead.leads_status != "Unqualified").count()
-    qualified_leads_count = session.query(SalesLead).filter(SalesLead.leads_status == "Qualified").count()
+    leads_count = session.query(SalesLead).filter(SalesLead.is_deleted.is_(False), SalesLead.leads_status != "Unqualified").count()
+    qualified_leads_count = session.query(SalesLead).filter(SalesLead.is_deleted.is_(False), SalesLead.leads_status == "Qualified").count()
 
     return {
         "leads_count": int(leads_count),

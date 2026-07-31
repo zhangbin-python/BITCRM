@@ -304,7 +304,7 @@
                 <div class="pipeline-notes-grid">
                     <div class="pipeline-notes-panel">
                         <label class="form-label fw-bold text-primary">{{ _('Follow-up History') }}</label>
-                        <textarea name="follow_up" class="form-control pipeline-followup-textarea" rows="6" placeholder="{{ _('Enter follow-up records...') }}">{{ pipeline.follow_up if pipeline else '' }}</textarea>
+                        <textarea name="follow_up" class="form-control pipeline-followup-textarea" rows="6" style="max-height: 300px; overflow-y: auto; resize: vertical;" placeholder="{{ _('Enter follow-up records...') }}">{{ pipeline.follow_up if pipeline else '' }}</textarea>
                     </div>
 
                     <div class="pipeline-secondary-notes">

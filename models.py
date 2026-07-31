@@ -48,7 +48,8 @@ class User(UserMixin, db.Model):
     supported_pipelines = db.relationship('Pipeline', 
                                            secondary='pipeline_support',
                                            backref='support_team', lazy='dynamic')
-    tasks = db.relationship('Task', backref='owner', lazy='dynamic')
+    tasks = db.relationship('Task', foreign_keys='Task.owner_id', backref='owner', lazy='dynamic')
+    sales_activities = db.relationship('SalesActivity', foreign_keys='SalesActivity.owner_id', backref='owner', lazy='dynamic')
     
     def set_password(self, password):
         """Set user password with hashing."""
@@ -200,6 +201,12 @@ class SalesLead(db.Model):
     date_added = db.Column(db.Date, nullable=True, index=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     note = db.Column(db.Text, nullable=True)
+    follow_up = db.Column(db.Text, nullable=True)
+
+    # Soft deletion
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+    deleted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -275,7 +282,14 @@ class SalesLead(db.Model):
             return True, None, value.strip()[:50] if value else None
         
         elif field_name == 'requirements':
-            return True, None, value.strip() if value else None
+            cleaned = value.strip() if value else None
+            if cleaned and len(cleaned) > 200:
+                return False, (
+                    'Requirements must be 200 characters or fewer. Keep only the clear '
+                    'product/service requirement, move communication history to Notes, '
+                    'then confirm Qualified again.'
+                ), None
+            return True, None, cleaned
         
         elif field_name == 'leads_status':
             if value not in self.STATUS_OPTIONS:
@@ -317,11 +331,22 @@ class SalesLead(db.Model):
         else:
             return False, f'字段 {field_name} 不允许编辑', None
     
+    def add_followup(self, followup_text=None, todo_text=None, todo_due_date=None):
+        """Append new records using the existing Follow-up History format."""
+        from sales_activity_service import append_followup_history
+        return append_followup_history(self, followup_text, todo_text, todo_due_date)
+
     def convert_to_pipeline(self):
         """Convert lead to pipeline when qualified."""
         if self.pipeline:
             return self.pipeline
-        
+        if self.requirements and len(self.requirements) > 200:
+            raise ValueError(
+                'Requirements will be copied to Pipeline Product and must not exceed 200 characters. '
+                'Please keep only the clear product/service requirement, move communication history '
+                'to Note, and confirm Qualified again.'
+            )
+
         # Create new pipeline entry
         pipeline = Pipeline(
             name=self.name,
@@ -397,6 +422,11 @@ class Pipeline(db.Model):
     comments = db.Column(db.Text, nullable=True)
     follow_up = db.Column(db.Text, nullable=True)
     forecast_base_month = db.Column(db.Date, nullable=True)
+
+    # Soft deletion
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+    deleted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     # Monthly revenue projections (M1-M12)
     # Use NUMERIC for cross-database schema compatibility while returning float in Python.
@@ -578,7 +608,7 @@ class Pipeline(db.Model):
         return stage_colors.get(self.stage, 'secondary')
     
     def add_followup(self, followup_text=None, stuckpoint_text=None, todo_text=None,
-                     todo_due_date=None, user_id=None):
+                     todo_due_date=None, user_id=None, create_task=True):
         """Add follow-up entry."""
         from datetime import datetime
         
@@ -595,17 +625,17 @@ class Pipeline(db.Model):
         if stuckpoint_text is not None:
             self.stuckpoint = stuckpoint_text or None
         
-        # Create task if todo provided
-        if todo_text and todo_due_date and user_id:
-            task = Task(
-                content=todo_text,
-                due_date=todo_due_date,
-                owner_id=user_id,
-                pipeline_id=self.id,
-                company=self.company
-            )
-            db.session.add(task)
-            # Append to follow-up
+        # Create task if requested and always append the To-do history entry.
+        if todo_text and todo_due_date:
+            if user_id and create_task:
+                task = Task(
+                    content=todo_text,
+                    due_date=todo_due_date,
+                    owner_id=user_id,
+                    pipeline_id=self.id,
+                    company=self.company
+                )
+                db.session.add(task)
             todo_timestamp = datetime.now().strftime('%Y-%m-%d')
             todo_entry = f"To-do, {todo_timestamp}: {todo_text} by {todo_due_date}"
             if self.follow_up:
@@ -648,11 +678,27 @@ class Task(db.Model):
     # Relationships
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True)
+    sales_lead_id = db.Column(db.Integer, db.ForeignKey('sales_leads.id'), nullable=True)
+    sales_activity_id = db.Column(db.Integer, db.ForeignKey('sales_activities.id'), nullable=True, index=True)
     company = db.Column(db.String(200), nullable=True)
-    
+
+    # Completion details
+    completion_notes = db.Column(db.Text, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    completed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
+    # Soft deletion
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+    deleted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    pipeline = db.relationship('Pipeline', foreign_keys=[pipeline_id], backref='tasks')
+    sales_lead = db.relationship('SalesLead', foreign_keys=[sales_lead_id], backref='tasks')
+    completed_by = db.relationship('User', foreign_keys=[completed_by_id])
     
     def get_status_color(self):
         """Return Bootstrap color class based on status."""
@@ -679,6 +725,87 @@ class Task(db.Model):
 
 
 # ============================================================================
+# SALES ACTIVITY MODELS
+# ============================================================================
+
+class SalesActivity(db.Model):
+    """Sales activity created from Follow-up, Next Steps / To-do, or Field Visit."""
+
+    __tablename__ = 'sales_activities'
+
+    id = db.Column(db.Integer, primary_key=True)
+    activity_type = db.Column(db.String(20), nullable=False, index=True)
+    online_subtype = db.Column(db.String(40), nullable=True)
+    source_type = db.Column(db.String(40), nullable=False, index=True)
+    sales_lead_id = db.Column(db.Integer, db.ForeignKey('sales_leads.id'), nullable=True, index=True)
+    pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True, index=True)
+    company = db.Column(db.String(200), nullable=False)
+    activity_date = db.Column(db.Date, nullable=False, index=True)
+    estimated_start_at = db.Column(db.DateTime, nullable=True)
+    estimated_end_at = db.Column(db.DateTime, nullable=True)
+    address = db.Column(db.Text, nullable=True)
+    purpose_project = db.Column(db.Text, nullable=True)
+    expected_result = db.Column(db.Text, nullable=True)
+    remarks = db.Column(db.Text, nullable=True)
+    followup_notes = db.Column(db.Text, nullable=True)
+    completion_notes = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(30), nullable=False, default='Pending Follow-up', index=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    completed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+    deleted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    sales_lead = db.relationship('SalesLead', foreign_keys=[sales_lead_id], backref='sales_activity_records')
+    pipeline = db.relationship('Pipeline', foreign_keys=[pipeline_id], backref='sales_activity_records')
+    completed_by = db.relationship('User', foreign_keys=[completed_by_id])
+    contacts = db.relationship('SalesActivityContact', backref='sales_activity', lazy='select', cascade='all, delete-orphan', order_by='SalesActivityContact.sort_order')
+    linked_task = db.relationship('Task', foreign_keys='Task.sales_activity_id', backref='sales_activity', uselist=False)
+
+    TYPE_OPTIONS = ['Online', 'Field Visit']
+    ONLINE_SUBTYPE_OPTIONS = ['Follow-up', 'Next Steps / To-do']
+    SOURCE_OPTIONS = ['Sales Leads', 'Pipeline', 'Existing Customer', 'Marketing Event', 'Other']
+    STATUS_OPTIONS = ['Pending Follow-up', 'Completed']
+
+    @property
+    def primary_contact(self):
+        return self.contacts[0] if self.contacts else None
+
+    def __repr__(self):
+        return f'<SalesActivity {self.activity_type} {self.company}>'
+
+
+class SalesActivityContact(db.Model):
+    """Repeatable contacts entered for a Sales Activity."""
+
+    __tablename__ = 'sales_activity_contacts'
+    id = db.Column(db.Integer, primary_key=True)
+    sales_activity_id = db.Column(db.Integer, db.ForeignKey('sales_activities.id'), nullable=False, index=True)
+    contact_name = db.Column(db.String(120), nullable=True)
+    position = db.Column(db.String(100), nullable=True)
+    contact_information = db.Column(db.String(255), nullable=True)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+
+class DeletedRecord(db.Model):
+    """Immutable snapshot retained when a business record is soft deleted."""
+
+    __tablename__ = 'deleted_records'
+    id = db.Column(db.Integer, primary_key=True)
+    entity_type = db.Column(db.String(50), nullable=False, index=True)
+    entity_id = db.Column(db.Integer, nullable=False, index=True)
+    entity_name = db.Column(db.String(200), nullable=True)
+    data_snapshot = db.Column(db.Text, nullable=False)
+    deleted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    deletion_reason = db.Column(db.Text, nullable=True)
+    deleted_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    deleted_by = db.relationship('User', foreign_keys=[deleted_by_id])
+
+
+# ============================================================================
 # ACTIVITY LOG MODEL
 # ============================================================================
 
@@ -695,6 +822,9 @@ class ActivityLog(db.Model):
     subject_id = db.Column(db.Integer, nullable=True)
     subject_name = db.Column(db.String(200))  # Name at time of action
     description = db.Column(db.Text)
+    old_values = db.Column(db.Text, nullable=True)
+    new_values = db.Column(db.Text, nullable=True)
+    extra_data = db.Column(db.Text, nullable=True)
     ip_address = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

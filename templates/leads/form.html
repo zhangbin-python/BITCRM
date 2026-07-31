@@ -110,7 +110,8 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">{{ _('Requirements/Details') }}</label>
-                            <textarea name="requirements" class="form-control" rows="5" placeholder="{{ _('Describe the prospect\'s requirements...') }}">{{ lead.requirements if lead else '' }}</textarea>
+                            <div class="form-text text-warning mb-1">{{ _('Keep the clear product/service requirement within 200 characters. Put communication history in Notes.') }}</div>
+                            <textarea name="requirements" class="form-control" rows="5" maxlength="200" placeholder="{{ _('Clear product/service requirement, max 200 characters') }}">{{ lead.requirements if lead else '' }}</textarea>
                         </div>
                     </div>
                 </div>

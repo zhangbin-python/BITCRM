@@ -517,6 +517,14 @@
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'sales_activities' in request.endpoint %}active{% endif %}"
+                               href="{{ url_for('sales_activities.index') }}">
+                                <i class="bi bi-calendar2-check"></i>
+                                {{ _('Sales Activities') }}
+                            </a>
+                        </li>
+
                         {% if current_user.can_access_leads() %}
                         <li class="nav-item">
                             <a class="nav-link {% if 'leads' in request.endpoint %}active{% endif %}"
@@ -540,14 +548,6 @@
                                href="{{ url_for('tasks.index') }}">
                                 <i class="bi bi-check-circle"></i>
                                 {{ _('Tasks') }}
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'activities' in request.endpoint or request.endpoint == 'main.activities' %}active{% endif %}"
-                               href="{{ url_for('main.activities') }}">
-                                <i class="bi bi-clock-history"></i>
-                                {{ _('Activities') }}
                             </a>
                         </li>
 

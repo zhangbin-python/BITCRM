@@ -1,21 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Login Logs') }} - BITCRM{% endblock %}
+{% block title %}{{ _('Login Logs / Operation Archive') }} - BITCRM{% endblock %}
 
 {% block extra_css %}
 <style>
-.admin-table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-.admin-table-container table {
-    min-width: 800px;
-}
-.admin-table-container table th,
-.admin-table-container table td {
-    white-space: nowrap;
-    padding: 12px 16px;
-}
+.admin-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.admin-table-container table { min-width: 1250px; }
+.admin-table-container table th, .admin-table-container table td { white-space: nowrap; padding: 12px 16px; }
+.log-description { max-width: 520px; white-space: normal !important; }
 </style>
 {% endblock %}
 
@@ -23,125 +15,80 @@
 <div class="container-fluid py-4">
     <div class="page-header mb-4">
         <div class="page-title-stack">
-            <h1 class="h3 mb-0 text-gray-800">{{ _('Login Logs') }}</h1>
-            <p class="text-muted small">{{ _('View user login and logout activity') }}</p>
-        </div>
-        <div class="page-header-actions">
-            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
-                <i class="fas fa-trash me-1"></i> {{ _('Clear Old Logs') }}
-            </button>
+            <h1 class="h3 mb-0 text-gray-800">{{ _('Login Logs / Operation Archive') }}</h1>
+            <p class="text-muted small mb-0">{{ _('Permanent archive of login, logout, and system operations. Records are not cleared from this page.') }}</p>
         </div>
     </div>
 
-    <!-- Filters -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label">{{ _('Action Type') }}</label>
-                    <select name="action" class="form-select">
-                        <option value="">{{ _('All') }}</option>
-                        <option value="login" {% if request.args.get('action') == 'login' %}selected{% endif %}>{{ _('Login') }}</option>
-                        <option value="logout" {% if request.args.get('action') == 'logout' %}selected{% endif %}>{{ _('Logout') }}</option>
-                        <option value="failed" {% if request.args.get('action') == 'failed' %}selected{% endif %}>{{ _('Failed Login') }}</option>
-                    </select>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">{{ _('Keyword') }}</label>
+                    <input type="text" name="q" class="form-control" value="{{ request.args.get('q', '') }}" placeholder="{{ _('User, action, subject, or description') }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-2">
+                    <label class="form-label">{{ _('Action Type') }}</label>
+                    <input type="text" name="action" class="form-control" value="{{ request.args.get('action', '') }}" placeholder="{{ _('e.g. Created') }}">
+                </div>
+                <div class="col-12 col-md-2">
                     <label class="form-label">{{ _('Username') }}</label>
                     <input type="text" name="user" class="form-control" value="{{ request.args.get('user', '') }}" placeholder="{{ _('Search username') }}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label">{{ _('Start Date') }}</label>
                     <input type="date" name="start_date" class="form-control" value="{{ request.args.get('start_date', '') }}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label">{{ _('End Date') }}</label>
                     <input type="date" name="end_date" class="form-control" value="{{ request.args.get('end_date', '') }}">
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-search me-1"></i> {{ _('Filter') }}
-                    </button>
+                <div class="col-12 col-md-1">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i></button>
                 </div>
             </form>
-            {% if request.args.get('action') or request.args.get('user') or request.args.get('start_date') or request.args.get('end_date') %}
-            <div class="mt-2">
-                <a href="{{ url_for('admin.login_logs') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-times me-1"></i> {{ _('Clear Filters') }}
-                </a>
-            </div>
+            {% if request.args %}
+            <div class="mt-2"><a href="{{ url_for('admin.login_logs') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times me-1"></i>{{ _('Clear Filters') }}</a></div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Logs Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="admin-table-container">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>{{ _('Time') }}</th>
-                            <th>{{ _('User') }}</th>
-                            <th>{{ _('Action') }}</th>
-                            <th>{{ _('Description') }}</th>
-                            <th>{{ _('IP Address') }}</th>
-                        </tr>
-                    </thead>
+                    <thead class="table-light"><tr>
+                        <th>{{ _('Time') }}</th><th>{{ _('User') }}</th><th>{{ _('Action') }}</th>
+                        <th>{{ _('Subject') }}</th><th>{{ _('Description') }}</th><th>{{ _('Change Details') }}</th><th>{{ _('IP Address') }}</th>
+                    </tr></thead>
                     <tbody>
-                        {% for log in logs %}
-                        <tr>
-                            <td>
-                                <small>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</small>
-                            </td>
-                            <td>
-                                <span class="badge {% if 'Failed' in log.action_type %}bg-danger{% elif 'Logout' in log.action_type %}bg-warning{% else %}bg-success{% endif %}">
-                                    {{ log.user_name }}
-                                </span>
-                            </td>
-                            <td>
-                                {% if 'Failed' in log.action_type %}
-                                <span class="text-danger fw-bold">{{ _(log.action_type) }}</span>
-                                {% elif 'Logout' in log.action_type %}
-                                <span class="text-warning">{{ _(log.action_type) }}</span>
-                                {% else %}
-                                <span class="text-success">{{ _(log.action_type) }}</span>
-                                {% endif %}
-                            </td>
-                            <td><small>{{ log.description or '-' }}</small></td>
-                            <td><small>{{ log.ip_address or '-' }}</small></td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
-                                {{ _('No login logs found') }}
-                            </td>
-                        </tr>
-                        {% endfor %}
+                    {% for log in logs %}
+                    <tr>
+                        <td><small>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '-' }}</small></td>
+                        <td>{{ log.user_name or '-' }}</td>
+                        <td><span class="badge bg-{{ log.get_action_badge() }}">{{ log.action_type }}</span></td>
+                        <td>
+                            <div>{{ log.subject_name or '-' }}</div>
+                            {% if log.subject_type or log.subject_id %}<small class="text-muted">{{ log.subject_type or '' }}{% if log.subject_id %} #{{ log.subject_id }}{% endif %}</small>{% endif %}
+                        </td>
+                        <td class="log-description"><small>{{ log.description or '-' }}</small></td>
+                        <td class="log-description">
+                            {% if log.old_values or log.new_values or log.extra_data %}
+                            <details>
+                                <summary class="text-primary">{{ _('View Details') }}</summary>
+                                {% if log.old_values %}<div class="mt-2"><strong>{{ _('Before') }}:</strong><pre class="small text-wrap mb-2">{{ log.old_values }}</pre></div>{% endif %}
+                                {% if log.new_values %}<div><strong>{{ _('After') }}:</strong><pre class="small text-wrap mb-2">{{ log.new_values }}</pre></div>{% endif %}
+                                {% if log.extra_data %}<div><strong>{{ _('Additional Data') }}:</strong><pre class="small text-wrap mb-0">{{ log.extra_data }}</pre></div>{% endif %}
+                            </details>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><small>{{ log.ip_address or '-' }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">{{ _('No operation logs found') }}</td></tr>
+                    {% endfor %}
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Clear Logs Modal -->
-<div class="modal fade" id="clearLogsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ _('Clear Old Login Logs') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>{{ _('This will clear all login/logout logs older than 30 days. This action cannot be undone.') }}</p>
-                <p class="text-danger">{{ _('Are you sure you want to proceed?') }}</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                <form action="{{ url_for('admin.clear_login_logs') }}" method="POST">
-                    <button type="submit" class="btn btn-danger">{{ _('Clear Logs') }}</button>
-                </form>
             </div>
         </div>
     </div>

@@ -74,16 +74,6 @@
     padding-right: 1rem;
 }
 
-/* Status cell styling - for clickable status toggle */
-.status-cell {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.status-cell:hover {
-    opacity: 0.8;
-}
-
 .status-date {
     font-size: 0.7rem;
     margin-top: 2px;
@@ -330,9 +320,7 @@
                     <tbody>
                         {% for task in overdue_tasks %}
                         <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="Overdue">
-                            <td class="text-center align-middle status-cell" 
-                                data-task-id="{{ task.id }}" 
-                                data-current-status="{{ task.status }}">
+                            <td class="text-center align-middle">
                                 <span class="badge bg-danger">{{ _(task.status) }}</span>
                                 <small class="status-date overdue d-block">{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}</small>
                             </td>
@@ -345,6 +333,7 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
+                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
                                     <button type="button" class="btn btn-sm btn-info shadow-sm" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#editTaskModal{{ task.id }}">
@@ -389,9 +378,7 @@
                     <tbody>
                         {% for task in in_progress_tasks %}
                         <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="In Progress">
-                            <td class="text-center align-middle status-cell" 
-                                data-task-id="{{ task.id }}" 
-                                data-current-status="{{ task.status }}">
+                            <td class="text-center align-middle">
                                 <span class="badge bg-success">{{ _(task.status) }}</span>
                                 <small class="status-date in-progress d-block">{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}</small>
                             </td>
@@ -404,6 +391,7 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
+                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
                                     <button type="button" class="btn btn-sm btn-info shadow-sm" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#editTaskModal{{ task.id }}">
@@ -446,16 +434,15 @@
                             <th class="text-center" style="width: 13%;">{{ _('Status') }}</th>
                             <th class="text-start" style="width: 13%;">{{ _('Owner') }}</th>
                             <th class="text-start" style="width: 20%;">{{ _('Company') }}</th>
-                            <th class="text-start" style="width: 44%;">{{ _('Content') }}</th>
+                            <th class="text-start" style="width: 28%;">{{ _('Content') }}</th>
+                            <th class="text-start" style="width: 28%;">{{ _('Completion Details') }}</th>
                             <th class="text-end" style="width: 13%;">{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for task in completed_tasks %}
                         <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="Completed">
-                            <td class="text-center align-middle status-cell" 
-                                data-task-id="{{ task.id }}" 
-                                data-current-status="{{ task.status }}">
+                            <td class="text-center align-middle">
                                 <span class="badge bg-secondary">{{ _(task.status) }}</span>
                                 <small class="status-date completed d-block">{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}</small>
                             </td>
@@ -466,8 +453,13 @@
                                     {{ task.content }}
                                 </span>
                             </td>
+                            <td class="text-start align-middle">
+                                <div class="small text-wrap"><strong>{{ _('Feedback') }}:</strong> {{ task.completion_notes or '-' }}</div>
+                                <div class="small text-muted text-wrap mt-1">{{ task.completed_at.strftime('%Y-%m-%d %H:%M') if task.completed_at else '-' }} · {{ task.completed_by.username if task.completed_by else '-' }}</div>
+                            </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
+                                    <form action="{{ url_for('tasks.reopen', task_id=task.id) }}" method="POST"><button class="btn btn-sm btn-warning shadow-sm" title="{{ _('Reopen') }}"><i class="bi bi-arrow-counterclockwise"></i></button></form>
                                     <button type="button" class="btn btn-sm btn-info shadow-sm" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#editTaskModal{{ task.id }}">
@@ -592,6 +584,25 @@
 </div>
 {% endfor %}
 
+<!-- Complete Task Modals -->
+{% for task in overdue_tasks + in_progress_tasks %}
+<div class="modal fade" id="completeTaskModal{{ task.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('tasks.complete', task_id=task.id) }}" method="POST">
+                <div class="modal-header"><h5 class="modal-title">{{ _('Complete Task') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p class="small text-muted">{{ task.content }}</p>
+                    <label class="form-label">{{ _('Completion Notes') }} *</label>
+                    <textarea name="completion_notes" class="form-control" rows="5" required placeholder="{{ _('Enter outcome, customer feedback, or completion details') }}"></textarea>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button><button type="submit" class="btn btn-success">{{ _('Complete') }}</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
 <!-- Initialize tooltips and unified owner filter -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -670,53 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateSummaryCounts();
     
-    // =========================================================================
-    // TASK STATUS TOGGLE - Click on status badge to toggle
-    // In Progress <-> Completed, Overdue -> Completed
-    // =========================================================================
-    
-    document.querySelectorAll('.status-cell').forEach(function(cell) {
-        cell.addEventListener('click', function() {
-            const taskId = this.dataset.taskId;
-            const currentStatus = this.dataset.currentStatus;
-            
-            // Determine new status
-            let newStatus = 'In Progress';
-            if (currentStatus === 'In Progress') {
-                newStatus = 'Completed';
-            } else if (currentStatus === 'Completed') {
-                newStatus = 'In Progress';
-            } else if (currentStatus === 'Overdue') {
-                newStatus = 'Completed';
-            }
-            
-            // AJAX call to toggle status
-            fetch(`/api/tasks/${taskId}/toggle-status`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    new_status: newStatus
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('{{ _("Task status updated!") }}');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
-                } else {
-                    showToast(data.error || '{{ _("Error updating task") }}');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('{{ _("Network error") }}');
-            });
-        });
-    });
+
 });
 
 // Toast notification helper

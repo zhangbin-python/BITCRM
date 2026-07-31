@@ -3,6 +3,7 @@ BITCRM Configuration Module
 Contains all application configuration settings.
 """
 import os
+from datetime import timedelta
 
 # Base directory
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -13,6 +14,16 @@ class Config:
     
     # Secret key for session management
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-change-in-production'
+
+    # Persistent login/session settings
+    REMEMBER_COOKIE_DURATION = timedelta(days=int(os.environ.get('REMEMBER_DAYS', '30')))
+    PERMANENT_SESSION_LIFETIME = REMEMBER_COOKIE_DURATION
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'false').lower() == 'true'
+    SESSION_COOKIE_SECURE = REMEMBER_COOKIE_SECURE
     
     # Database configuration - Support Zeabur PostgreSQL
     DATABASE_URL = os.environ.get('DATABASE_URL') or \

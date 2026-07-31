@@ -16,7 +16,7 @@ import os
 from urllib.parse import urlparse, urljoin
 
 from extensions import db, cache
-from models import User, SalesLead, Pipeline, Task, ActivityLog, disable_metrics_events
+from models import User, SalesLead, Pipeline, Task, ActivityLog, SalesActivity, disable_metrics_events
 from services.weekly_metrics_service import (
     get_company_dashboard_summary,
     get_owner_dashboard_summary,
@@ -36,6 +36,7 @@ from utils import (
 )
 from activity_logger import log_activity, log_lead_import, log_lead_created, log_lead_updated, log_pipeline_created, log_pipeline_stage_changed, log_task_created, log_task_completed, log_task_reopened, log_followup_created, log_account_created, log_lead_deleted, log_lead_exported, log_pipeline_deleted, log_pipeline_exported, log_pipeline_imported, log_task_edited, log_task_deleted, log_task_status_changed, log_password_changed, log_language_changed, log_user_created, log_user_status_changed, log_filter_applied, log_column_visibility_changed, log_login, log_logout
 from extensions import cache
+from sales_activity_service import append_followup_history, complete_task, reopen_task, create_online_activities, soft_delete
 
 # ============================================================================
 # MAIN BLUEPRINT
@@ -230,7 +231,7 @@ def _build_export_dataframe(items, visible_columns, value_getter):
 
 def _get_pipeline_access_query():
     """Build pipeline query scoped to the current user's access."""
-    query = Pipeline.query
+    query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
     if not current_user.is_admin():
         supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
@@ -590,7 +591,7 @@ def dashboard():
     # =========================================================================
     # 预加载所有 Pipeline 数据（带 owner 关联）
     # =========================================================================
-    base_query = Pipeline.query.options(joinedload(Pipeline.owner))
+    base_query = Pipeline.query.filter(Pipeline.is_deleted.is_(False)).options(joinedload(Pipeline.owner))
 
     # 根据权限过滤
     if not current_user.is_admin():
@@ -615,8 +616,8 @@ def dashboard():
     # 全公司数据（用 Python 聚合，比多次 SQL 查询快）
     # =========================================================================
     company_this = {
-        'leads_count': SalesLead.query.filter(SalesLead.leads_status != 'Unqualified').count(),
-        'qualified_leads_count': SalesLead.query.filter(SalesLead.leads_status == 'Qualified').count(),
+        'leads_count': SalesLead.query.filter(SalesLead.is_deleted.is_(False), SalesLead.leads_status != 'Unqualified').count(),
+        'qualified_leads_count': SalesLead.query.filter(SalesLead.is_deleted.is_(False), SalesLead.leads_status == 'Qualified').count(),
         'pipeline_count': len(active_pipelines),
         'tcv': sum(p.tcv_usd or 0 for p in active_pipelines),
         'current_qtr_revenue': calculate_quarter_revenue(active_pipelines, current_qtr[0], current_qtr[1]),
@@ -645,11 +646,12 @@ def dashboard():
         user_pipelines = owner_pipeline_map.get(user.id, [])
 
         # 该 owner 的 Leads
-        user_leads_count = SalesLead.query.filter_by(owner_id=user.id).filter(
+        user_leads_count = SalesLead.query.filter_by(owner_id=user.id, is_deleted=False).filter(
             SalesLead.leads_status != 'Unqualified'
         ).count()
 
         qualified_leads_count = SalesLead.query.filter(
+            SalesLead.is_deleted.is_(False),
             or_(SalesLead.owner_id == user.id)
         ).filter(
             or_(SalesLead.leads_status == 'Qualified')
@@ -797,153 +799,6 @@ def manual():
     return render_template('manual.html')
 
 
-@main_bp.route('/activities')
-@login_required
-def activities():
-    """Activities/Operation Logs page."""
-    from datetime import datetime, timedelta
-    
-    # Get filter parameters
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    user_id = request.args.get('user_id')
-    action_type = request.args.get('action_type')
-    subject_type = request.args.get('subject_type')
-    keyword = request.args.get('keyword', '')
-    export = request.args.get('export')
-    
-    # Build query
-    query = ActivityLog.query
-    
-    # Apply permission filters
-    if current_user.role == 'sales':
-        # Sales can only view own logs
-        query = query.filter(ActivityLog.user_id == current_user.id)
-    elif current_user.role == 'marketing':
-        # Marketing can view all leads-related logs
-        query = query.filter(
-            or_(
-                ActivityLog.subject_type == 'lead',
-                ActivityLog.action_type.like('Leads%')
-            )
-        )
-    # Admin can view all logs
-    
-    # Apply date filters
-    if start_date:
-        query = query.filter(ActivityLog.created_at >= datetime.strptime(start_date, '%Y-%m-%d'))
-    if end_date:
-        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        query = query.filter(ActivityLog.created_at < end_date_obj)
-    
-    # Apply user filter
-    if user_id:
-        query = query.filter(ActivityLog.user_id == int(user_id))
-    
-    # Apply subject type filter
-    if subject_type:
-        query = query.filter(ActivityLog.subject_type == subject_type)
-    
-    # Apply action type filter
-    if action_type:
-        query = query.filter(ActivityLog.action_type == action_type)
-    
-    # Apply keyword search
-    if keyword:
-        query = query.filter(
-            or_(
-                ActivityLog.description.ilike(f'%{keyword}%'),
-                ActivityLog.subject_name.ilike(f'%{keyword}%'),
-                ActivityLog.user_name.ilike(f'%{keyword}%')
-            )
-        )
-    
-    # Get statistics
-    today = datetime.now().date()
-    week_ago = today - timedelta(days=7)
-    month_ago = today - timedelta(days=30)
-    
-    # Base stats query (permission filtered only, no search filters)
-    stats_query = ActivityLog.query
-    if current_user.role == 'sales':
-        stats_query = stats_query.filter(ActivityLog.user_id == current_user.id)
-    elif current_user.role == 'marketing':
-        stats_query = stats_query.filter(
-            or_(
-                ActivityLog.subject_type == 'lead',
-                ActivityLog.action_type.like('Leads%')
-            )
-        )
-    
-    stats = {
-        'total': stats_query.count(),
-        'today': stats_query.filter(ActivityLog.created_at >= datetime.combine(today, datetime.min.time())).count(),
-        'week': stats_query.filter(ActivityLog.created_at >= datetime.combine(week_ago, datetime.min.time())).count(),
-        'month': stats_query.filter(ActivityLog.created_at >= datetime.combine(month_ago, datetime.min.time())).count()
-    }
-    
-    # Export functionality
-    if export == 'csv':
-        from io import StringIO
-        import csv
-        
-        activities = query.order_by(ActivityLog.created_at.desc()).all()
-        
-        output = StringIO()
-        writer = csv.writer(output)
-        writer.writerow(['ID', 'Time', 'User', 'Action Type', 'Subject Type', 'Subject ID', 'Subject Name', 'Description', 'IP Address'])
-        
-        for a in activities:
-            writer.writerow([
-                a.id,
-                a.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                a.user_name,
-                a.action_type,
-                a.subject_type or '',
-                a.subject_id or '',
-                a.subject_name or '',
-                a.description or '',
-                a.ip_address or ''
-            ])
-        
-        response = make_response(output.getvalue())
-        response.headers['Content-Type'] = 'text/csv'
-        response.headers['Content-Disposition'] = f'attachment; filename=activities_{today}.csv'
-        return response
-    
-    # Get all action types for filter dropdown
-    action_types = db.session.query(ActivityLog.action_type).distinct().all()
-    action_types = [a[0] for a in action_types]
-    
-    # Get users who have activity logs for filter dropdown (only show users with data)
-    users = db.session.query(User).join(ActivityLog).filter(
-        User.is_active == True
-    ).distinct().order_by(User.username).all()
-    
-    # Order by created_at descending and paginate
-    query = query.order_by(ActivityLog.created_at.desc())
-    page = request.args.get('page', 1, type=int)
-    per_page = 100
-    activities = query.paginate(page=page, per_page=per_page, error_out=False)
-    
-    # Prepare filters dict for template
-    filters = {
-        'start_date': start_date,
-        'end_date': end_date,
-        'user_id': user_id,
-        'action_type': action_type,
-        'subject_type': subject_type,
-        'keyword': keyword
-    }
-    
-    return render_template('activities.html',
-                          activities=activities,
-                          stats=stats,
-                          users=users,
-                          action_types=action_types,
-                          filters=filters)
-
-
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """User login."""
@@ -960,7 +815,8 @@ def login():
             user = User.query.filter(func.lower(User.username) == entered_username.lower()).first()
         
         if user and user.check_password(password):
-            login_user(user)
+            login_user(user, remember=True)
+            session.permanent = True
             log_login(user, request.remote_addr, success=True)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('main.dashboard'))
@@ -1027,7 +883,7 @@ def index():
     sort_order = filter_values['sort_order']
     
     # Build query
-    query = SalesLead.query
+    query = SalesLead.query.filter(SalesLead.is_deleted.is_(False))
     
     # Sales can only see their own leads + leads owned by marketing
     if not current_user.can_view_all_leads():
@@ -1204,10 +1060,18 @@ def edit(lead_id):
         flash('You do not have permission to access Sales Leads.', 'danger')
         return redirect(url_for('main.dashboard'))
     
-    lead = SalesLead.query.get_or_404(lead_id)
+    lead = SalesLead.query.filter_by(id=lead_id, is_deleted=False).first_or_404()
     
     if request.method == 'POST':
         try:
+            old_values = {
+                'name': lead.name,
+                'company': lead.company,
+                'requirements': lead.requirements,
+                'leads_status': lead.leads_status,
+                'owner_id': lead.owner_id,
+                'note': lead.note,
+            }
             lead.name = request.form.get('name')
             lead.company = request.form.get('company')
             lead.industry = request.form.get('industry')
@@ -1229,7 +1093,20 @@ def edit(lead_id):
                 pipeline = lead.convert_to_pipeline()
                 db.session.add(pipeline)
             
+            new_values = {
+                'name': lead.name,
+                'company': lead.company,
+                'requirements': lead.requirements,
+                'leads_status': lead.leads_status,
+                'owner_id': lead.owner_id,
+                'note': lead.note,
+            }
             db.session.commit()
+            log_activity(
+                current_user, 'Leads - Updated', 'lead', lead.id, lead.company or lead.name,
+                'Updated Sales Lead fields', request.remote_addr,
+                old_values=old_values, new_values=new_values,
+            )
             flash('Sales Lead updated successfully!', 'success')
             
             return redirect(url_for('leads.index'))
@@ -1251,16 +1128,18 @@ def delete(lead_id):
         flash('You do not have permission to access Sales Leads.', 'danger')
         return redirect(url_for('main.dashboard'))
     
-    lead = SalesLead.query.get_or_404(lead_id)
+    lead = SalesLead.query.filter_by(id=lead_id, is_deleted=False).first_or_404()
     
     try:
-        db.session.delete(lead)
+        soft_delete(lead, current_user.id, 'sales_lead', lead.company or lead.name,
+                    request.form.get('deletion_reason'))
+        log_activity(
+            current_user, 'Leads - Deleted', 'lead', lead.id, lead.company or lead.name,
+            f'Soft-deleted Sales Lead: {lead.company or lead.name}', request.remote_addr,
+            extra_data={'archived': True}, commit=False,
+        )
         db.session.commit()
-        
-        # Log the activity
-        log_lead_deleted(current_user, lead.name, request.remote_addr)
-        
-        flash('Sales Lead deleted successfully!', 'success')
+        flash('Sales Lead deleted and archived successfully!', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting Sales Lead: {str(e)}', 'danger')
@@ -1280,7 +1159,7 @@ def quick_update(lead_id):
     if not current_user.can_access_leads():
         return jsonify({'success': False, 'error': '无权访问销售线索'}), 403
     
-    lead = SalesLead.query.get_or_404(lead_id)
+    lead = SalesLead.query.filter_by(id=lead_id, is_deleted=False).first_or_404()
     
     try:
         data = request.get_json()
@@ -1350,10 +1229,57 @@ def quick_update(lead_id):
             'raw_value': new_value
         })
         
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:
         db.session.rollback()
         print(f"[QUICK UPDATE ERROR] Lead {lead_id}: {str(e)}")
         return jsonify({'success': False, 'error': f'更新失败: {str(e)}'}), 500
+
+
+@leads_bp.route('/<int:lead_id>/add-followup', methods=['POST'])
+@login_required
+def add_lead_followup(lead_id):
+    """Add Follow-up Notes and/or Next Steps to a Sales Lead."""
+    if not current_user.can_access_leads():
+        return jsonify({'success': False, 'error': 'Permission denied'}), 403
+    lead = SalesLead.query.filter_by(id=lead_id, is_deleted=False).first_or_404()
+
+    try:
+        followup_text = request.form.get('followup_text', '').strip()
+        todo_text = request.form.get('todo_text', '').strip()
+        todo_due_date = validate_date(request.form.get('todo_due_date'))
+        if todo_text and not todo_due_date:
+            return jsonify({'success': False, 'error': 'To-do Due Date is required when Next Steps / To-do is filled'}), 400
+        if not followup_text and not todo_text:
+            return jsonify({'success': False, 'error': 'Follow-up Notes or Next Steps / To-do is required'}), 400
+
+        activities = create_online_activities(
+            source_type='Sales Leads', owner_id=current_user.id,
+            sales_lead_id=lead.id, company=lead.company or lead.name,
+            followup_text=followup_text, todo_text=todo_text,
+            todo_due_date=todo_due_date, activity_date=date.today(),
+        )
+        append_followup_history(lead, followup_text, todo_text, todo_due_date)
+        if lead.pipeline and not lead.pipeline.is_deleted:
+            append_followup_history(lead.pipeline, followup_text, todo_text, todo_due_date)
+        log_activity(
+            current_user, 'Leads - Follow-up Added', 'lead', lead.id,
+            lead.company or lead.name,
+            f'Added Sales Lead follow-up; created {len(activities)} Online activity record(s)',
+            request.remote_addr,
+            extra_data={'followup_notes': bool(followup_text), 'next_steps': bool(todo_text)},
+            commit=False,
+        )
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Follow-up added successfully!'})
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @leads_bp.route('/import-template')
@@ -1386,7 +1312,7 @@ def export():
         return redirect(url_for('main.dashboard'))
     
     # Get filtered leads
-    query = SalesLead.query
+    query = SalesLead.query.filter(SalesLead.is_deleted.is_(False))
     
     # Sales can only see their own leads + leads owned by marketing
     if not current_user.can_view_all_leads():
@@ -1752,7 +1678,7 @@ def kanban_data():
     owner_filter = request.args.get('owner', None)
     
     # Build query
-    query = Pipeline.query
+    query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
     
     # Filter by access permissions
     if not current_user.is_admin():
@@ -1809,7 +1735,7 @@ def update_stage():
     if not pipeline_id or not new_stage:
         return jsonify({'success': False, 'error': 'Missing pipeline_id or stage'})
     
-    pipeline = Pipeline.query.get(pipeline_id)
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first()
     if not pipeline:
         return jsonify({'success': False, 'error': 'Pipeline not found'})
     
@@ -1910,7 +1836,7 @@ def add():
 def edit(pipeline_id):
     """Edit Pipeline entry."""
     
-    pipeline = Pipeline.query.get_or_404(pipeline_id)
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first_or_404()
     
     # Check access
     if not current_user.can_access_pipeline(pipeline):
@@ -1919,6 +1845,14 @@ def edit(pipeline_id):
     
     if request.method == 'POST':
         try:
+            old_values = {
+                'name': pipeline.name,
+                'company': pipeline.company,
+                'stage': pipeline.stage,
+                'owner_id': pipeline.owner_id,
+                'follow_up': pipeline.follow_up,
+                'stuckpoint': pipeline.stuckpoint,
+            }
             pipeline.name = request.form.get('name')
             pipeline.company = request.form.get('company')
             pipeline.industry = request.form.get('industry')
@@ -1958,11 +1892,24 @@ def edit(pipeline_id):
             # Recalculate metrics
             calculate_pipeline_metrics(pipeline)
             
+            new_values = {
+                'name': pipeline.name,
+                'company': pipeline.company,
+                'stage': pipeline.stage,
+                'owner_id': pipeline.owner_id,
+                'follow_up': pipeline.follow_up,
+                'stuckpoint': pipeline.stuckpoint,
+            }
             db.session.commit()
             
             # Log stage change
             if old_stage != new_stage:
                 log_pipeline_stage_changed(current_user, pipeline, old_stage, new_stage, request.remote_addr)
+            log_activity(
+                current_user, 'Pipeline - Updated', 'pipeline', pipeline.id,
+                pipeline.company or pipeline.name, 'Updated Pipeline fields', request.remote_addr,
+                old_values=old_values, new_values=new_values,
+            )
             
             flash('Pipeline entry updated successfully!', 'success')
             
@@ -1987,20 +1934,22 @@ def edit(pipeline_id):
 def delete(pipeline_id):
     """Delete Pipeline entry."""
     
-    pipeline = Pipeline.query.get_or_404(pipeline_id)
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first_or_404()
     
     if not current_user.can_access_pipeline(pipeline):
         flash('You do not have permission to delete this Pipeline.', 'danger')
         return redirect(url_for('pipeline.index'))
     
     try:
-        db.session.delete(pipeline)
+        soft_delete(pipeline, current_user.id, 'pipeline', pipeline.company or pipeline.name,
+                    request.form.get('deletion_reason'))
+        log_activity(
+            current_user, 'Pipeline - Deleted', 'pipeline', pipeline.id, pipeline.company or pipeline.name,
+            f'Soft-deleted Pipeline entry: {pipeline.company or pipeline.name}', request.remote_addr,
+            extra_data={'archived': True}, commit=False,
+        )
         db.session.commit()
-        
-        # Log the activity
-        log_pipeline_deleted(current_user, pipeline_id, pipeline.company, request.remote_addr)
-        
-        flash('Pipeline entry deleted successfully!', 'success')
+        flash('Pipeline entry deleted and archived successfully!', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting Pipeline: {str(e)}', 'danger')
@@ -2013,7 +1962,7 @@ def delete(pipeline_id):
 def get_followup_data(pipeline_id):
     """Get follow-up data as HTML for modal."""
     
-    pipeline = Pipeline.query.get_or_404(pipeline_id)
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first_or_404()
     
     if not current_user.can_access_pipeline(pipeline):
         return '<div class="alert alert-danger">Permission denied</div>'
@@ -2073,67 +2022,60 @@ def get_followup_data(pipeline_id):
 @pipeline_bp.route('/<int:pipeline_id>/add-followup', methods=['POST'])
 @login_required
 def add_followup(pipeline_id):
-    """Add follow-up to Pipeline entry."""
-    import traceback
-    
-    print(f"[DEBUG] add_followup called for pipeline {pipeline_id}")
-    
-    pipeline = Pipeline.query.get_or_404(pipeline_id)
-    print(f"[DEBUG] Pipeline found: {pipeline.company}")
-    
+    """Save Pipeline follow-up and create separate Online activity records."""
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first_or_404()
     if not current_user.can_access_pipeline(pipeline):
-        print("[DEBUG] Permission denied")
         return jsonify({'success': False, 'error': 'Permission denied'}), 403
-    
+
     try:
         followup_text = request.form.get('followup_text', '').strip()
         stuckpoint_text = request.form.get('stuckpoint_text', '').strip()
         todo_text = request.form.get('todo_text', '').strip()
-        todo_due_date = request.form.get('todo_due_date', '').strip()
+        todo_due_date = validate_date(request.form.get('todo_due_date'))
         new_stage = request.form.get('stage') or pipeline.stage
         old_stage = pipeline.stage
+        old_stuckpoint = pipeline.stuckpoint or ''
         stage_changed = new_stage in Pipeline.STAGE_OPTIONS and new_stage != old_stage
-        stuckpoint_changed = stuckpoint_text != (pipeline.stuckpoint or '')
-        
-        print(f"[DEBUG] followup_text: {followup_text[:50]}...")
-        
+        stuckpoint_changed = stuckpoint_text != old_stuckpoint
+
         if todo_text and not todo_due_date:
-            return jsonify({'success': False, 'error': 'To-do Due Date is required when Next Steps / To-do is filled'})
+            return jsonify({'success': False, 'error': 'To-do Due Date is required when Next Steps / To-do is filled'}), 400
+        if not (followup_text or todo_text or stage_changed or stuckpoint_changed):
+            return jsonify({'success': False, 'error': 'Please update notes, stage, stuckpoint, or next steps before saving'}), 400
 
-        has_updates = bool(followup_text or todo_text or stage_changed or stuckpoint_changed)
-        if not has_updates:
-            print("[DEBUG] No follow-up updates provided")
-            return jsonify({'success': False, 'error': 'Please update notes, stage, stuckpoint, or next steps before saving'})
-        
-        # Add follow-up
-        print("[DEBUG] Calling pipeline.add_followup()...")
-        pipeline.add_followup(
-            followup_text=followup_text or None,
-            stuckpoint_text=stuckpoint_text,
-            todo_text=todo_text if todo_text else None,
-            todo_due_date=validate_date(todo_due_date) if todo_text else None,
-            user_id=current_user.id
-        )
+        activities = []
+        if followup_text or todo_text:
+            activities = create_online_activities(
+                source_type='Pipeline', owner_id=current_user.id,
+                pipeline_id=pipeline.id, company=pipeline.company or pipeline.name,
+                followup_text=followup_text, todo_text=todo_text,
+                todo_due_date=todo_due_date, activity_date=date.today(),
+            )
+            append_followup_history(pipeline, followup_text, todo_text, todo_due_date)
+            if pipeline.sales_lead and not pipeline.sales_lead.is_deleted:
+                append_followup_history(pipeline.sales_lead, followup_text, todo_text, todo_due_date)
 
+        pipeline.stuckpoint = stuckpoint_text or None
         if stage_changed:
             pipeline.stage = new_stage
             calculate_pipeline_metrics(pipeline)
-        
-        print("[DEBUG] Committing to database...")
+
+        log_activity(
+            current_user, 'Pipeline - Follow-up Added', 'pipeline', pipeline.id,
+            pipeline.company or pipeline.name,
+            f'Updated Pipeline follow-up; created {len(activities)} Online activity record(s)',
+            request.remote_addr,
+            old_values={'stage': old_stage, 'stuckpoint': old_stuckpoint},
+            new_values={'stage': pipeline.stage, 'stuckpoint': pipeline.stuckpoint},
+            extra_data={'followup_notes': bool(followup_text), 'next_steps': bool(todo_text)},
+            commit=False,
+        )
         db.session.commit()
-        
-        if followup_text or todo_text or stuckpoint_changed:
-            log_followup_created(current_user, pipeline, request.remote_addr)
-        if stage_changed:
-            log_pipeline_stage_changed(current_user, pipeline, old_stage, new_stage, request.remote_addr)
-        
-        print("[DEBUG] Success!")
-        
         return jsonify({'success': True, 'message': 'Follow-up added successfully!'})
-        
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:
-        print(f"[ERROR] Exception: {e}")
-        traceback.print_exc()
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -2470,7 +2412,7 @@ def index():
     """Task Management page."""
     
     # Get all tasks accessible to user
-    query = Task.query
+    query = Task.query.filter(Task.is_deleted.is_(False))
     
     if not current_user.is_admin():
         query = query.filter(Task.owner_id == current_user.id)
@@ -2549,7 +2491,7 @@ def add():
 def complete(task_id):
     """Mark task as completed."""
     
-    task = Task.query.get_or_404(task_id)
+    task = Task.query.filter_by(id=task_id, is_deleted=False).first_or_404()
     
     # Check ownership
     if not current_user.is_admin() and task.owner_id != current_user.id:
@@ -2557,13 +2499,24 @@ def complete(task_id):
         return redirect(url_for('tasks.index'))
     
     try:
-        task.status = 'Completed'
+        completion_notes = request.form.get('completion_notes', '').strip()
+        complete_task(task, completion_notes, current_user.id)
+        completion_history = f'Task completed: {task.content}; Feedback: {completion_notes}'
+        if task.sales_lead and not task.sales_lead.is_deleted:
+            append_followup_history(task.sales_lead, completion_history)
+        if task.pipeline and not task.pipeline.is_deleted:
+            append_followup_history(task.pipeline, completion_history)
+        log_activity(
+            current_user, 'Task - Completed', 'task', task.id,
+            task.content[:200], f'Completed task with feedback: {completion_notes}',
+            request.remote_addr, new_values={'status': 'Completed', 'completion_notes': completion_notes},
+            commit=False,
+        )
         db.session.commit()
-        
-        # Log the activity
-        log_task_completed(current_user, task, request.remote_addr)
-        
         flash('Task marked as completed!', 'success')
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
     except Exception as e:
         db.session.rollback()
         flash(f'Error completing task: {str(e)}', 'danger')
@@ -2576,7 +2529,7 @@ def complete(task_id):
 def reopen(task_id):
     """Reopen a completed task."""
     
-    task = Task.query.get_or_404(task_id)
+    task = Task.query.filter_by(id=task_id, is_deleted=False).first_or_404()
     
     # Check ownership
     if not current_user.is_admin() and task.owner_id != current_user.id:
@@ -2584,12 +2537,14 @@ def reopen(task_id):
         return redirect(url_for('tasks.index'))
     
     try:
-        task.status = 'In Progress'
+        old_status = task.status
+        reopen_task(task)
+        log_activity(
+            current_user, 'Task - Reopened', 'task', task.id, task.content[:200],
+            f'Reopened task from {old_status} to {task.status}', request.remote_addr,
+            old_values={'status': old_status}, new_values={'status': task.status}, commit=False,
+        )
         db.session.commit()
-        
-        # Log the activity
-        log_task_reopened(current_user, task, request.remote_addr)
-        
         flash('Task reopened!', 'success')
     except Exception as e:
         db.session.rollback()
@@ -2603,7 +2558,7 @@ def reopen(task_id):
 def edit_task(task_id):
     """Edit task."""
     
-    task = Task.query.get_or_404(task_id)
+    task = Task.query.filter_by(id=task_id, is_deleted=False).first_or_404()
     
     # Check ownership
     if not current_user.is_admin() and task.owner_id != current_user.id:
@@ -2636,7 +2591,7 @@ def edit_task(task_id):
 def delete(task_id):
     """Delete task."""
     
-    task = Task.query.get_or_404(task_id)
+    task = Task.query.filter_by(id=task_id, is_deleted=False).first_or_404()
     
     # Check ownership
     if not current_user.is_admin() and task.owner_id != current_user.id:
@@ -2644,13 +2599,14 @@ def delete(task_id):
         return redirect(url_for('tasks.index'))
     
     try:
-        db.session.delete(task)
+        soft_delete(task, current_user.id, 'task', task.content[:200], request.form.get('deletion_reason'))
+        log_activity(
+            current_user, 'Task - Deleted', 'task', task.id, task.content[:200],
+            f'Soft-deleted task: {task.content[:200]}', request.remote_addr,
+            extra_data={'archived': True}, commit=False,
+        )
         db.session.commit()
-        
-        # Log the activity
-        log_task_deleted(current_user, task_id, request.remote_addr)
-        
-        flash('Task deleted successfully!', 'success')
+        flash('Task deleted and archived successfully!', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting task: {str(e)}', 'danger')
@@ -2814,73 +2770,37 @@ def reset_password(user_id):
 @admin_bp.route('/login-logs')
 @login_required
 def login_logs():
-    """View login/logout activity logs (admin only)."""
-    
+    """View the immutable login and operation archive (admin only)."""
     if not current_user.is_admin():
         flash('Admin access required.', 'danger')
         return redirect(url_for('main.dashboard'))
-    
-    # Get filter parameters
-    action_filter = request.args.get('action', None)
-    user_filter = request.args.get('user', None)
-    start_date = request.args.get('start_date', None)
-    end_date = request.args.get('end_date', None)
-    
-    # Build query
+
+    action_filter = request.args.get('action', '').strip()
+    user_filter = request.args.get('user', '').strip()
+    keyword = request.args.get('q', '').strip()
+    start_date = request.args.get('start_date', '').strip()
+    end_date = request.args.get('end_date', '').strip()
+
     query = ActivityLog.query
-    
-    # Filter by action type (login/logout)
     if action_filter:
-        if action_filter == 'login':
-            query = query.filter(ActivityLog.action_type.like('%Login%'))
-        elif action_filter == 'logout':
-            query = query.filter(ActivityLog.action_type.like('%Logout%'))
-        elif action_filter == 'failed':
-            query = query.filter(ActivityLog.action_type.like('%Failed%'))
-    
-    # Filter by user
+        query = query.filter(ActivityLog.action_type.ilike(f'%{action_filter}%'))
     if user_filter:
         query = query.filter(ActivityLog.user_name.ilike(f'%{user_filter}%'))
-    
-    # Filter by date range
+    if keyword:
+        like = f'%{keyword}%'
+        query = query.filter(or_(
+            ActivityLog.user_name.ilike(like),
+            ActivityLog.action_type.ilike(like),
+            ActivityLog.subject_name.ilike(like),
+            ActivityLog.description.ilike(like),
+        ))
     if start_date:
         query = query.filter(ActivityLog.created_at >= start_date)
     if end_date:
         query = query.filter(ActivityLog.created_at <= f'{end_date} 23:59:59')
-    
-    # Get logs (most recent first)
-    logs = query.order_by(ActivityLog.created_at.desc()).limit(500).all()
-    
+
+    logs = query.order_by(ActivityLog.created_at.desc()).limit(1000).all()
     return render_template('admin/login_logs.html', logs=logs)
-
-
-@admin_bp.route('/login-logs/clear', methods=['POST'])
-@login_required
-def clear_login_logs():
-    """Clear old login logs (older than 30 days, admin only)."""
-    
-    if not current_user.is_admin():
-        flash('Admin access required.', 'danger')
-        return redirect(url_for('main.dashboard'))
-    
-    try:
-        from datetime import timedelta
-        cutoff_date = datetime.utcnow() - timedelta(days=30)
-        
-        deleted = ActivityLog.query.filter(
-            ActivityLog.action_type.like('%Login%'),
-            ActivityLog.created_at < cutoff_date
-        ).delete()
-        
-        db.session.commit()
-        
-        flash(f'Cleared {deleted} old login logs.', 'success')
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error clearing logs: {str(e)}', 'danger')
-    
-    return redirect(url_for('admin.login_logs'))
 
 
 # ============================================================================
@@ -2937,7 +2857,7 @@ def api_quick_update(lead_id):
     if not current_user.can_access_leads():
         return jsonify({'success': False, 'error': 'Permission denied'}), 403
     
-    lead = SalesLead.query.get_or_404(lead_id)
+    lead = SalesLead.query.filter_by(id=lead_id, is_deleted=False).first_or_404()
     
     try:
         data = request.get_json()
@@ -2958,8 +2878,12 @@ def api_quick_update(lead_id):
         if field not in editable_fields:
             return jsonify({'success': False, 'error': f'Field {field} is not editable'}), 400
         
+        is_valid, error_message, cleaned_value = lead.validate_field(field, value)
+        if not is_valid:
+            return jsonify({'success': False, 'error': error_message}), 400
+
         # Handle status changes - log to pipeline comments
-        if field == 'leads_status' and value == 'Qualified' and lead.leads_status != 'Qualified':
+        if field == 'leads_status' and cleaned_value == 'Qualified' and lead.leads_status != 'Qualified':
             # Get or create pipeline
             if not lead.pipeline:
                 pipeline = lead.convert_to_pipeline()
@@ -2972,16 +2896,23 @@ def api_quick_update(lead_id):
             
             if lead.pipeline:
                 old_comment = lead.pipeline.comments or ''
-                status_action = value  # Qualified or Unqualified
+                status_action = cleaned_value
                 new_comment = f"{old_comment}\n{today}, {username} {status_action}".strip()
                 lead.pipeline.comments = new_comment
         
-        # Set the value directly
-        setattr(lead, field, value)
+        old_value = getattr(lead, field, None)
+        setattr(lead, field, cleaned_value)
+        log_activity(
+            current_user, 'Leads - Updated', 'lead', lead.id, lead.company or lead.name,
+            f'Updated {field}', request.remote_addr,
+            old_values={field: old_value}, new_values={field: cleaned_value}, commit=False,
+        )
         db.session.commit()
-        
         return jsonify({'success': True, 'message': 'Update successful'})
-        
+
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -3116,279 +3047,45 @@ def change_password():
 
 
 # ============================================================================
-# ACTIVITIES API
-# ============================================================================
-
-@api_bp.route('/activities/', methods=['GET'])
-@login_required
-def get_activities():
-    """Get activities list with filters."""
-    from datetime import datetime, timedelta
-    
-    # Get query parameters
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 100, type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    user_id = request.args.get('user_id')
-    action_type = request.args.get('action_type')
-    keyword = request.args.get('keyword', '')
-    subject_type = request.args.get('subject_type')
-    
-    # Build query
-    query = ActivityLog.query
-    
-    # Apply permission filters
-    if current_user.role == 'sales':
-        query = query.filter(ActivityLog.user_id == current_user.id)
-    elif current_user.role == 'marketing':
-        query = query.filter(
-            or_(
-                ActivityLog.subject_type == 'lead',
-                ActivityLog.action_type.like('Leads%')
-            )
-        )
-    
-    # Apply filters
-    if start_date:
-        query = query.filter(ActivityLog.created_at >= datetime.strptime(start_date, '%Y-%m-%d'))
-    if end_date:
-        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        query = query.filter(ActivityLog.created_at < end_date_obj)
-    if user_id:
-        query = query.filter(ActivityLog.user_id == int(user_id))
-    if action_type:
-        query = query.filter(ActivityLog.action_type == action_type)
-    if subject_type:
-        query = query.filter(ActivityLog.subject_type == subject_type)
-    if keyword:
-        query = query.filter(
-            or_(
-                ActivityLog.description.ilike(f'%{keyword}%'),
-                ActivityLog.subject_name.ilike(f'%{keyword}%'),
-                ActivityLog.user_name.ilike(f'%{keyword}%')
-            )
-        )
-    
-    # Get paginated results
-    query = query.order_by(ActivityLog.created_at.desc())
-    activities = query.paginate(page=page, per_page=per_page, error_out=False)
-    
-    # Serialize results
-    data = {
-        'items': [{
-            'id': a.id,
-            'user_id': a.user_id,
-            'user_name': a.user_name,
-            'action_type': a.action_type,
-            'subject_type': a.subject_type,
-            'subject_id': a.subject_id,
-            'subject_name': a.subject_name,
-            'description': a.description,
-            'ip_address': a.ip_address,
-            'created_at': a.created_at.isoformat(),
-            'action_icon': a.get_action_icon(),
-            'action_badge': a.get_action_badge()
-        } for a in activities.items],
-        'total': activities.total,
-        'page': activities.page,
-        'per_page': activities.per_page,
-        'pages': activities.pages
-    }
-    
-    return jsonify(data)
-
-
-@api_bp.route('/activities/log', methods=['POST'])
-@login_required
-def create_activity_log():
-    """Create a new activity log entry."""
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({'success': False, 'error': 'No data provided'}), 400
-    
-    required_fields = ['action_type']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
-    
-    try:
-        activity = log_activity(
-            user=current_user,
-            action_type=data['action_type'],
-            subject_type=data.get('subject_type'),
-            subject_id=data.get('subject_id'),
-            subject_name=data.get('subject_name'),
-            description=data.get('description'),
-            ip_address=data.get('ip_address')
-        )
-        
-        return jsonify({
-            'success': True,
-            'message': 'Activity logged successfully',
-            'activity_id': activity.id
-        }), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@api_bp.route('/activities/stats', methods=['GET'])
-@login_required
-def get_activity_stats():
-    """Get activity statistics."""
-    from datetime import datetime, timedelta
-    
-    today = datetime.now().date()
-    week_ago = today - timedelta(days=7)
-    month_ago = today - timedelta(days=30)
-    
-    # Build base query with permissions
-    base_query = ActivityLog.query
-    if current_user.role == 'sales':
-        base_query = base_query.filter(ActivityLog.user_id == current_user.id)
-    elif current_user.role == 'marketing':
-        base_query = base_query.filter(
-            or_(
-                ActivityLog.subject_type == 'lead',
-                ActivityLog.action_type.like('Leads%')
-            )
-        )
-    
-    # Calculate stats
-    stats = {
-        'total': base_query.count(),
-        'today': base_query.filter(ActivityLog.created_at >= datetime.combine(today, datetime.min.time())).count(),
-        'week': base_query.filter(ActivityLog.created_at >= datetime.combine(week_ago, datetime.min.time())).count(),
-        'month': base_query.filter(ActivityLog.created_at >= datetime.combine(month_ago, datetime.min.time())).count()
-    }
-    
-    return jsonify(stats)
-
-
-@api_bp.route('/activities/stream', methods=['GET'])
-@login_required
-def stream_activities():
-    """
-    Stream activities for real-time updates.
-    Supports polling with 'after_id' parameter.
-    """
-    from datetime import datetime, timedelta
-    
-    # Get the last activity ID
-    after_id = request.args.get('after_id', 0, type=int)
-    
-    # Build query for new activities
-    query = ActivityLog.query.filter(ActivityLog.id > after_id)
-    
-    # Apply permission filters
-    if current_user.role == 'sales':
-        query = query.filter(ActivityLog.user_id == current_user.id)
-    elif current_user.role == 'marketing':
-        query = query.filter(
-            or_(
-                ActivityLog.subject_type == 'lead',
-                ActivityLog.action_type.like('Leads%')
-            )
-        )
-    
-    # Order by created_at ascending (oldest first for polling)
-    query = query.order_by(ActivityLog.created_at.asc())
-    
-    # Get activities
-    activities = query.limit(50).all()
-    
-    # Get current stats
-    today = datetime.now().date()
-    week_ago = today - timedelta(days=7)
-    month_ago = today - timedelta(days=30)
-    
-    base_query = ActivityLog.query
-    if current_user.role == 'sales':
-        base_query = base_query.filter(ActivityLog.user_id == current_user.id)
-    elif current_user.role == 'marketing':
-        base_query = base_query.filter(
-            or_(
-                ActivityLog.subject_type == 'lead',
-                ActivityLog.action_type.like('Leads%')
-            )
-        )
-    
-    stats = {
-        'total': base_query.count(),
-        'today': base_query.filter(ActivityLog.created_at >= datetime.combine(today, datetime.min.time())).count(),
-        'week': base_query.filter(ActivityLog.created_at >= datetime.combine(week_ago, datetime.min.time())).count(),
-        'month': base_query.filter(ActivityLog.created_at >= datetime.combine(month_ago, datetime.min.time())).count()
-    }
-    
-    # Serialize results
-    data = {
-        'items': [{
-            'id': a.id,
-            'user_id': a.user_id,
-            'user_name': a.user_name,
-            'action_type': a.action_type,
-            'subject_type': a.subject_type,
-            'subject_id': a.subject_id,
-            'subject_name': a.subject_name,
-            'description': a.description,
-            'ip_address': a.ip_address,
-            'created_at': a.created_at.isoformat(),
-            'action_icon': a.get_action_icon(),
-            'action_badge': a.get_action_badge()
-        } for a in activities],
-        'stats': stats,
-        'has_more': len(activities) == 50
-    }
-    
-    return jsonify(data)
-
-
-# ============================================================================
 # TASKS API - Task Status Toggle
 # ============================================================================
 
 @api_bp.route('/tasks/<int:task_id>/toggle-status', methods=['POST'])
 @login_required
 def toggle_task_status(task_id):
-    """Toggle task status between In Progress and Completed."""
-    task = Task.query.get_or_404(task_id)
-    
-    # Check if user has permission to modify this task
+    """Compatibility API: completion requires notes; reopening uses shared rules."""
+    task = Task.query.filter_by(id=task_id, is_deleted=False).first_or_404()
     if not current_user.is_admin() and task.owner_id != current_user.id:
         return jsonify({'success': False, 'error': 'Permission denied'}), 403
-    
+
     try:
         data = request.get_json() or {}
         new_status = data.get('new_status')
-        
-        # Determine new status
-        if new_status:
-            task.status = new_status
+        completion_notes = (data.get('completion_notes') or '').strip()
+        if new_status == 'Completed':
+            complete_task(task, completion_notes, current_user.id)
+            completion_history = f'Task completed: {task.content}; Feedback: {completion_notes}'
+            if task.sales_lead and not task.sales_lead.is_deleted:
+                append_followup_history(task.sales_lead, completion_history)
+            if task.pipeline and not task.pipeline.is_deleted:
+                append_followup_history(task.pipeline, completion_history)
+            action = 'Task - Completed'
+        elif new_status in ('In Progress', 'Overdue') or task.status == 'Completed':
+            reopen_task(task)
+            action = 'Task - Reopened'
         else:
-            # Toggle between In Progress and Completed
-            if task.status == 'In Progress':
-                task.status = 'Completed'
-                # Log task completion
-                log_task_completed(current_user, task, request.remote_addr)
-            elif task.status == 'Completed':
-                task.status = 'In Progress'
-                # Log task reopening
-                log_task_reopened(current_user, task, request.remote_addr)
-            elif task.status == 'Overdue':
-                # Direct toggle from Overdue to Completed (no alert)
-                task.status = 'Completed'
-                log_task_completed(current_user, task, request.remote_addr)
-        
+            return jsonify({'success': False, 'error': 'Use the Complete button and provide Completion Notes.'}), 400
+
+        log_activity(
+            current_user, action, 'task', task.id, task.content[:200],
+            f'{action}: {task.content[:200]}', request.remote_addr,
+            new_values={'status': task.status, 'completion_notes': task.completion_notes}, commit=False,
+        )
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Task status updated successfully',
-            'new_status': task.status
-        })
-        
+        return jsonify({'success': True, 'message': 'Task status updated successfully', 'new_status': task.status})
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -3407,7 +3104,7 @@ def get_pipeline_kanban_data():
     show_lost = request.args.get('show_lost', 'false') == 'true'
     
     # Build base query
-    query = Pipeline.query
+    query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
     
     # Filter by access permissions
     if not current_user.is_admin():
@@ -3498,7 +3195,7 @@ def get_owner_metrics_data():
     users = User.query.filter_by(is_active=True).all()
     
     # Build base pipeline query
-    base_pipeline_query = Pipeline.query
+    base_pipeline_query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
     if not current_user.is_admin():
         # Get the Pipeline IDs that current_user supports
         supported_pipeline_ids = db.session.query(Pipeline.id).filter(
@@ -3520,7 +3217,7 @@ def get_owner_metrics_data():
     metrics = []
     for user in users:
         # Count leads for this user (exclude Unqualified)
-        leads_count = SalesLead.query.filter_by(owner_id=user.id).filter(
+        leads_count = SalesLead.query.filter_by(owner_id=user.id, is_deleted=False).filter(
             SalesLead.leads_status != 'Unqualified'
         ).count()
         
@@ -3531,6 +3228,7 @@ def get_owner_metrics_data():
         ).subquery()
         
         qualified_leads_count = SalesLead.query.filter(
+            SalesLead.is_deleted.is_(False),
             or_(
                 SalesLead.owner_id == user.id,
                 SalesLead.id.in_(api_user_pipeline_lead_ids)

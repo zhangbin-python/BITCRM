@@ -4,39 +4,37 @@ Provides functions to log user activities throughout the application.
 """
 from extensions import db
 from models import ActivityLog
-from flask import request
+from flask import has_request_context, request
+import json
+from datetime import date, datetime
 
 
-def log_activity(user, action_type, subject_type, subject_id=None, subject_name=None, 
-                 description=None, ip_address=None):
-    """
-    Log a user activity.
-    
-    Args:
-        user: User object or User instance performing the action
-        action_type: Type of action (e.g., "Leads - Imported", "Pipeline - Stage Changed")
-        subject_type: Type of subject (e.g., "lead", "pipeline", "task", "account")
-        subject_id: ID of the subject (optional)
-        subject_name: Name/identifier of the subject at time of action (optional)
-        description: Additional description of the action (optional)
-        ip_address: IP address of the user (optional, auto-detected if not provided)
-    
-    Returns:
-        ActivityLog: The created activity log entry
-    """
-    # Get user info
+def _json_default(value):
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return str(value)
+
+
+def _dump_json(value):
+    if value is None:
+        return None
+    return json.dumps(value, ensure_ascii=False, default=_json_default)
+
+
+def log_activity(user, action_type, subject_type, subject_id=None, subject_name=None,
+                 description=None, ip_address=None, old_values=None, new_values=None,
+                 extra_data=None, commit=True):
+    """Create a durable operation log entry with optional before/after details."""
     if hasattr(user, 'id'):
         user_id = user.id
-        user_name = user.username
+        user_name = getattr(user, 'username', None) or 'Unknown'
     else:
         user_id = user
         user_name = 'Unknown'
-    
-    # Auto-detect IP address if not provided
-    if ip_address is None:
-        ip_address = request.remote_addr if request else None
-    
-    # Create activity log entry
+
+    if ip_address is None and has_request_context():
+        ip_address = request.remote_addr
+
     activity = ActivityLog(
         user_id=user_id,
         user_name=user_name,
@@ -45,12 +43,14 @@ def log_activity(user, action_type, subject_type, subject_id=None, subject_name=
         subject_id=subject_id,
         subject_name=subject_name,
         description=description,
-        ip_address=ip_address
+        old_values=_dump_json(old_values),
+        new_values=_dump_json(new_values),
+        extra_data=_dump_json(extra_data),
+        ip_address=ip_address,
     )
-    
     db.session.add(activity)
-    db.session.commit()
-    
+    if commit:
+        db.session.commit()
     return activity
 
 
