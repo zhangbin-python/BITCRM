@@ -177,8 +177,10 @@ def create_app(config_class=None):
             db.session.rollback()
             print("[INFO] deposit_date column might already exist")
         
-        # 3.3 Create all tables
+        # 3.3 Create all tables and migrate stored Sales Activity terminology
         db.create_all()
+        from schema_updates import ensure_sales_activity_terminology
+        ensure_sales_activity_terminology()
         
         # 4. Handle existing users - add default dashboard_filters value
         users = User.query.all()

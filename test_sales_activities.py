@@ -5,7 +5,9 @@ from datetime import date
 
 from app import create_app
 from extensions import db
+from sqlalchemy import text
 from models import ActivityLog, DeletedRecord, Pipeline, SalesActivity, SalesLead, Task, User
+from schema_updates import ensure_sales_activity_columns, ensure_sales_activity_terminology
 
 
 class SalesActivitiesTests(unittest.TestCase):
@@ -54,7 +56,7 @@ class SalesActivitiesTests(unittest.TestCase):
         db.session.commit()
         return lead
 
-    def test_followup_and_todo_create_two_independent_online_activities(self):
+    def test_followup_and_todo_create_two_independent_remote_engagement_activities(self):
         lead = self._lead()
         response = self.client.post(
             f'/leads/{lead.id}/add-followup',
@@ -70,11 +72,11 @@ class SalesActivitiesTests(unittest.TestCase):
         activities = SalesActivity.query.order_by(SalesActivity.id).all()
         self.assertEqual(len(activities), 2)
         completed, pending = activities
-        self.assertEqual((completed.activity_type, completed.online_subtype, completed.status),
-                         ('Online', 'Follow-up', 'Completed'))
+        self.assertEqual((completed.activity_type, completed.remote_engagement_subtype, completed.status),
+                         ('Remote Engagement', 'Follow-up', 'Completed'))
         self.assertEqual(completed.completion_notes, 'Customer confirmed the technical scope.')
-        self.assertEqual((pending.activity_type, pending.online_subtype, pending.status),
-                         ('Online', 'Next Steps / To-do', 'Pending Follow-up'))
+        self.assertEqual((pending.activity_type, pending.remote_engagement_subtype, pending.status),
+                         ('Remote Engagement', 'Next Steps / To-do', 'Pending Follow-up'))
         self.assertEqual(pending.followup_notes, 'Send the revised quotation.')
 
         task = Task.query.one()
@@ -110,12 +112,12 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.followup_notes, 'Arrange solution workshop.')
         self.assertEqual(activity.completion_notes, 'Workshop completed; technical team approved the design.')
 
-    def test_field_visit_supports_cross_date_schedule_and_feedback_sync(self):
+    def test_on_site_visit_supports_cross_date_schedule_and_feedback_sync(self):
         lead = self._lead()
         response = self.client.post(
             '/sales-activities/add',
             data={
-                'activity_type': 'Field Visit',
+                'activity_type': 'On-site Visit',
                 'source_type': 'Sales Leads',
                 'sales_lead_id': str(lead.id),
                 'company': lead.company,
@@ -141,7 +143,7 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.estimated_end_at.strftime('%Y-%m-%d %H:%M'), '2026-08-08 01:00')
         self.assertEqual(len(activity.contacts), 2)
         self.assertEqual(task.sales_activity_id, activity.id)
-        self.assertIn('Field Visit scheduled', lead.follow_up)
+        self.assertIn('On-site Visit scheduled', lead.follow_up)
 
         response = self.client.post(
             f'/sales-activities/{activity.id}/followup',
@@ -156,17 +158,17 @@ class SalesActivitiesTests(unittest.TestCase):
         db.session.refresh(task)
         self.assertEqual(activity.status, 'Completed')
         self.assertEqual(task.status, 'Completed')
-        self.assertIn('Field Visit feedback: Customer approved', lead.follow_up)
+        self.assertIn('On-site Visit feedback: Customer approved', lead.follow_up)
         self.assertIn('Send final migration plan.', lead.follow_up)
         self.assertEqual(SalesActivity.query.count(), 2)
-        next_step_activity = SalesActivity.query.filter_by(online_subtype='Next Steps / To-do').one()
+        next_step_activity = SalesActivity.query.filter_by(remote_engagement_subtype='Next Steps / To-do').one()
         self.assertEqual(next_step_activity.status, 'Pending Follow-up')
         self.assertEqual(Task.query.count(), 2)
 
-    def test_invalid_field_visit_reopens_form_and_uses_start_date_as_activity_date(self):
+    def test_invalid_on_site_visit_reopens_form_and_uses_start_date_as_activity_date(self):
         lead = self._lead(company='Retained Visit Form Co')
         data = {
-            'activity_type': 'Field Visit',
+            'activity_type': 'On-site Visit',
             'source_type': 'Sales Leads',
             'sales_lead_id': str(lead.id),
             'company': lead.company,
@@ -204,20 +206,20 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.estimated_start_at.strftime('%H:%M'), '15:00')
         self.assertEqual(activity.estimated_end_at.strftime('%H:%M'), '16:00')
 
-    def test_add_sales_activity_defaults_to_field_visit(self):
+    def test_add_sales_activity_defaults_to_on_site_visit(self):
         response = self.client.get('/sales-activities/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'<option value="Field Visit" selected>', response.data)
+        self.assertIn(b'<option value="On-site Visit" selected>', response.data)
         self.assertIn(b'<th>Date</th>', response.data)
         self.assertIn(b'min-width: 1900px', response.data)
         self.assertIn(b'sales-activity-table-wrapper', response.data)
-        self.assertNotIn(b'<th>Online Subtype</th>', response.data)
+        self.assertNotIn(b'<th>Remote Engagement Subtype</th>', response.data)
 
     def test_strict_sources_reject_manual_company_but_other_source_accepts_it(self):
         response = self.client.post(
             '/sales-activities/add',
             data={
-                'activity_type': 'Online', 'source_type': 'Sales Leads',
+                'activity_type': 'Remote Engagement', 'source_type': 'Sales Leads',
                 'company': 'Typed Company', 'activity_date': '2026-08-01',
                 'followup_text': 'Should be rejected',
             },
@@ -228,7 +230,7 @@ class SalesActivitiesTests(unittest.TestCase):
         response = self.client.post(
             '/sales-activities/add',
             data={
-                'activity_type': 'Online', 'source_type': 'Other',
+                'activity_type': 'Remote Engagement', 'source_type': 'Other',
                 'company': 'Manual Company', 'activity_date': '2026-08-01',
                 'followup_text': 'Manual source follow-up',
             },
@@ -276,6 +278,50 @@ class SalesActivitiesTests(unittest.TestCase):
         page = self.client.get('/leads/')
         self.assertNotIn(b'Archived Company', page.data)
 
+    def test_legacy_sales_activity_terminology_is_migrated(self):
+        lead = self._lead(company='Legacy Terminology Co')
+        activity = SalesActivity(
+            activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+            remote_engagement_subtype='Follow-up',
+            source_type='Sales Leads',
+            sales_lead_id=lead.id,
+            company=lead.company,
+            activity_date=date(2026, 8, 1),
+            status='Completed',
+            owner_id=self.admin_id,
+        )
+        task = Task(
+            content='Field Visit follow-up: Legacy Terminology Co',
+            due_date=date(2026, 8, 1),
+            owner_id=self.admin_id,
+            sales_lead_id=lead.id,
+            company=lead.company,
+        )
+        db.session.add_all([activity, task])
+        db.session.commit()
+        activity_id = activity.id
+        task_id = task.id
+
+        db.session.execute(text(
+            'ALTER TABLE sales_activities '
+            'RENAME COLUMN remote_engagement_subtype TO online_subtype'
+        ))
+        db.session.execute(
+            text('UPDATE sales_activities SET activity_type = :legacy_type WHERE id = :activity_id'),
+            {'legacy_type': 'Online', 'activity_id': activity_id},
+        )
+        db.session.commit()
+
+        ensure_sales_activity_columns()
+        ensure_sales_activity_terminology()
+        db.session.expire_all()
+
+        migrated = db.session.get(SalesActivity, activity_id)
+        migrated_task = db.session.get(Task, task_id)
+        self.assertEqual(migrated.activity_type, 'Remote Engagement')
+        self.assertEqual(migrated.remote_engagement_subtype, 'Follow-up')
+        self.assertIn('On-site Visit follow-up', migrated_task.content)
+
     def test_legacy_activities_and_log_clear_routes_are_removed(self):
         self.assertEqual(self.client.get('/activities').status_code, 404)
         self.assertEqual(self.client.post('/admin/login-logs/clear').status_code, 404)
@@ -291,7 +337,7 @@ class SalesActivitiesTests(unittest.TestCase):
             self.client.post(
                 '/sales-activities/add',
                 data={
-                    'activity_type': 'Online', 'source_type': 'Sales Leads',
+                    'activity_type': 'Remote Engagement', 'source_type': 'Sales Leads',
                     'sales_lead_id': str(lead.id), 'company': lead.company,
                     'activity_date': activity_day, 'followup_text': f'Follow-up {activity_day}',
                 },

@@ -1316,3 +1316,11 @@ msgstr "用户名或密码错误，请重试。"
 
 msgid "Username is not case-sensitive."
 msgstr "用户名不区分大小写。"
+
+#: templates/sales_activities/index.html
+msgid "Remote Engagement"
+msgstr "远程沟通"
+
+#: templates/sales_activities/index.html
+msgid "On-site Visit"
+msgstr "外勤拜访"

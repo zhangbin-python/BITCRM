@@ -729,13 +729,13 @@ class Task(db.Model):
 # ============================================================================
 
 class SalesActivity(db.Model):
-    """Sales activity created from Follow-up, Next Steps / To-do, or Field Visit."""
+    """Sales activity created from Follow-up, Next Steps / To-do, or On-site Visit."""
 
     __tablename__ = 'sales_activities'
 
     id = db.Column(db.Integer, primary_key=True)
     activity_type = db.Column(db.String(20), nullable=False, index=True)
-    online_subtype = db.Column(db.String(40), nullable=True)
+    remote_engagement_subtype = db.Column(db.String(40), nullable=True)
     source_type = db.Column(db.String(40), nullable=False, index=True)
     sales_lead_id = db.Column(db.Integer, db.ForeignKey('sales_leads.id'), nullable=True, index=True)
     pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True, index=True)
@@ -765,10 +765,21 @@ class SalesActivity(db.Model):
     contacts = db.relationship('SalesActivityContact', backref='sales_activity', lazy='select', cascade='all, delete-orphan', order_by='SalesActivityContact.sort_order')
     linked_task = db.relationship('Task', foreign_keys='Task.sales_activity_id', backref='sales_activity', uselist=False)
 
-    TYPE_OPTIONS = ['Online', 'Field Visit']
-    ONLINE_SUBTYPE_OPTIONS = ['Follow-up', 'Next Steps / To-do']
+    TYPE_REMOTE_ENGAGEMENT = 'Remote Engagement'
+    TYPE_ON_SITE_VISIT = 'On-site Visit'
+    TYPE_OPTIONS = [TYPE_REMOTE_ENGAGEMENT, TYPE_ON_SITE_VISIT]
+    LEGACY_TYPE_ALIASES = {
+        'Online': TYPE_REMOTE_ENGAGEMENT,
+        'Field Visit': TYPE_ON_SITE_VISIT,
+    }
+    REMOTE_ENGAGEMENT_SUBTYPE_OPTIONS = ['Follow-up', 'Next Steps / To-do']
     SOURCE_OPTIONS = ['Sales Leads', 'Pipeline', 'Existing Customer', 'Marketing Event', 'Other']
     STATUS_OPTIONS = ['Pending Follow-up', 'Completed']
+
+    @classmethod
+    def normalize_type(cls, value):
+        """Return the canonical activity type, including for legacy requests."""
+        return cls.LEGACY_TYPE_ALIASES.get(value, value)
 
     @property
     def primary_contact(self):

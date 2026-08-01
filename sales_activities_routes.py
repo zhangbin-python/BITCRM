@@ -14,7 +14,7 @@ from sales_activity_service import (
     append_followup_history,
     complete_activity,
     create_activity_contacts,
-    create_online_activities,
+    create_remote_engagement_activities,
     soft_delete,
 )
 from utils import calculate_pipeline_metrics, validate_date
@@ -44,13 +44,13 @@ def _parse_datetime(date_value, time_value):
 
 def _pending_deadline(activity):
     """Return the latest registered date/time before a pending activity is overdue."""
-    if activity.activity_type == 'Field Visit' and activity.estimated_end_at:
+    if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT and activity.estimated_end_at:
         return activity.estimated_end_at
     if activity.linked_task and activity.linked_task.due_date:
         # A date-only task is due through the end of that calendar day.
         return datetime.combine(activity.linked_task.due_date, time.max)
     if activity.activity_date:
-        # Online activities without a task are due through the end of their activity date.
+        # Remote Engagement activities without a task are due through the end of their activity date.
         return datetime.combine(activity.activity_date, time.max)
     return None
 
@@ -98,7 +98,7 @@ def _sync_targets(lead, pipeline):
 @login_required
 def index():
     query = _visible_activity_query()
-    activity_type = request.args.get('type', 'All')
+    activity_type = SalesActivity.normalize_type(request.args.get('type', 'All'))
     start_date = validate_date(request.args.get('start_date'))
     end_date = validate_date(request.args.get('end_date'))
     owner_id = request.args.get('owner_id', type=int)
@@ -141,20 +141,20 @@ def index():
     source_counts = Counter(activity.source_type for activity in activities)
     stats = {
         'total': len(activities),
-        'online': type_counts['Online'],
-        'field_visit': type_counts['Field Visit'],
+        'remote_engagement': type_counts[SalesActivity.TYPE_REMOTE_ENGAGEMENT],
+        'on_site_visit': type_counts[SalesActivity.TYPE_ON_SITE_VISIT],
         'pending': sum(1 for activity in activities if activity.status == 'Pending Follow-up'),
         'sources': source_counts,
     }
 
     owner_stats = []
     if current_user.is_admin():
-        grouped = defaultdict(lambda: {'total': 0, 'online': 0, 'field_visit': 0, 'pending': 0})
+        grouped = defaultdict(lambda: {'total': 0, 'remote_engagement': 0, 'on_site_visit': 0, 'pending': 0})
         for activity in activities:
             item = grouped[activity.owner.username if activity.owner else 'Unknown']
             item['total'] += 1
-            item['online'] += activity.activity_type == 'Online'
-            item['field_visit'] += activity.activity_type == 'Field Visit'
+            item['remote_engagement'] += activity.activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT
+            item['on_site_visit'] += activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
             item['pending'] += activity.status == 'Pending Follow-up'
         owner_stats = sorted(({'owner': owner, **counts} for owner, counts in grouped.items()), key=lambda item: item['owner'])
 
@@ -262,7 +262,7 @@ def source_search():
 @login_required
 def add():
     try:
-        activity_type = request.form.get('activity_type')
+        activity_type = SalesActivity.normalize_type(request.form.get('activity_type'))
         source_type = request.form.get('source_type')
         if activity_type not in SalesActivity.TYPE_OPTIONS or source_type not in SalesActivity.SOURCE_OPTIONS:
             raise ValueError('Please select a valid activity type and source type.')
@@ -274,14 +274,14 @@ def add():
             raise PermissionError('You do not have permission to use this Sales Lead.')
         if pipeline and not current_user.can_access_pipeline(pipeline):
             raise PermissionError('You do not have permission to use this Pipeline.')
-        # Online activities use Activity Date. Field Visit uses its Estimated Start Date
+        # Remote Engagement activities use Activity Date. On-site Visit uses its Estimated Start Date
         # as the activity date, so the form does not need a duplicate Visit Date field.
         activity_date = validate_date(request.form.get('activity_date'))
-        if activity_type == 'Field Visit':
-            # A Field Visit's activity date is always its Estimated Start Date.
+        if activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
+            # An On-site Visit's activity date is always its Estimated Start Date.
             activity_date = validate_date(request.form.get('start_date'))
         if not activity_date:
-            raise ValueError('Activity Date is required for Online, or Estimated Start Date is required for a Field Visit.')
+            raise ValueError('Activity Date is required for Remote Engagement, or Estimated Start Date is required for an On-site Visit.')
         owner_id = request.form.get('owner_id', type=int) if current_user.is_admin() else current_user.id
         owner_id = owner_id or current_user.id
         contacts = _contacts_from_form()
@@ -289,13 +289,13 @@ def add():
         expected = request.form.get('expected_result', '').strip()
         remarks = request.form.get('remarks', '').strip()
 
-        if activity_type == 'Online':
+        if activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT:
             followup_text = request.form.get('followup_text', '').strip()
             todo_text = request.form.get('todo_text', '').strip()
             todo_due_date = validate_date(request.form.get('todo_due_date'))
             if todo_text and not todo_due_date:
                 raise ValueError('To-do Due Date is required when Next Steps / To-do is filled.')
-            activities = create_online_activities(
+            activities = create_remote_engagement_activities(
                 source_type=source_type, owner_id=owner_id, sales_lead_id=sales_lead_id,
                 pipeline_id=pipeline_id, company=company, followup_text=followup_text,
                 todo_text=todo_text, todo_due_date=todo_due_date, activity_date=activity_date,
@@ -303,16 +303,16 @@ def add():
             )
             for target in _sync_targets(lead, pipeline):
                 append_followup_history(target, followup_text, todo_text, todo_due_date)
-            description = f'Created {len(activities)} Online sales activity record(s) for {company}'
+            description = f'Created {len(activities)} Remote Engagement sales activity record(s) for {company}'
         else:
             start_at = _parse_datetime(request.form.get('start_date') or request.form.get('activity_date'), request.form.get('start_time'))
             end_at = _parse_datetime(request.form.get('end_date') or request.form.get('activity_date'), request.form.get('end_time'))
             if not start_at or not end_at:
-                raise ValueError('Estimated Start Date/Time and Estimated End Date/Time are required for a Field Visit.')
+                raise ValueError('Estimated Start Date/Time and Estimated End Date/Time are required for an On-site Visit.')
             if end_at <= start_at:
                 raise ValueError('Estimated End Time must be later than Estimated Start Time.')
             activity = SalesActivity(
-                activity_type='Field Visit', source_type=source_type,
+                activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type=source_type,
                 sales_lead_id=lead.id if lead else None, pipeline_id=pipeline.id if pipeline else None,
                 company=company, activity_date=activity_date, estimated_start_at=start_at,
                 estimated_end_at=end_at, address=request.form.get('address', '').strip() or None,
@@ -323,22 +323,22 @@ def add():
             db.session.flush()
             create_activity_contacts(activity, contacts)
             task = Task(
-                content=f'Field Visit follow-up: {company}' + (f' - {purpose}' if purpose else ''),
+                content=f'On-site Visit follow-up: {company}' + (f' - {purpose}' if purpose else ''),
                 due_date=activity_date, owner_id=owner_id, pipeline_id=pipeline.id if pipeline else None,
                 sales_lead_id=lead.id if lead else None, sales_activity_id=activity.id,
                 company=company, status='In Progress',
             )
             db.session.add(task)
-            plan_note = f'Field Visit scheduled for {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
+            plan_note = f'On-site Visit scheduled for {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
             if purpose:
                 plan_note += f'; Purpose / Project: {purpose}'
             for target in _sync_targets(lead, pipeline):
                 append_followup_history(target, plan_note)
-            description = f'Created Field Visit for {company} on {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
+            description = f'Created On-site Visit for {company} on {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
 
         db.session.flush()
         log_activity(current_user, 'Sales Activity - Created', 'sales_activity',
-                     (activities[0].id if activity_type == 'Online' else activity.id), company,
+                     (activities[0].id if activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT else activity.id), company,
                      description, request.remote_addr)
         db.session.commit()
         flash('Sales Activity added successfully!', 'success')
@@ -363,7 +363,7 @@ def followup(activity_id):
         flash('Permission denied.', 'danger')
         return redirect(url_for('sales_activities.index'))
     try:
-        if activity.activity_type == 'Online' and activity.online_subtype == 'Next Steps / To-do':
+        if activity.activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT and activity.remote_engagement_subtype == 'Next Steps / To-do':
             raise ValueError('This activity must be completed from its linked Task.')
         notes = request.form.get('completion_notes', '').strip()
         todo_text = request.form.get('todo_text', '').strip()
@@ -373,8 +373,8 @@ def followup(activity_id):
         complete_activity(activity, current_user.id, notes)
         lead = activity.sales_lead
         pipeline = activity.pipeline
-        if activity.activity_type == 'Field Visit':
-            history_note = f'Field Visit feedback: {notes}'
+        if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
+            history_note = f'On-site Visit feedback: {notes}'
             for target in _sync_targets(lead, pipeline):
                 append_followup_history(target, history_note)
             if pipeline:
@@ -387,7 +387,7 @@ def followup(activity_id):
                     pipeline.stage = new_stage
                     calculate_pipeline_metrics(pipeline)
             if todo_text:
-                create_online_activities(
+                create_remote_engagement_activities(
                     source_type=activity.source_type,
                     owner_id=activity.owner_id,
                     sales_lead_id=activity.sales_lead_id,

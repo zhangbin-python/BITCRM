@@ -19,9 +19,9 @@ The implementation will reuse the existing system labels wherever they already e
 New labels will be introduced only where the current system has no equivalent:
 
 - `Sales Activities`
-- `Online`
-- `Field Visit`
-- `Online Subtype`
+- `Remote Engagement`
+- `On-site Visit`
+- `Remote Engagement Subtype`
 - `Pending Follow-up`
 - `Existing Customer`
 - `Marketing Event`
@@ -59,7 +59,7 @@ Each record will include the user, timestamp, action, subject, subject ID, detai
 
 The module will provide:
 
-- `All`, `Online`, and `Field Visit` quick filters.
+- `All`, `Remote Engagement`, and `On-site Visit` quick filters.
 - Start/end date filtering.
 - Owner filtering for administrators.
 - Summary statistics by activity type and source type.
@@ -72,9 +72,9 @@ The module will provide:
 The table will display:
 
 - `Activity Date / Visit Date`.
-- Visit start/end time for `Field Visit`.
+- Visit start/end time for `On-site Visit`.
 - `Type`.
-- `Online Subtype` where applicable.
+- `Remote Engagement Subtype` where applicable.
 - `Source Type`.
 - `Company`.
 - `Address`.
@@ -115,9 +115,9 @@ When `Source Type` is `Pipeline`:
 
 These sources may use a manually entered Company. Existing Customer and Marketing Event may also offer fuzzy suggestions from existing CRM data, but manual entry remains allowed.
 
-## 6. Field Visit
+## 6. On-site Visit
 
-A Field Visit will support:
+An On-site Visit will support:
 
 - Source type and linked CRM record where applicable.
 - Company.
@@ -129,31 +129,31 @@ A Field Visit will support:
 - Expected Result.
 - Remarks.
 
-Creating a Field Visit will create a pending Sales Activity and a linked Task. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
+Creating an On-site Visit will create a pending Sales Activity and a linked Task. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
 
 Submitting the activity Follow-up will save the feedback, mark the activity completed, complete the linked Task, save Completion Notes, and synchronize the relevant Lead/Pipeline Follow-up History when applicable.
 
-## 7. Online Activity Rules
+## 7. Remote Engagement Activity Rules
 
-Online activities are created from Sales Lead/Pipeline Follow-up History or directly from the Sales Activities form. `Follow-up Notes` and `Next Steps / To-do` are separate activities.
+Remote Engagement activities are created from Sales Lead/Pipeline Follow-up History or directly from the Sales Activities form. `Follow-up Notes` and `Next Steps / To-do` are separate activities.
 
 ### Follow-up Notes only
 
-- Create one `Online` activity with subtype `Follow-up`.
+- Create one `Remote Engagement` activity with subtype `Follow-up`.
 - Mark it `Completed` immediately.
 - Do not create a pending Task.
 - Synchronize the relevant Sales Lead and Pipeline Follow-up History.
 
 ### Next Steps / To-do only
 
-- Create one separate `Online` activity with subtype `Next Steps / To-do`.
+- Create one separate `Remote Engagement` activity with subtype `Next Steps / To-do`.
 - Create a linked Task.
 - Mark the activity `Pending Follow-up`.
 - The activity becomes `Completed` only when the linked Task is completed with required Completion Notes.
 
 ### Both fields
 
-Create two separate Online activities: one completed Follow-up activity and one pending Next Steps / To-do activity linked to the Task.
+Create two separate Remote Engagement activities: one completed Follow-up activity and one pending Next Steps / To-do activity linked to the Task.
 
 The new implementation will apply this rule only to newly created records. Existing Follow-up History will not be parsed or converted into historical Sales Activities.
 
@@ -166,7 +166,7 @@ Sales Leads will receive a Follow-up action using the existing Pipeline Follow-u
 - Next Steps / To-do.
 - To-do Due Date.
 
-The same two-activity Online rule will be applied. If the Lead has a linked Pipeline, synchronization will update both records without creating duplicate activities or Tasks.
+The same two-activity Remote Engagement rule will be applied. If the Lead has a linked Pipeline, synchronization will update both records without creating duplicate activities or Tasks.
 
 ## 9. Task Completion
 
@@ -223,7 +223,7 @@ After implementation, the following will be executed automatically:
 
 - Database migration against the current database.
 - Existing test suite.
-- New tests for source validation, dual Online activity creation, Task completion, synchronization, soft deletion, Requirements length validation, and persistent login.
+- New tests for source validation, dual Remote Engagement activity creation, Task completion, synchronization, soft deletion, Requirements length validation, and persistent login.
 - Flask application import and route registration checks.
 - Template/build/static asset checks.
 - A final database integrity check.

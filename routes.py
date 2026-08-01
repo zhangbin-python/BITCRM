@@ -36,7 +36,7 @@ from utils import (
 )
 from activity_logger import log_activity, log_lead_import, log_lead_created, log_lead_updated, log_pipeline_created, log_pipeline_stage_changed, log_task_created, log_task_completed, log_task_reopened, log_followup_created, log_account_created, log_lead_deleted, log_lead_exported, log_pipeline_deleted, log_pipeline_exported, log_pipeline_imported, log_task_edited, log_task_deleted, log_task_status_changed, log_password_changed, log_language_changed, log_user_created, log_user_status_changed, log_filter_applied, log_column_visibility_changed, log_login, log_logout
 from extensions import cache
-from sales_activity_service import append_followup_history, complete_task, reopen_task, create_online_activities, soft_delete
+from sales_activity_service import append_followup_history, complete_task, reopen_task, create_remote_engagement_activities, soft_delete
 
 # ============================================================================
 # MAIN BLUEPRINT
@@ -1255,7 +1255,7 @@ def add_lead_followup(lead_id):
         if not followup_text and not todo_text:
             return jsonify({'success': False, 'error': 'Follow-up Notes or Next Steps / To-do is required'}), 400
 
-        activities = create_online_activities(
+        activities = create_remote_engagement_activities(
             source_type='Sales Leads', owner_id=current_user.id,
             sales_lead_id=lead.id, company=lead.company or lead.name,
             followup_text=followup_text, todo_text=todo_text,
@@ -1267,7 +1267,7 @@ def add_lead_followup(lead_id):
         log_activity(
             current_user, 'Leads - Follow-up Added', 'lead', lead.id,
             lead.company or lead.name,
-            f'Added Sales Lead follow-up; created {len(activities)} Online activity record(s)',
+            f'Added Sales Lead follow-up; created {len(activities)} Remote Engagement activity record(s)',
             request.remote_addr,
             extra_data={'followup_notes': bool(followup_text), 'next_steps': bool(todo_text)},
             commit=False,
@@ -2022,7 +2022,7 @@ def get_followup_data(pipeline_id):
 @pipeline_bp.route('/<int:pipeline_id>/add-followup', methods=['POST'])
 @login_required
 def add_followup(pipeline_id):
-    """Save Pipeline follow-up and create separate Online activity records."""
+    """Save Pipeline follow-up and create separate Remote Engagement activity records."""
     pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first_or_404()
     if not current_user.can_access_pipeline(pipeline):
         return jsonify({'success': False, 'error': 'Permission denied'}), 403
@@ -2045,7 +2045,7 @@ def add_followup(pipeline_id):
 
         activities = []
         if followup_text or todo_text:
-            activities = create_online_activities(
+            activities = create_remote_engagement_activities(
                 source_type='Pipeline', owner_id=current_user.id,
                 pipeline_id=pipeline.id, company=pipeline.company or pipeline.name,
                 followup_text=followup_text, todo_text=todo_text,
@@ -2063,7 +2063,7 @@ def add_followup(pipeline_id):
         log_activity(
             current_user, 'Pipeline - Follow-up Added', 'pipeline', pipeline.id,
             pipeline.company or pipeline.name,
-            f'Updated Pipeline follow-up; created {len(activities)} Online activity record(s)',
+            f'Updated Pipeline follow-up; created {len(activities)} Remote Engagement activity record(s)',
             request.remote_addr,
             old_values={'stage': old_stage, 'stuckpoint': old_stuckpoint},
             new_values={'stage': pipeline.stage, 'stuckpoint': pipeline.stuckpoint},

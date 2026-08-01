@@ -111,13 +111,13 @@ def create_activity_contacts(activity, contacts):
     activity.contacts.extend(normalized)
 
 
-def create_online_activities(
+def create_remote_engagement_activities(
     *, source_type, owner_id, sales_lead_id=None, pipeline_id=None,
     company=None, followup_text=None, todo_text=None, todo_due_date=None,
     activity_date=None, purpose_project=None, expected_result=None,
     remarks=None, contacts=None,
 ):
-    """Create separate Online activities for Follow-up Notes and To-do.
+    """Create separate Remote Engagement activities for Follow-up Notes and To-do.
 
     Follow-up Notes produce a completed activity. Next Steps / To-do produces
     another pending activity and one linked Task. Existing history is never read
@@ -133,8 +133,8 @@ def create_online_activities(
 
     if followup_text:
         activity = SalesActivity(
-            activity_type='Online',
-            online_subtype='Follow-up',
+            activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+            remote_engagement_subtype='Follow-up',
             source_type=source_type,
             sales_lead_id=lead.id if lead else None,
             pipeline_id=pipeline.id if pipeline else None,
@@ -158,8 +158,8 @@ def create_online_activities(
     if todo_text:
         todo_date = todo_due_date or activity_date
         activity = SalesActivity(
-            activity_type='Online',
-            online_subtype='Next Steps / To-do',
+            activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+            remote_engagement_subtype='Next Steps / To-do',
             source_type=source_type,
             sales_lead_id=lead.id if lead else None,
             pipeline_id=pipeline.id if pipeline else None,

@@ -79,7 +79,7 @@
     <div class="page-header mb-4">
         <div class="page-title-stack">
             <h1 class="h3 mb-0 text-gray-800">{{ _('Sales Activities') }}</h1>
-            <p class="text-muted small mb-0">{{ _('Track Online and Field Visit activities') }}</p>
+            <p class="text-muted small mb-0">{{ _('Track Remote Engagement and On-site Visit activities') }}</p>
         </div>
     </div>
 
@@ -95,8 +95,8 @@
                             <label class="form-label">{{ _('Type') }}</label>
                             <div class="type-filter-options" role="radiogroup" aria-label="{{ _('Type') }}">
                                 <div class="type-filter-option"><input type="radio" name="type" id="typeAll" value="All" {% if selected_type == 'All' %}checked{% endif %}><label for="typeAll">{{ _('All') }}</label></div>
-                                <div class="type-filter-option"><input type="radio" name="type" id="typeOnline" value="Online" {% if selected_type == 'Online' %}checked{% endif %}><label for="typeOnline">{{ _('Online') }}</label></div>
-                                <div class="type-filter-option"><input type="radio" name="type" id="typeFieldVisit" value="Field Visit" {% if selected_type == 'Field Visit' %}checked{% endif %}><label for="typeFieldVisit">{{ _('Field Visit') }}</label></div>
+                                <div class="type-filter-option"><input type="radio" name="type" id="typeRemoteEngagement" value="Remote Engagement" {% if selected_type == 'Remote Engagement' %}checked{% endif %}><label for="typeRemoteEngagement">{{ _('Remote Engagement') }}</label></div>
+                                <div class="type-filter-option"><input type="radio" name="type" id="typeOnSiteVisit" value="On-site Visit" {% if selected_type == 'On-site Visit' %}checked{% endif %}><label for="typeOnSiteVisit">{{ _('On-site Visit') }}</label></div>
                             </div>
                         </div>
                         <div class="col-12 col-md-6 col-xl-4">
@@ -131,11 +131,11 @@
 
             {% if current_user.is_admin() %}
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Activities by Owner') }}</h5>
-                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Total') }}</th><th>{{ _('Online') }}</th><th>{{ _('Field Visit') }}</th><th>{{ _('Pending Follow-up') }}</th></tr></thead>
+                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Total') }}</th><th>{{ _('Remote Engagement') }}</th><th>{{ _('On-site Visit') }}</th><th>{{ _('Pending Follow-up') }}</th></tr></thead>
                     <tbody>
-                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.total }}</td><td>{{ item.online }}</td><td>{{ item.field_visit }}</td><td>{{ item.pending }}</td></tr>{% endfor %}
+                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.total }}</td><td>{{ item.remote_engagement }}</td><td>{{ item.on_site_visit }}</td><td>{{ item.pending }}</td></tr>{% endfor %}
                     </tbody>
-                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.total }}</td><td>{{ stats.online }}</td><td>{{ stats.field_visit }}</td><td>{{ stats.pending }}</td></tr></tfoot>
+                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.total }}</td><td>{{ stats.remote_engagement }}</td><td>{{ stats.on_site_visit }}</td><td>{{ stats.pending }}</td></tr></tfoot>
                 </table></div>
                 {% if not owner_stats %}<div class="small text-muted mt-2">{{ _('No activities found') }}</div>{% endif %}
             </div></div>
@@ -194,8 +194,8 @@
             <tbody>
             {% for activity in activities %}
             <tr>
-                <td>{% if activity.activity_type == 'Field Visit' %}<strong>{{ activity.activity_date.strftime('%Y-%m-%d') }}</strong><br><small>{{ activity.estimated_start_at.strftime('%Y-%m-%d %H:%M') if activity.estimated_start_at else '' }}<br>→ {{ activity.estimated_end_at.strftime('%Y-%m-%d %H:%M') if activity.estimated_end_at else '' }}</small>{% else %}{{ activity.activity_date.strftime('%Y-%m-%d') }}{% endif %}</td>
-                <td><span class="badge bg-{{ 'info' if activity.activity_type == 'Online' else 'primary' }}">{{ _(activity.activity_type) }}</span></td>
+                <td>{% if activity.activity_type == 'On-site Visit' %}<strong>{{ activity.activity_date.strftime('%Y-%m-%d') }}</strong><br><small>{{ activity.estimated_start_at.strftime('%Y-%m-%d %H:%M') if activity.estimated_start_at else '' }}<br>→ {{ activity.estimated_end_at.strftime('%Y-%m-%d %H:%M') if activity.estimated_end_at else '' }}</small>{% else %}{{ activity.activity_date.strftime('%Y-%m-%d') }}{% endif %}</td>
+                <td><span class="badge bg-{{ 'info' if activity.activity_type == 'Remote Engagement' else 'primary' }}">{{ _(activity.activity_type) }}</span></td>
                 <td>{{ _(activity.source_type) }}</td>
                 <td><strong>{{ activity.company }}</strong></td>
                 <td class="activity-description">{{ activity.address or '-' }}</td>
@@ -209,7 +209,7 @@
                 <td><span class="badge bg-{{ 'danger' if activity.status == 'Pending Follow-up' else 'success' }}">{{ _(activity.status) }}</span></td>
                 <td>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td><div class="d-flex gap-1">
-                    {% if activity.status == 'Pending Follow-up' and not (activity.activity_type == 'Online' and activity.online_subtype == 'Next Steps / To-do') %}<button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#followupActivity{{ activity.id }}" title="{{ _('Follow-up') }}"><i class="bi bi-chat-dots"></i></button>{% endif %}
+                    {% if activity.status == 'Pending Follow-up' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}<button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#followupActivity{{ activity.id }}" title="{{ _('Follow-up') }}"><i class="bi bi-chat-dots"></i></button>{% endif %}
                     {% if activity.linked_task %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('tasks.index') }}" title="{{ _('Open Task') }}"><i class="bi bi-check2-square"></i></a>{% endif %}
                     <form method="post" action="{{ url_for('sales_activities.delete', activity_id=activity.id) }}" onsubmit="return confirm('{{ _('Archive this activity?') }}')"><button class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}"><i class="bi bi-trash"></i></button></form>
                 </div></td>
@@ -222,7 +222,7 @@
 
 <!-- Add activity modal -->
 {% set form_data = add_form_data or {} %}
-{% set form_activity_type = (form_data.get('activity_type') or ['Field Visit'])|first %}
+{% set form_activity_type = (form_data.get('activity_type') or ['On-site Visit'])|first %}
 {% set form_source_type = (form_data.get('source_type') or [source_options[0]])|first %}
 {% set form_company = (form_data.get('company') or [''])|first %}
 {% set form_lead_id = (form_data.get('sales_lead_id') or [''])|first %}
@@ -253,23 +253,23 @@
 <div class="modal fade" id="addSalesActivityModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><form method="post" action="{{ url_for('sales_activities.add') }}" id="salesActivityForm">
     <div class="modal-header"><h5 class="modal-title">{{ _('Add Sales Activity') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body"><div class="row g-3">
-        <div class="col-md-3"><label class="form-label">{{ _('Type') }} *</label><select name="activity_type" id="activityType" class="form-select" required><option value="Online" {% if form_activity_type == 'Online' %}selected{% endif %}>{{ _('Online') }}</option><option value="Field Visit" {% if form_activity_type == 'Field Visit' %}selected{% endif %}>{{ _('Field Visit') }}</option></select></div>
+        <div class="col-md-3"><label class="form-label">{{ _('Type') }} *</label><select name="activity_type" id="activityType" class="form-select" required><option value="Remote Engagement" {% if form_activity_type == 'Remote Engagement' %}selected{% endif %}>{{ _('Remote Engagement') }}</option><option value="On-site Visit" {% if form_activity_type == 'On-site Visit' %}selected{% endif %}>{{ _('On-site Visit') }}</option></select></div>
         <div class="col-md-3"><label class="form-label">{{ _('Source Type') }} *</label><select name="source_type" id="sourceType" class="form-select" required>{% for source in source_options %}<option value="{{ source }}" {% if form_source_type == source %}selected{% endif %}>{{ _(source) }}</option>{% endfor %}</select></div>
         <div class="col-md-6"><label class="form-label">{{ _('Company') }} *</label><div class="input-group"><input type="text" id="companySearch" class="form-control" placeholder="{{ _('Search company...') }}" autocomplete="off" value="{{ form_company }}" required><input type="hidden" name="company" id="companyValue" value="{{ form_company }}"><input type="hidden" name="sales_lead_id" id="salesLeadId" value="{{ form_lead_id }}"><input type="hidden" name="pipeline_id" id="pipelineId" value="{{ form_pipeline_id }}"><button class="btn btn-outline-secondary" type="button" id="clearCompany">×</button></div><div id="companyResults" class="list-group position-absolute shadow" style="z-index:1080;max-width:560px"></div><div id="companyHelp" class="form-text"></div></div>
-        <div class="col-md-3 online-only"><label class="form-label" id="dateLabel">{{ _('Activity Date') }} *</label><input type="date" name="activity_date" class="form-control" value="{{ form_activity_date }}"></div>
+        <div class="col-md-3 remote-engagement-only"><label class="form-label" id="dateLabel">{{ _('Activity Date') }} *</label><input type="date" name="activity_date" class="form-control" value="{{ form_activity_date }}"></div>
         <div class="col-md-3"><label class="form-label">{{ _('Owner') }}</label><select name="owner_id" class="form-select">{% for owner in owners %}<option value="{{ owner.id }}" {% if form_owner_id|string == owner.id|string %}selected{% endif %}>{{ owner.username }}</option>{% else %}<option value="{{ current_user.id }}" selected>{{ current_user.username }}</option>{% endfor %}</select><div class="form-text">{{ _('Defaults to the current user.') }}</div></div>
-        <div class="col-md-9 field-visit-only"><label class="form-label" for="visitSchedule">{{ _('Visit Schedule') }} *</label><input type="text" id="visitSchedule" class="form-control" placeholder="{{ _('Select start and end date/time') }}" autocomplete="off" value="{{ form_schedule_value }}" required><input type="hidden" id="visitStartDate" name="start_date" value="{{ form_start_date }}"><input type="hidden" id="visitStartTime" name="start_time" value="{{ form_start_time }}"><input type="hidden" id="visitEndDate" name="end_date" value="{{ form_end_date }}"><input type="hidden" id="visitEndTime" name="end_time" value="{{ form_end_time }}"><div class="form-text" id="visitScheduleHelp">{{ _('Choose the start date/time, then the end date/time in the same picker.') }}</div></div>
-        <div class="col-12 field-visit-only"><label class="form-label">{{ _('Address') }}</label><textarea name="address" class="form-control" rows="2">{{ form_address }}</textarea></div>
+        <div class="col-md-9 on-site-visit-only"><label class="form-label" for="visitSchedule">{{ _('Visit Schedule') }} *</label><input type="text" id="visitSchedule" class="form-control" placeholder="{{ _('Select start and end date/time') }}" autocomplete="off" value="{{ form_schedule_value }}" required><input type="hidden" id="visitStartDate" name="start_date" value="{{ form_start_date }}"><input type="hidden" id="visitStartTime" name="start_time" value="{{ form_start_time }}"><input type="hidden" id="visitEndDate" name="end_date" value="{{ form_end_date }}"><input type="hidden" id="visitEndTime" name="end_time" value="{{ form_end_time }}"><div class="form-text" id="visitScheduleHelp">{{ _('Choose the start date/time, then the end date/time in the same picker.') }}</div></div>
+        <div class="col-12 on-site-visit-only"><label class="form-label">{{ _('Address') }}</label><textarea name="address" class="form-control" rows="2">{{ form_address }}</textarea></div>
         <div class="col-12"><label class="form-label">{{ _('Contacts') }}</label><div id="contactsContainer">{% for index in range(contact_count) %}<div class="row g-2 contact-row{% if index > 0 %} mt-2{% endif %}"><div class="col-md-3"><input name="contact_name[]" class="form-control" placeholder="{{ _('Contact') }}" value="{{ contact_names[index] if index < contact_names|length else '' }}"></div><div class="col-md-3"><input name="contact_position[]" class="form-control" placeholder="{{ _('Position') }}" value="{{ contact_positions[index] if index < contact_positions|length else '' }}"></div><div class="col-md-5"><input name="contact_information[]" class="form-control" placeholder="{{ _('Contact Information') }}" value="{{ contact_information[index] if index < contact_information|length else '' }}"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger remove-contact" {% if index == 0 %}disabled{% endif %}>×</button></div></div>{% endfor %}</div><button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addContact"><i class="bi bi-plus"></i> {{ _('Add Contact') }}</button></div>
         <div class="col-md-4"><label class="form-label">{{ _('Purpose / Project') }}</label><textarea name="purpose_project" class="form-control" rows="2">{{ form_purpose }}</textarea></div>
         <div class="col-md-4"><label class="form-label">{{ _('Expected Result') }}</label><textarea name="expected_result" class="form-control" rows="2">{{ form_expected_result }}</textarea></div>
         <div class="col-md-4"><label class="form-label">{{ _('Remarks') }}</label><textarea name="remarks" class="form-control" rows="2">{{ form_remarks }}</textarea></div>
-        <div class="col-12 online-only"><hr><h6>{{ _('Online Follow-up') }}</h6><div class="row g-3"><div class="col-md-6"><label class="form-label">{{ _('Follow-up Notes') }}</label><textarea name="followup_text" class="form-control" rows="3">{{ form_followup_text }}</textarea></div><div class="col-md-6"><label class="form-label">{{ _('Next Steps / To-do') }}</label><textarea name="todo_text" class="form-control" rows="3">{{ form_todo_text }}</textarea></div><div class="col-md-4"><label class="form-label">{{ _('To-do Due Date') }}</label><input type="date" name="todo_due_date" class="form-control" value="{{ form_todo_due_date }}"></div></div></div>
+        <div class="col-12 remote-engagement-only"><hr><h6>{{ _('Remote Engagement Follow-up') }}</h6><div class="row g-3"><div class="col-md-6"><label class="form-label">{{ _('Follow-up Notes') }}</label><textarea name="followup_text" class="form-control" rows="3">{{ form_followup_text }}</textarea></div><div class="col-md-6"><label class="form-label">{{ _('Next Steps / To-do') }}</label><textarea name="todo_text" class="form-control" rows="3">{{ form_todo_text }}</textarea></div><div class="col-md-4"><label class="form-label">{{ _('To-do Due Date') }}</label><input type="date" name="todo_due_date" class="form-control" value="{{ form_todo_due_date }}"></div></div></div>
     </div></div>
     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button><button class="btn btn-primary">{{ _('Save Activity') }}</button></div>
 </form></div></div></div>
 
-{% for activity in activities if activity.status == 'Pending Follow-up' and not (activity.activity_type == 'Online' and activity.online_subtype == 'Next Steps / To-do') %}
+{% for activity in activities if activity.status == 'Pending Follow-up' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}
 <div class="modal fade" id="followupActivity{{ activity.id }}" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content">
         <form method="post" action="{{ url_for('sales_activities.followup', activity_id=activity.id) }}">
@@ -279,7 +279,7 @@
                 <label class="form-label">{{ _('Follow-up Notes') }} / {{ _('Completion Notes') }} *</label>
                 <textarea name="completion_notes" class="form-control" rows="5" required placeholder="{{ _('Enter visit result, customer feedback, and completed work') }}"></textarea>
                 {% if activity.source_type in ['Sales Leads', 'Pipeline'] %}
-                <div class="alert alert-info small mt-3 mb-3">{{ _('The feedback will be written to Follow-up History. Optional Next Steps / To-do creates a separate Online activity and Task.') }}</div>
+                <div class="alert alert-info small mt-3 mb-3">{{ _('The feedback will be written to Follow-up History. Optional Next Steps / To-do creates a separate Remote Engagement activity and Task.') }}</div>
                 {% if activity.source_type == 'Pipeline' %}
                 <div class="row g-3">
                     <div class="col-md-6"><label class="form-label">{{ _('Current Stuckpoint') }}</label><textarea name="stuckpoint_text" class="form-control" rows="2">{{ activity.pipeline.stuckpoint if activity.pipeline and activity.pipeline.stuckpoint else '' }}</textarea></div>
@@ -505,12 +505,12 @@ if (window.flatpickr && visitScheduleInput) {
   });
 }
 function toggleActivityType() {
-  const field = activityType.value === 'Field Visit';
-  document.querySelectorAll('.field-visit-only').forEach(el=>el.style.display=field?'':'none');
-  document.querySelectorAll('.online-only').forEach(el=>el.style.display=field?'none':'');
+  const onSiteVisit = activityType.value === 'On-site Visit';
+  document.querySelectorAll('.on-site-visit-only').forEach(el=>el.style.display=onSiteVisit?'':'none');
+  document.querySelectorAll('.remote-engagement-only').forEach(el=>el.style.display=onSiteVisit?'none':'');
   const activityDate = document.querySelector('[name="activity_date"]');
-  if (activityDate) activityDate.required = !field;
-  if (visitScheduleInput) visitScheduleInput.required = field;
+  if (activityDate) activityDate.required = !onSiteVisit;
+  if (visitScheduleInput) visitScheduleInput.required = onSiteVisit;
 }
 toggleActivityType();
 const hasAddFormData = {{ 'true' if add_form_data else 'false' }};
@@ -523,7 +523,7 @@ document.getElementById('salesActivityForm').addEventListener('submit', event=>{
     alert('{{ _('Please select a valid Company from the system search results.') }}');
     return;
   }
-  if (activityType.value === 'Field Visit' && !validateVisitDateTime(true)) {
+  if (activityType.value === 'On-site Visit' && !validateVisitDateTime(true)) {
     event.preventDefault();
   }
 });
