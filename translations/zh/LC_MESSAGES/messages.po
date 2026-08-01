@@ -1408,3 +1408,16 @@ msgstr "结束时间"
 #: templates/tasks.html
 msgid "Open Sales Activity"
 msgstr "打开销售活动"
+
+#: templates/sales_activities/index.html
+#, python-format
+msgid "Showing %(start)s-%(end)s of %(total)s records"
+msgstr "显示第 %(start)s-%(end)s 条，共 %(total)s 条记录"
+
+#: templates/sales_activities/index.html
+msgid "0 records"
+msgstr "0 条记录"
+
+#: templates/sales_activities/index.html
+msgid "Activity List pagination"
+msgstr "活动列表分页"

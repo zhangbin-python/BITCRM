@@ -29,7 +29,8 @@
 .sales-activity-calendar-card .card-body { display: flex; flex-direction: column; min-height: 498px; }
 .sales-activity-calendar-card .activity-calendar-weekdays { flex: 0 0 auto; }
 .sales-activity-calendar-card .activity-calendar { flex: 1 1 auto; min-height: 300px; grid-auto-rows: minmax(48px, 1fr); align-content: stretch; }
-.activity-calendar-legend { flex: 0 0 auto; font-size: .74rem; }
+.activity-calendar-legend { flex: 0 0 auto; font-size: .8rem; gap: .4rem !important; }
+.activity-calendar-legend .badge { font-size: .82rem; line-height: 1.2; padding: .4rem .55rem; border: 1px solid rgba(0, 0, 0, .08); }
 .activity-calendar-title { font-size: 1.28rem; }
 .activity-calendar-subtitle { font-size: .82rem; }
 .activity-calendar-month-label { font-size: .95rem; }
@@ -53,9 +54,9 @@
 .owner-summary-table tbody td, .owner-summary-table tfoot td { vertical-align: middle; }
 .owner-summary-table tfoot td { border-top: 2px solid #dee2e6; }
 .type-filter-options { display: flex; flex-wrap: nowrap; width: 100%; gap: .45rem; }
-.type-filter-option { flex: 1 1 0; min-width: 0; }
+.type-filter-option { display: flex; flex: 1 1 0; min-width: 0; }
 .type-filter-option input { position: absolute; opacity: 0; pointer-events: none; }
-.type-filter-option label { display: flex; align-items: center; justify-content: center; min-height: 38px; width: 100%; padding: .45rem .65rem; border: 1px solid #ced4da; border-radius: .45rem; background: #fff; color: #495057; cursor: pointer; white-space: normal; overflow-wrap: anywhere; text-align: center; line-height: 1.15; transition: all .15s ease-in-out; }
+.type-filter-option label { display: flex; align-items: center; justify-content: center; min-height: 48px; height: 100%; width: 100%; padding: .45rem .65rem; border: 1px solid #ced4da; border-radius: .45rem; background: #fff; color: #495057; cursor: pointer; white-space: normal; overflow-wrap: anywhere; text-align: center; line-height: 1.15; transition: all .15s ease-in-out; }
 .sales-activity-table .badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
 .type-filter-option label:hover { border-color: #667eea; color: #4f46b5; }
 .type-filter-option input:checked + label { border-color: #667eea; background: #667eea; color: #fff; box-shadow: 0 2px 5px rgba(102,126,234,.25); }
@@ -73,6 +74,7 @@
     .calendar-day .day-number { font-size: .8rem; }
     .calendar-day .activity-count { font-size: .66rem; }
     .type-filter-option label { font-size: .82rem; padding-inline: .35rem; }
+    .activity-calendar-legend .badge { font-size: .76rem; padding: .35rem .45rem; }
 }
 </style>
 {% endblock %}
@@ -184,19 +186,19 @@
                 </div>
                 <div class="activity-calendar-weekdays mb-1">{% for day in [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')] %}<div class="calendar-weekday">{{ day }}</div>{% endfor %}</div>
                 <div id="activityCalendar" class="activity-calendar"></div>
-                <div class="activity-calendar-legend small text-muted mt-3 d-flex flex-wrap gap-1"><span class="badge" style="background:#d1e7dd;color:#155724">{{ _('Scheduled / completed') }}</span> <span class="badge" style="background:#fff3cd;color:#664d03">{{ _('Follow-up Required / Due Today') }}</span> <span class="badge" style="background:#f8d7da;color:#721c24">{{ _('Overdue') }}</span> <span class="badge" style="background:#dee2e6;color:#343a40">{{ _('Cancelled / past') }}</span></div>
+                <div class="activity-calendar-legend text-muted mt-3 d-flex flex-wrap"><span class="badge" style="background:#d1e7dd;color:#155724">{{ _('Scheduled / completed') }}</span> <span class="badge" style="background:#fff3cd;color:#664d03">{{ _('Follow-up Required / Due Today') }}</span> <span class="badge" style="background:#f8d7da;color:#721c24">{{ _('Overdue') }}</span> <span class="badge" style="background:#dee2e6;color:#343a40">{{ _('Cancelled / past') }}</span></div>
             </div></div>
         </div>
     </div>
 
-    <div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-3"><h5 class="mb-0">{{ _('Activity List') }}</h5><span class="text-muted small">{{ activities|length }} {{ _('records') }}</span></div>
+    <div class="card"><div class="card-body"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h5 class="mb-0">{{ _('Activity List') }}</h5><span class="text-muted small">{% if pagination.total %}{{ _('Showing %(start)s-%(end)s of %(total)s records', start=pagination.first, end=pagination.last, total=pagination.total) }}{% else %}{{ _('0 records') }}{% endif %}</span></div>
         <div class="table-responsive sales-activity-table-wrapper">
         <table class="table table-hover table-sm sales-activity-table mb-0">
             <thead><tr><th>{{ _('Date') }}</th><th>{{ _('Type') }}</th><th>{{ _('Source Type') }}</th><th>{{ _('Company') }}</th><th>{{ _('Address') }}</th><th>{{ _('Contact') }}</th><th>{{ _('Purpose / Project') }}</th><th>{{ _('Expected Result') }}</th><th>{{ _('Activity Notes') }}</th><th>{{ _('Completion Feedback') }}</th><th>{{ _('Remarks') }}</th><th>{{ _('Owner') }}</th><th>{{ _('Status') }}</th><th>{{ _('Created At') }}</th><th>{{ _('Actions') }}</th></tr></thead>
             <tbody>
             {% for activity in activities %}
             <tr>
-                <td>{% if activity.activity_type == 'On-site Visit' %}<strong>{{ activity.activity_date.strftime('%Y-%m-%d') }}</strong><br><small>{{ activity.estimated_start_at.strftime('%Y-%m-%d %H:%M') if activity.estimated_start_at else '' }}<br>→ {{ activity.estimated_end_at.strftime('%Y-%m-%d %H:%M') if activity.estimated_end_at else '' }}</small>{% else %}{{ activity.activity_date.strftime('%Y-%m-%d') }}{% endif %}</td>
+                <td>{% if activity.activity_type == 'On-site Visit' and activity.estimated_start_at %}<strong class="activity-schedule-start">{{ activity.estimated_start_at.strftime('%Y-%m-%d %H:%M') }}</strong>{% if activity.estimated_end_at %}<br><small class="activity-schedule-end">→ {{ activity.estimated_end_at.strftime('%Y-%m-%d %H:%M') }}</small>{% endif %}{% else %}{{ activity.activity_date.strftime('%Y-%m-%d') }}{% endif %}</td>
                 <td><span class="badge bg-{{ 'info' if activity.activity_type == 'Remote Engagement' else 'primary' }}">{{ _(activity.activity_type) }}</span></td>
                 <td>{{ _(activity.source_type) }}</td>
                 <td><strong>{{ activity.company }}</strong></td>
@@ -225,6 +227,25 @@
             {% else %}<tr><td colspan="15" class="text-center text-muted py-5">{{ _('No sales activities found') }}</td></tr>{% endfor %}
             </tbody>
         </table></div>
+        {% if pagination.pages > 1 %}
+        <nav class="mt-3" aria-label="{{ _('Activity List pagination') }}">
+            <ul class="pagination pagination-sm justify-content-center flex-wrap mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    {% if pagination.has_prev %}<a class="page-link" href="{{ url_for('sales_activities.index', page=pagination.prev_num, **pagination_query) }}">{{ _('Previous') }}</a>{% else %}<span class="page-link">{{ _('Previous') }}</span>{% endif %}
+                </li>
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}<li class="page-item active" aria-current="page"><span class="page-link">{{ page_num }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="{{ url_for('sales_activities.index', page=page_num, **pagination_query) }}">{{ page_num }}</a></li>{% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    {% if pagination.has_next %}<a class="page-link" href="{{ url_for('sales_activities.index', page=pagination.next_num, **pagination_query) }}">{{ _('Next') }}</a>{% else %}<span class="page-link">{{ _('Next') }}</span>{% endif %}
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
     </div></div>
 </div>
 
@@ -366,7 +387,7 @@ function renderCalendar() {
       else if (iso < todayIso) el.classList.add('has-gray');
     }
     el.innerHTML = `<div class="day-number">${day}</div>${data ? `<div class="activity-count">${data.total}</div>` : ''}`;
-    el.addEventListener('click', () => { if (selectedDates.has(iso)) selectedDates.delete(iso); else selectedDates.add(iso); const params = new URLSearchParams(window.location.search); params.delete('dates'); [...selectedDates].sort().forEach(value => params.append('dates', value)); window.location.search = params.toString(); });
+    el.addEventListener('click', () => { if (selectedDates.has(iso)) selectedDates.delete(iso); else selectedDates.add(iso); const params = new URLSearchParams(window.location.search); params.delete('dates'); params.delete('page'); [...selectedDates].sort().forEach(value => params.append('dates', value)); window.location.search = params.toString(); });
     root.appendChild(el);
   }
 }
@@ -383,6 +404,7 @@ if (activityFiltersForm) {
       if (field && field.value) params.set(name, field.value);
       else params.delete(name);
     });
+    params.delete('page');
     window.location.search = params.toString();
   };
 

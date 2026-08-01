@@ -1,7 +1,7 @@
 import os
 import tempfile
 import unittest
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from app import create_app
 from extensions import db
@@ -141,6 +141,12 @@ class SalesActivitiesTests(unittest.TestCase):
         task = Task.query.one()
         self.assertEqual(activity.estimated_start_at.strftime('%Y-%m-%d %H:%M'), '2026-07-30 23:00')
         self.assertEqual(activity.estimated_end_at.strftime('%Y-%m-%d %H:%M'), '2026-07-31 01:00')
+
+        activity_list = self.client.get('/sales-activities/')
+        self.assertEqual(activity_list.status_code, 200)
+        activity_html = activity_list.get_data(as_text=True)
+        self.assertIn('<strong class="activity-schedule-start">2026-07-30 23:00</strong>', activity_html)
+        self.assertIn('<small class="activity-schedule-end">→ 2026-07-31 01:00</small>', activity_html)
         self.assertEqual(len(activity.contacts), 2)
         self.assertEqual(task.sales_activity_id, activity.id)
         self.assertIn('On-site Visit scheduled', lead.follow_up)
@@ -214,6 +220,41 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn(b'min-width: 1900px', response.data)
         self.assertIn(b'sales-activity-table-wrapper', response.data)
         self.assertNotIn(b'<th>Remote Engagement Subtype</th>', response.data)
+
+    def test_activity_list_paginates_twenty_records_and_preserves_filters(self):
+        base_date = date(2026, 8, 1)
+        for index in range(1, 26):
+            db.session.add(SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up',
+                source_type='Other',
+                company=f'Paged Activity {index:02d}',
+                activity_date=base_date + timedelta(days=index),
+                status=SalesActivity.STATUS_COMPLETED,
+                owner_id=self.admin_id,
+            ))
+        db.session.commit()
+
+        query_string = (
+            f'type=Remote%20Engagement&start_date=2026-08-01&'
+            f'end_date=2026-09-30&owner_id={self.admin_id}'
+        )
+        first_page = self.client.get(f'/sales-activities/?{query_string}')
+        self.assertEqual(first_page.status_code, 200)
+        self.assertIn(b'Showing 1-20 of 25 records', first_page.data)
+        self.assertIn(b'Paged Activity 25', first_page.data)
+        self.assertIn(b'Paged Activity 06', first_page.data)
+        self.assertNotIn(b'Paged Activity 05', first_page.data)
+        self.assertIn(b'page=2', first_page.data)
+        self.assertIn(b'type=Remote+Engagement', first_page.data)
+        self.assertIn(b'start_date=2026-08-01', first_page.data)
+
+        second_page = self.client.get(f'/sales-activities/?{query_string}&page=2')
+        self.assertEqual(second_page.status_code, 200)
+        self.assertIn(b'Showing 21-25 of 25 records', second_page.data)
+        self.assertIn(b'Paged Activity 05', second_page.data)
+        self.assertIn(b'Paged Activity 01', second_page.data)
+        self.assertNotIn(b'Paged Activity 25', second_page.data)
 
     def test_strict_sources_reject_manual_company_but_other_source_accepts_it(self):
         response = self.client.post(

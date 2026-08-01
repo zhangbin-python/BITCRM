@@ -116,14 +116,21 @@ def index():
     if selected_dates:
         query = query.filter(SalesActivity.activity_date.in_(selected_dates))
 
-    activities = query.order_by(SalesActivity.activity_date.desc(), SalesActivity.created_at.desc()).all()
-    type_counts = Counter(activity.activity_type for activity in activities)
-    source_counts = Counter(activity.source_type for activity in activities)
+    ordered_query = query.order_by(
+        SalesActivity.activity_date.desc(), SalesActivity.created_at.desc(), SalesActivity.id.desc()
+    )
+    matching_activities = ordered_query.all()
+    page = max(request.args.get('page', 1, type=int) or 1, 1)
+    pagination = ordered_query.paginate(page=page, per_page=20, error_out=False)
+    activities = pagination.items
+
+    type_counts = Counter(activity.activity_type for activity in matching_activities)
+    source_counts = Counter(activity.source_type for activity in matching_activities)
     now = datetime.now()
-    display_statuses = {activity.id: activity.get_display_status(now) for activity in activities}
-    deadline_indicators = {activity.id: activity.get_deadline_indicator(now) for activity in activities}
+    display_statuses = {activity.id: activity.get_display_status(now) for activity in matching_activities}
+    deadline_indicators = {activity.id: activity.get_deadline_indicator(now) for activity in matching_activities}
     stats = {
-        'total': len(activities),
+        'total': len(matching_activities),
         'remote_engagement': type_counts[SalesActivity.TYPE_REMOTE_ENGAGEMENT],
         'on_site_visit': type_counts[SalesActivity.TYPE_ON_SITE_VISIT],
         'scheduled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_SCHEDULED),
@@ -140,7 +147,7 @@ def index():
             'total': 0, 'remote_engagement': 0, 'on_site_visit': 0,
             'scheduled': 0, 'follow_up_required': 0, 'overdue': 0,
         })
-        for activity in activities:
+        for activity in matching_activities:
             item = grouped[activity.owner.username if activity.owner else 'Unknown']
             item['total'] += 1
             item['remote_engagement'] += activity.activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT
@@ -152,9 +159,9 @@ def index():
 
     # Keep the compact horizontal source summary, but show the owner names and
     # each owner's count inside every source-type cell.
-    owner_names = sorted({activity.owner.username if activity.owner else 'Unknown' for activity in activities})
+    owner_names = sorted({activity.owner.username if activity.owner else 'Unknown' for activity in matching_activities})
     source_owner_counts = defaultdict(lambda: defaultdict(int))
-    for activity in activities:
+    for activity in matching_activities:
         owner_name = activity.owner.username if activity.owner else 'Unknown'
         source_owner_counts[activity.source_type][owner_name] += 1
     source_owner_rows = []
@@ -193,8 +200,9 @@ def index():
     add_form_data = session.pop('sales_activity_form_data', {})
     reopen_add_modal = session.pop('sales_activity_reopen_form', False)
     return render_template(
-        'sales_activities/index.html', activities=activities, stats=stats,
-        owner_stats=owner_stats, source_owner_rows=source_owner_rows, source_totals=source_totals,
+        'sales_activities/index.html', activities=activities, pagination=pagination,
+        pagination_query={key: values for key, values in request.args.to_dict(flat=False).items() if key != 'page'},
+        stats=stats, owner_stats=owner_stats, source_owner_rows=source_owner_rows, source_totals=source_totals,
         owners=owners, calendar_data=dict(calendar),
         selected_type=activity_type, start_date=start_date, end_date=end_date,
         selected_dates=[item.isoformat() for item in selected_dates], selected_owner_id=owner_id,
