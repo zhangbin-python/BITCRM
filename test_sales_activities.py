@@ -220,6 +220,10 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn(b'min-width: 1900px', response.data)
         self.assertIn(b'sales-activity-table-wrapper', response.data)
         self.assertNotIn(b'<th>Remote Engagement Subtype</th>', response.data)
+        self.assertLess(
+            response.data.index(b'for="typeOnSiteVisit"'),
+            response.data.index(b'for="typeRemoteEngagement"'),
+        )
 
     def test_activity_list_paginates_twenty_records_and_preserves_filters(self):
         base_date = date(2026, 8, 1)
