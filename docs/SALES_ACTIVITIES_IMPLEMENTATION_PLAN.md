@@ -22,7 +22,8 @@ New labels will be introduced only where the current system has no equivalent:
 - `Remote Engagement`
 - `On-site Visit`
 - `Remote Engagement Subtype`
-- `Pending Follow-up`
+- `Scheduled`, `Follow-up Required`, `Completed`, and `Cancelled`
+- `Due Today` and `Overdue` reminder indicators
 - `Existing Customer`
 - `Marketing Event`
 - `Expected Result`
@@ -63,7 +64,7 @@ The module will provide:
 - Start/end date filtering.
 - Owner filtering for administrators.
 - Summary statistics by activity type and source type.
-- Pending follow-up count.
+- Scheduled, follow-up-required, completed, cancelled, and overdue counts.
 - An administrator-only per-owner summary.
 - A month calendar with multi-date selection.
 - A reverse-chronological activity table.
@@ -129,7 +130,9 @@ An On-site Visit will support:
 - Expected Result.
 - Remarks.
 
-Creating an On-site Visit will create a pending Sales Activity and a linked Task. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
+Creating an On-site Visit will create a `Scheduled` Sales Activity and a linked Task. Before the visit ends it remains `Scheduled`; after the end time it displays `Follow-up Required` with an `Overdue` reminder until feedback is submitted. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
+
+Open activities can be edited or rescheduled. Time, owner, contacts, address, activity details, and the linked Task deadline are kept synchronized. Completed and cancelled records remain immutable history. Cancelling an activity retains the record, cancellation reason, user, and time, and marks its linked Task `Cancelled`.
 
 Submitting the activity Follow-up will save the feedback, mark the activity completed, complete the linked Task, save Completion Notes, and synchronize the relevant Lead/Pipeline Follow-up History when applicable.
 
@@ -148,7 +151,8 @@ Remote Engagement activities are created from Sales Lead/Pipeline Follow-up Hist
 
 - Create one separate `Remote Engagement` activity with subtype `Next Steps / To-do`.
 - Create a linked Task.
-- Mark the activity `Pending Follow-up`.
+- Mark the stored activity `Scheduled`.
+- Display it as `Scheduled` before its due date, `Follow-up Required` with `Due Today` on the due date, and `Follow-up Required` with `Overdue` after the due date.
 - The activity becomes `Completed` only when the linked Task is completed with required Completion Notes.
 
 ### Both fields

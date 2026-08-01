@@ -182,16 +182,20 @@
     background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
 }
 
+.task-summary-cancelled .card-body {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
 /* Mobile specific */
 @media (max-width: 768px) {
     .table-scroll-touch {
         max-height: 350px;
     }
-    
+
     .table-scroll-touch table {
         min-width: 700px;
     }
-    
+
     .scroll-hint-badge {
         display: inline-flex;
     }
@@ -209,10 +213,10 @@
 
         <div class="page-header-actions">
         <div class="owner-filter dropdown">
-            <button class="btn btn-outline-secondary d-flex align-items-center gap-2 px-4 py-2" 
+            <button class="btn btn-outline-secondary d-flex align-items-center gap-2 px-4 py-2"
                     style="min-height: 44px; min-width: 44px;"
-                    type="button" 
-                    data-bs-toggle="dropdown" 
+                    type="button"
+                    data-bs-toggle="dropdown"
                     aria-expanded="false">
                 <i class="bi bi-funnel"></i>
                 <span class="fw-semibold">{{ _('Filter by Owner') }}</span>
@@ -229,7 +233,7 @@
                 {% for user in users %}
                 <li class="mb-1">
                     <div class="form-check">
-                        <input class="form-check-input owner-checkbox" type="checkbox" 
+                        <input class="form-check-input owner-checkbox" type="checkbox"
                                 id="owner_{{ user.id }}" value="{{ user.id }}" checked>
                         <label class="form-check-label" for="owner_{{ user.id }}">
                             {{ user.username }}
@@ -240,10 +244,10 @@
             </ul>
         </div>
 
-        <button type="button" 
-                class="btn btn-primary d-flex align-items-center gap-2 px-4 py-2" 
+        <button type="button"
+                class="btn btn-primary d-flex align-items-center gap-2 px-4 py-2"
                 style="min-height: 44px; min-width: 44px;"
-                data-bs-toggle="modal" 
+                data-bs-toggle="modal"
                 data-bs-target="#addTaskModal">
             <i class="fas fa-plus fa-lg"></i>
             <span class="fw-semibold">{{ _('Add Task') }}</span>
@@ -253,7 +257,7 @@
 
     <!-- Task Stats -->
     <div class="row mb-4 g-3">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="task-summary-card task-summary-overdue">
                 <div class="card h-100">
                     <div class="card-body">
@@ -267,7 +271,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="task-summary-card task-summary-progress">
                 <div class="card h-100">
                     <div class="card-body">
@@ -281,7 +285,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-3">
             <div class="task-summary-card task-summary-completed">
                 <div class="card h-100">
                     <div class="card-body">
@@ -293,6 +297,15 @@
                         <div class="task-summary-meta mt-2">{{ _('Finished tasks in the current view') }}</div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="task-summary-card task-summary-cancelled">
+                <div class="card h-100"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3"><div class="task-summary-label">{{ _('Cancelled') }}</div><span class="task-summary-icon"><i class="bi bi-x-circle-fill"></i></span></div>
+                    <div class="task-summary-value" id="cancelledCount">{{ cancelled_tasks|length }}</div>
+                    <div class="task-summary-meta mt-2">{{ _('Cancelled linked activities retained for history') }}</div>
+                </div></div>
             </div>
         </div>
     </div>
@@ -333,17 +346,19 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
-                                    <button type="button" class="btn btn-sm btn-info shadow-sm" 
-                                            data-bs-toggle="modal" 
+                                    {% if not task.sales_activity or task.sales_activity.activity_type != 'On-site Visit' %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
                                         <i class="bi bi-pencil-fill"></i>
-                                    </button>
+                                    </button>{% endif %}
+                                    {% if not task.sales_activity %}
                                     <button type="button" class="btn btn-sm btn-danger shadow-sm"
                                             onclick="if(confirm('{{ _('Are you sure?') }}')) { document.getElementById('deleteForm{{ task.id }}').submit(); }">
                                         <i class="bi bi-trash-fill"></i>
                                     </button>
                                     <form id="deleteForm{{ task.id }}" action="{{ url_for('tasks.delete', task_id=task.id) }}" method="POST" style="display: none;"></form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -391,17 +406,19 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
-                                    <button type="button" class="btn btn-sm btn-info shadow-sm" 
-                                            data-bs-toggle="modal" 
+                                    {% if not task.sales_activity or task.sales_activity.activity_type != 'On-site Visit' %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
                                         <i class="bi bi-pencil-fill"></i>
-                                    </button>
+                                    </button>{% endif %}
+                                    {% if not task.sales_activity %}
                                     <button type="button" class="btn btn-sm btn-danger shadow-sm"
                                             onclick="if(confirm('{{ _('Are you sure?') }}')) { document.getElementById('deleteForm{{ task.id }}').submit(); }">
                                         <i class="bi bi-trash-fill"></i>
                                     </button>
                                     <form id="deleteForm{{ task.id }}" action="{{ url_for('tasks.delete', task_id=task.id) }}" method="POST" style="display: none;"></form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -460,16 +477,18 @@
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
                                     <form action="{{ url_for('tasks.reopen', task_id=task.id) }}" method="POST"><button class="btn btn-sm btn-warning shadow-sm" title="{{ _('Reopen') }}"><i class="bi bi-arrow-counterclockwise"></i></button></form>
-                                    <button type="button" class="btn btn-sm btn-info shadow-sm" 
-                                            data-bs-toggle="modal" 
+                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
                                         <i class="bi bi-pencil-fill"></i>
-                                    </button>
+                                    </button>{% endif %}
+                                    {% if not task.sales_activity %}
                                     <button type="button" class="btn btn-sm btn-danger shadow-sm"
                                             onclick="if(confirm('{{ _('Are you sure?') }}')) { document.getElementById('deleteForm{{ task.id }}').submit(); }">
                                         <i class="bi bi-trash-fill"></i>
                                     </button>
                                     <form id="deleteForm{{ task.id }}" action="{{ url_for('tasks.delete', task_id=task.id) }}" method="POST" style="display: none;"></form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -484,6 +503,16 @@
             {% endif %}
         </div>
     </div>
+
+    {% if cancelled_tasks %}
+    <div class="card mb-4 border-secondary">
+        <div class="card-header bg-light text-secondary"><h6 class="mb-0"><i class="bi bi-x-circle me-2"></i>{{ _('Cancelled Tasks') }}</h6></div>
+        <div class="card-body p-0"><div class="table-scroll-touch"><table class="table table-sm mb-0">
+            <thead class="table-light"><tr><th class="text-center">{{ _('Status') }}</th><th>{{ _('Owner') }}</th><th>{{ _('Company') }}</th><th>{{ _('Content') }}</th><th>{{ _('Due Date') }}</th></tr></thead>
+            <tbody>{% for task in cancelled_tasks %}<tr class="task-row text-muted" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="Cancelled"><td class="text-center"><span class="badge bg-secondary">{{ _('Cancelled') }}</span></td><td>{{ task.owner.username if task.owner else '-' }}</td><td>{{ task.company or '-' }}</td><td class="text-decoration-line-through">{{ task.content }}</td><td>{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '-' }}</td></tr>{% endfor %}</tbody>
+        </table></div></div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Toast Container -->
@@ -611,15 +640,15 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     });
-    
+
     // =========================================================================
     // UNIFIED OWNER FILTER - Controls all three tables
     // =========================================================================
-    
+
     const selectAll = document.getElementById('selectAllOwners');
     const checkboxes = document.querySelectorAll('.owner-checkbox');
     const rows = document.querySelectorAll('.task-row');
-    
+
     // Select all handler
     if (selectAll) {
         selectAll.addEventListener('change', function() {
@@ -630,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             filterRows();
         });
     }
-    
+
     // Individual checkbox handler
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -640,13 +669,13 @@ document.addEventListener('DOMContentLoaded', function() {
             filterRows();
         });
     });
-    
+
     // Filter rows based on selected owners
     function filterRows() {
         const selectedOwners = Array.from(checkboxes)
             .filter(cb => cb.checked)
             .map(cb => cb.value);
-        
+
         rows.forEach(row => {
             const ownerId = row.dataset.ownerId;
             row.style.display = selectedOwners.includes(ownerId) ? '' : 'none';
@@ -680,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     updateSummaryCounts();
-    
+
 
 });
 

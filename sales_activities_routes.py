@@ -1,6 +1,6 @@
 """Sales Activities routes."""
 from collections import Counter, defaultdict
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required
@@ -40,26 +40,6 @@ def _parse_datetime(date_value, time_value):
         datetime.strptime(date_value, '%Y-%m-%d').date(),
         datetime.strptime(time_value, '%H:%M').time(),
     )
-
-
-def _pending_deadline(activity):
-    """Return the latest registered date/time before a pending activity is overdue."""
-    if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT and activity.estimated_end_at:
-        return activity.estimated_end_at
-    if activity.linked_task and activity.linked_task.due_date:
-        # A date-only task is due through the end of that calendar day.
-        return datetime.combine(activity.linked_task.due_date, time.max)
-    if activity.activity_date:
-        # Remote Engagement activities without a task are due through the end of their activity date.
-        return datetime.combine(activity.activity_date, time.max)
-    return None
-
-
-def _is_pending_overdue(activity, now=None):
-    if activity.status != 'Pending Follow-up':
-        return False
-    deadline = _pending_deadline(activity)
-    return bool(deadline and (now or datetime.now()) > deadline)
 
 
 def _contacts_from_form():
@@ -139,23 +119,35 @@ def index():
     activities = query.order_by(SalesActivity.activity_date.desc(), SalesActivity.created_at.desc()).all()
     type_counts = Counter(activity.activity_type for activity in activities)
     source_counts = Counter(activity.source_type for activity in activities)
+    now = datetime.now()
+    display_statuses = {activity.id: activity.get_display_status(now) for activity in activities}
+    deadline_indicators = {activity.id: activity.get_deadline_indicator(now) for activity in activities}
     stats = {
         'total': len(activities),
         'remote_engagement': type_counts[SalesActivity.TYPE_REMOTE_ENGAGEMENT],
         'on_site_visit': type_counts[SalesActivity.TYPE_ON_SITE_VISIT],
-        'pending': sum(1 for activity in activities if activity.status == 'Pending Follow-up'),
+        'scheduled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_SCHEDULED),
+        'follow_up_required': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED),
+        'completed': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_COMPLETED),
+        'cancelled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_CANCELLED),
+        'overdue': sum(1 for indicator in deadline_indicators.values() if indicator == 'Overdue'),
         'sources': source_counts,
     }
 
     owner_stats = []
     if current_user.is_admin():
-        grouped = defaultdict(lambda: {'total': 0, 'remote_engagement': 0, 'on_site_visit': 0, 'pending': 0})
+        grouped = defaultdict(lambda: {
+            'total': 0, 'remote_engagement': 0, 'on_site_visit': 0,
+            'scheduled': 0, 'follow_up_required': 0, 'overdue': 0,
+        })
         for activity in activities:
             item = grouped[activity.owner.username if activity.owner else 'Unknown']
             item['total'] += 1
             item['remote_engagement'] += activity.activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT
             item['on_site_visit'] += activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
-            item['pending'] += activity.status == 'Pending Follow-up'
+            item['scheduled'] += display_statuses[activity.id] == SalesActivity.STATUS_SCHEDULED
+            item['follow_up_required'] += display_statuses[activity.id] == SalesActivity.STATUS_FOLLOW_UP_REQUIRED
+            item['overdue'] += deadline_indicators[activity.id] == 'Overdue'
         owner_stats = sorted(({'owner': owner, **counts} for owner, counts in grouped.items()), key=lambda item: item['owner'])
 
     # Keep the compact horizontal source summary, but show the owner names and
@@ -181,14 +173,21 @@ def index():
         for source in SalesActivity.SOURCE_OPTIONS
     }
 
-    calendar = defaultdict(lambda: {'total': 0, 'pending': 0, 'overdue': 0, 'completed': 0})
-    now = datetime.now()
+    calendar = defaultdict(lambda: {
+        'total': 0, 'scheduled': 0, 'follow_up_required': 0,
+        'due_today': 0, 'overdue': 0, 'completed': 0, 'cancelled': 0,
+    })
     for activity in calendar_activities:
         key = activity.activity_date.isoformat()
+        display_status = activity.get_display_status(now)
+        indicator = activity.get_deadline_indicator(now)
         calendar[key]['total'] += 1
-        calendar[key]['pending'] += activity.status == 'Pending Follow-up'
-        calendar[key]['overdue'] += _is_pending_overdue(activity, now)
-        calendar[key]['completed'] += activity.status == 'Completed'
+        calendar[key]['scheduled'] += display_status == SalesActivity.STATUS_SCHEDULED
+        calendar[key]['follow_up_required'] += display_status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED
+        calendar[key]['due_today'] += indicator == 'Due Today'
+        calendar[key]['overdue'] += indicator == 'Overdue'
+        calendar[key]['completed'] += display_status == SalesActivity.STATUS_COMPLETED
+        calendar[key]['cancelled'] += display_status == SalesActivity.STATUS_CANCELLED
 
     owners = User.query.filter_by(is_active=True).order_by(User.username).all() if current_user.is_admin() else []
     add_form_data = session.pop('sales_activity_form_data', {})
@@ -317,14 +316,14 @@ def add():
                 company=company, activity_date=activity_date, estimated_start_at=start_at,
                 estimated_end_at=end_at, address=request.form.get('address', '').strip() or None,
                 purpose_project=purpose or None, expected_result=expected or None,
-                remarks=remarks or None, status='Pending Follow-up', owner_id=owner_id,
+                remarks=remarks or None, status=SalesActivity.STATUS_SCHEDULED, owner_id=owner_id,
             )
             db.session.add(activity)
             db.session.flush()
             create_activity_contacts(activity, contacts)
             task = Task(
                 content=f'On-site Visit follow-up: {company}' + (f' - {purpose}' if purpose else ''),
-                due_date=activity_date, owner_id=owner_id, pipeline_id=pipeline.id if pipeline else None,
+                due_date=end_at.date(), owner_id=owner_id, pipeline_id=pipeline.id if pipeline else None,
                 sales_lead_id=lead.id if lead else None, sales_activity_id=activity.id,
                 company=company, status='In Progress',
             )
@@ -363,6 +362,8 @@ def followup(activity_id):
         flash('Permission denied.', 'danger')
         return redirect(url_for('sales_activities.index'))
     try:
+        if activity.get_display_status() != SalesActivity.STATUS_FOLLOW_UP_REQUIRED:
+            raise ValueError('Only activities requiring follow-up can be completed here.')
         if activity.activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT and activity.remote_engagement_subtype == 'Next Steps / To-do':
             raise ValueError('This activity must be completed from its linked Task.')
         notes = request.form.get('completion_notes', '').strip()
@@ -411,6 +412,153 @@ def followup(activity_id):
     except Exception as exc:
         db.session.rollback()
         flash(f'Error completing Sales Activity: {exc}', 'danger')
+    return redirect(url_for('sales_activities.index'))
+
+
+@sales_activities_bp.route('/<int:activity_id>/edit', methods=['POST'])
+@login_required
+def edit(activity_id):
+    """Edit or reschedule an open Sales Activity and keep its linked Task aligned."""
+    activity = SalesActivity.query.filter_by(id=activity_id, is_deleted=False).first_or_404()
+    if not _can_manage(activity):
+        flash('Permission denied.', 'danger')
+        return redirect(url_for('sales_activities.index'))
+
+    try:
+        if not activity.can_edit:
+            raise ValueError('Completed or cancelled activities cannot be edited. Create a new activity instead.')
+
+        old_values = {
+            'activity_date': activity.activity_date,
+            'estimated_start_at': activity.estimated_start_at,
+            'estimated_end_at': activity.estimated_end_at,
+            'owner_id': activity.owner_id,
+            'address': activity.address,
+            'purpose_project': activity.purpose_project,
+            'expected_result': activity.expected_result,
+            'remarks': activity.remarks,
+            'task_content': activity.linked_task.content if activity.linked_task else None,
+            'task_due_date': activity.linked_task.due_date if activity.linked_task else None,
+        }
+
+        owner_id = request.form.get('owner_id', type=int) if current_user.is_admin() else current_user.id
+        owner_id = owner_id or activity.owner_id
+        if not db.session.get(User, owner_id):
+            raise ValueError('Please select a valid owner.')
+
+        if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
+            start_at = _parse_datetime(request.form.get('start_date'), request.form.get('start_time'))
+            end_at = _parse_datetime(request.form.get('end_date'), request.form.get('end_time'))
+            if not start_at or not end_at:
+                raise ValueError('Estimated Start Date/Time and Estimated End Date/Time are required for an On-site Visit.')
+            if end_at <= start_at:
+                raise ValueError('Estimated End Time must be later than Estimated Start Time.')
+            activity.activity_date = start_at.date()
+            activity.estimated_start_at = start_at
+            activity.estimated_end_at = end_at
+            activity.address = request.form.get('address', '').strip() or None
+            if activity.linked_task:
+                activity.linked_task.due_date = end_at.date()
+        elif activity.remote_engagement_subtype == 'Next Steps / To-do':
+            due_date = validate_date(request.form.get('activity_date'))
+            task_content = request.form.get('task_content', '').strip()
+            if not due_date:
+                raise ValueError('To-do Due Date is required.')
+            if not task_content:
+                raise ValueError('Next Steps / To-do is required.')
+            activity.activity_date = due_date
+            activity.followup_notes = task_content
+            if not activity.linked_task:
+                raise ValueError('The linked Task is missing. Please contact an administrator.')
+            activity.linked_task.content = task_content
+            activity.linked_task.due_date = due_date
+        else:
+            activity_date = validate_date(request.form.get('activity_date'))
+            if not activity_date:
+                raise ValueError('Activity Date is required.')
+            activity.activity_date = activity_date
+
+        activity.owner_id = owner_id
+        activity.purpose_project = request.form.get('purpose_project', '').strip() or None
+        activity.expected_result = request.form.get('expected_result', '').strip() or None
+        activity.remarks = request.form.get('remarks', '').strip() or None
+        activity.status = SalesActivity.STATUS_SCHEDULED
+        activity.contacts.clear()
+        create_activity_contacts(activity, _contacts_from_form())
+
+        if activity.linked_task:
+            activity.linked_task.owner_id = owner_id
+            activity.linked_task.company = activity.company
+            activity.linked_task.status = 'In Progress'
+            activity.linked_task.check_overdue()
+
+        new_values = {
+            'activity_date': activity.activity_date,
+            'estimated_start_at': activity.estimated_start_at,
+            'estimated_end_at': activity.estimated_end_at,
+            'owner_id': activity.owner_id,
+            'address': activity.address,
+            'purpose_project': activity.purpose_project,
+            'expected_result': activity.expected_result,
+            'remarks': activity.remarks,
+            'task_content': activity.linked_task.content if activity.linked_task else None,
+            'task_due_date': activity.linked_task.due_date if activity.linked_task else None,
+        }
+        log_activity(
+            current_user, 'Sales Activity - Rescheduled', 'sales_activity', activity.id,
+            activity.company, f'Updated/rescheduled {activity.activity_type} for {activity.company}',
+            request.remote_addr, old_values=old_values, new_values=new_values, commit=False,
+        )
+        db.session.commit()
+        flash('Sales Activity updated successfully!', 'success')
+    except (ValueError, PermissionError) as exc:
+        db.session.rollback()
+        flash(str(exc), 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        flash(f'Error updating Sales Activity: {exc}', 'danger')
+    return redirect(url_for('sales_activities.index'))
+
+
+@sales_activities_bp.route('/<int:activity_id>/cancel', methods=['POST'])
+@login_required
+def cancel(activity_id):
+    """Cancel an open activity without deleting its history."""
+    activity = SalesActivity.query.filter_by(id=activity_id, is_deleted=False).first_or_404()
+    if not _can_manage(activity):
+        flash('Permission denied.', 'danger')
+        return redirect(url_for('sales_activities.index'))
+
+    try:
+        if activity.status in (SalesActivity.STATUS_COMPLETED, SalesActivity.STATUS_CANCELLED):
+            raise ValueError('Only open activities can be cancelled.')
+        reason = request.form.get('cancellation_reason', '').strip()
+        if not reason:
+            raise ValueError('Cancellation Reason is required.')
+        old_status = activity.get_display_status()
+        activity.status = SalesActivity.STATUS_CANCELLED
+        activity.cancelled_at = datetime.utcnow()
+        activity.cancelled_by_id = current_user.id
+        activity.cancellation_reason = reason
+        if activity.linked_task and activity.linked_task.status != 'Completed':
+            activity.linked_task.status = 'Cancelled'
+            activity.linked_task.completion_notes = None
+            activity.linked_task.completed_at = None
+            activity.linked_task.completed_by_id = None
+        log_activity(
+            current_user, 'Sales Activity - Cancelled', 'sales_activity', activity.id,
+            activity.company, f'Cancelled {activity.activity_type} for {activity.company}: {reason}',
+            request.remote_addr, old_values={'status': old_status},
+            new_values={'status': SalesActivity.STATUS_CANCELLED, 'cancellation_reason': reason}, commit=False,
+        )
+        db.session.commit()
+        flash('Sales Activity cancelled.', 'success')
+    except ValueError as exc:
+        db.session.rollback()
+        flash(str(exc), 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        flash(f'Error cancelling Sales Activity: {exc}', 'danger')
     return redirect(url_for('sales_activities.index'))
 
 

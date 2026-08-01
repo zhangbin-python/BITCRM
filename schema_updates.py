@@ -29,6 +29,9 @@ COLUMN_UPDATES = {
     'sales_activities': {
         'remote_engagement_subtype': 'VARCHAR(40) NULL',
         'completion_notes': 'TEXT NULL',
+        'cancelled_at': 'TIMESTAMP NULL',
+        'cancelled_by_id': 'INTEGER NULL',
+        'cancellation_reason': 'TEXT NULL',
     },
     'activity_logs': {
         'old_values': 'TEXT NULL',
@@ -135,4 +138,16 @@ def ensure_sales_activity_terminology():
                 },
             )
 
+    db.session.commit()
+
+
+def ensure_sales_activity_statuses():
+    """Migrate the legacy open status to the new scheduled business state."""
+    inspector = inspect(db.engine)
+    if 'sales_activities' not in inspector.get_table_names():
+        return
+    db.session.execute(text(
+        'UPDATE "sales_activities" SET "status" = :scheduled '
+        'WHERE "status" = :legacy_status'
+    ), {'scheduled': 'Scheduled', 'legacy_status': 'Pending Follow-up'})
     db.session.commit()

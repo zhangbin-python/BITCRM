@@ -55,7 +55,8 @@
 .type-filter-options { display: flex; flex-wrap: nowrap; width: 100%; gap: .45rem; }
 .type-filter-option { flex: 1 1 0; min-width: 0; }
 .type-filter-option input { position: absolute; opacity: 0; pointer-events: none; }
-.type-filter-option label { display: flex; align-items: center; justify-content: center; min-height: 38px; width: 100%; padding: .45rem .65rem; border: 1px solid #ced4da; border-radius: .45rem; background: #fff; color: #495057; cursor: pointer; white-space: nowrap; transition: all .15s ease-in-out; }
+.type-filter-option label { display: flex; align-items: center; justify-content: center; min-height: 38px; width: 100%; padding: .45rem .65rem; border: 1px solid #ced4da; border-radius: .45rem; background: #fff; color: #495057; cursor: pointer; white-space: normal; overflow-wrap: anywhere; text-align: center; line-height: 1.15; transition: all .15s ease-in-out; }
+.sales-activity-table .badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
 .type-filter-option label:hover { border-color: #667eea; color: #4f46b5; }
 .type-filter-option input:checked + label { border-color: #667eea; background: #667eea; color: #fff; box-shadow: 0 2px 5px rgba(102,126,234,.25); }
 .type-filter-option input:focus-visible + label { outline: 2px solid rgba(102,126,234,.45); outline-offset: 2px; }
@@ -71,6 +72,7 @@
     .activity-calendar-month-label { font-size: .88rem; }
     .calendar-day .day-number { font-size: .8rem; }
     .calendar-day .activity-count { font-size: .66rem; }
+    .type-filter-option label { font-size: .82rem; padding-inline: .35rem; }
 }
 </style>
 {% endblock %}
@@ -131,11 +133,11 @@
 
             {% if current_user.is_admin() %}
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Activities by Owner') }}</h5>
-                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Total') }}</th><th>{{ _('Remote Engagement') }}</th><th>{{ _('On-site Visit') }}</th><th>{{ _('Pending Follow-up') }}</th></tr></thead>
+                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Total') }}</th><th>{{ _('Remote Engagement') }}</th><th>{{ _('On-site Visit') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Overdue') }}</th></tr></thead>
                     <tbody>
-                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.total }}</td><td>{{ item.remote_engagement }}</td><td>{{ item.on_site_visit }}</td><td>{{ item.pending }}</td></tr>{% endfor %}
+                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.total }}</td><td>{{ item.remote_engagement }}</td><td>{{ item.on_site_visit }}</td><td>{{ item.scheduled }}</td><td>{{ item.follow_up_required }}</td><td>{{ item.overdue }}</td></tr>{% endfor %}
                     </tbody>
-                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.total }}</td><td>{{ stats.remote_engagement }}</td><td>{{ stats.on_site_visit }}</td><td>{{ stats.pending }}</td></tr></tfoot>
+                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.total }}</td><td>{{ stats.remote_engagement }}</td><td>{{ stats.on_site_visit }}</td><td>{{ stats.scheduled }}</td><td>{{ stats.follow_up_required }}</td><td>{{ stats.overdue }}</td></tr></tfoot>
                 </table></div>
                 {% if not owner_stats %}<div class="small text-muted mt-2">{{ _('No activities found') }}</div>{% endif %}
             </div></div>
@@ -182,7 +184,7 @@
                 </div>
                 <div class="activity-calendar-weekdays mb-1">{% for day in [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')] %}<div class="calendar-weekday">{{ day }}</div>{% endfor %}</div>
                 <div id="activityCalendar" class="activity-calendar"></div>
-                <div class="activity-calendar-legend small text-muted mt-3 d-flex flex-wrap gap-1"><span class="badge" style="background:#d1e7dd;color:#155724">{{ _('Scheduled / completed') }}</span> <span class="badge" style="background:#f8d7da;color:#721c24">{{ _('Overdue pending follow-up') }}</span> <span class="badge" style="background:#dee2e6;color:#343a40">{{ _('Past') }}</span></div>
+                <div class="activity-calendar-legend small text-muted mt-3 d-flex flex-wrap gap-1"><span class="badge" style="background:#d1e7dd;color:#155724">{{ _('Scheduled / completed') }}</span> <span class="badge" style="background:#fff3cd;color:#664d03">{{ _('Follow-up Required / Due Today') }}</span> <span class="badge" style="background:#f8d7da;color:#721c24">{{ _('Overdue') }}</span> <span class="badge" style="background:#dee2e6;color:#343a40">{{ _('Cancelled / past') }}</span></div>
             </div></div>
         </div>
     </div>
@@ -206,11 +208,17 @@
                 <td class="activity-description">{{ activity.completion_notes or '-' }}</td>
                 <td class="activity-description">{{ activity.remarks or '-' }}</td>
                 <td>{{ activity.owner.username if activity.owner else '-' }}</td>
-                <td><span class="badge bg-{{ 'danger' if activity.status == 'Pending Follow-up' else 'success' }}">{{ _(activity.status) }}</span></td>
+                <td>
+                    <span class="badge bg-{{ activity.status_color }}">{{ _(activity.display_status) }}</span>
+                    {% if activity.deadline_indicator %}<span class="badge bg-{{ 'danger' if activity.deadline_indicator == 'Overdue' else 'info' }} mt-1">{{ _(activity.deadline_indicator) }}</span>{% endif %}
+                    {% if activity.status == 'Cancelled' and activity.cancellation_reason %}<small class="d-block text-muted mt-1" title="{{ activity.cancellation_reason }}">{{ activity.cancellation_reason }}</small>{% endif %}
+                </td>
                 <td>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td><div class="d-flex gap-1">
-                    {% if activity.status == 'Pending Follow-up' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}<button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#followupActivity{{ activity.id }}" title="{{ _('Follow-up') }}"><i class="bi bi-chat-dots"></i></button>{% endif %}
-                    {% if activity.linked_task %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('tasks.index') }}" title="{{ _('Open Task') }}"><i class="bi bi-check2-square"></i></a>{% endif %}
+                    {% if activity.can_edit %}<button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editActivity{{ activity.id }}" title="{{ _('Edit / Reschedule') }}"><i class="bi bi-pencil"></i></button>{% endif %}
+                    {% if activity.display_status == 'Follow-up Required' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}<button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#followupActivity{{ activity.id }}" title="{{ _('Follow-up') }}"><i class="bi bi-chat-dots"></i></button>{% endif %}
+                    {% if activity.linked_task and activity.status != 'Cancelled' %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('tasks.index') }}" title="{{ _('Open Task') }}"><i class="bi bi-check2-square"></i></a>{% endif %}
+                    {% if activity.can_edit %}<button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cancelActivity{{ activity.id }}" title="{{ _('Cancel Activity') }}"><i class="bi bi-x-circle"></i></button>{% endif %}
                     <form method="post" action="{{ url_for('sales_activities.delete', activity_id=activity.id) }}" onsubmit="return confirm('{{ _('Archive this activity?') }}')"><button class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}"><i class="bi bi-trash"></i></button></form>
                 </div></td>
             </tr>
@@ -269,7 +277,37 @@
     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button><button class="btn btn-primary">{{ _('Save Activity') }}</button></div>
 </form></div></div></div>
 
-{% for activity in activities if activity.status == 'Pending Follow-up' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}
+{% for activity in activities if activity.can_edit %}
+<div class="modal fade" id="editActivity{{ activity.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <form method="post" action="{{ url_for('sales_activities.edit', activity_id=activity.id) }}">
+            <div class="modal-header"><h5 class="modal-title">{{ _('Edit / Reschedule') }} - {{ activity.company }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><div class="row g-3">
+                <div class="col-12"><div class="alert alert-light border py-2 mb-0"><strong>{{ _(activity.activity_type) }}</strong> · {{ _(activity.source_type) }} · {{ activity.company }}<br><small class="text-muted">{{ _('Company and source are fixed to preserve the activity history and linked records.') }}</small></div></div>
+                {% if activity.activity_type == 'On-site Visit' %}
+                <div class="col-md-3"><label class="form-label">{{ _('Start Date') }} *</label><input type="date" name="start_date" class="form-control" required value="{{ activity.estimated_start_at.strftime('%Y-%m-%d') if activity.estimated_start_at else activity.activity_date.isoformat() }}"></div>
+                <div class="col-md-3"><label class="form-label">{{ _('Start Time') }} *</label><input type="time" name="start_time" class="form-control" required value="{{ activity.estimated_start_at.strftime('%H:%M') if activity.estimated_start_at else '' }}"></div>
+                <div class="col-md-3"><label class="form-label">{{ _('End Date') }} *</label><input type="date" name="end_date" class="form-control" required value="{{ activity.estimated_end_at.strftime('%Y-%m-%d') if activity.estimated_end_at else activity.activity_date.isoformat() }}"></div>
+                <div class="col-md-3"><label class="form-label">{{ _('End Time') }} *</label><input type="time" name="end_time" class="form-control" required value="{{ activity.estimated_end_at.strftime('%H:%M') if activity.estimated_end_at else '' }}"></div>
+                <div class="col-12"><label class="form-label">{{ _('Address') }}</label><textarea name="address" class="form-control" rows="2">{{ activity.address or '' }}</textarea></div>
+                {% else %}
+                <div class="col-md-4"><label class="form-label">{{ _('To-do Due Date') if activity.remote_engagement_subtype == 'Next Steps / To-do' else _('Activity Date') }} *</label><input type="date" name="activity_date" class="form-control" required value="{{ activity.activity_date.isoformat() }}"></div>
+                {% if activity.remote_engagement_subtype == 'Next Steps / To-do' %}<div class="col-md-8"><label class="form-label">{{ _('Next Steps / To-do') }} *</label><textarea name="task_content" class="form-control" rows="2" required>{{ activity.linked_task.content if activity.linked_task else activity.followup_notes or '' }}</textarea></div>{% endif %}
+                {% endif %}
+                {% if current_user.is_admin() %}<div class="col-md-4"><label class="form-label">{{ _('Owner') }}</label><select name="owner_id" class="form-select">{% for owner in owners %}<option value="{{ owner.id }}" {% if activity.owner_id == owner.id %}selected{% endif %}>{{ owner.username }}</option>{% endfor %}</select></div>{% endif %}
+                <div class="col-12"><label class="form-label">{{ _('Contacts') }}</label><div class="edit-contacts-container">{% for contact in activity.contacts %}<div class="row g-2 contact-row mb-2"><div class="col-md-4"><input name="contact_name[]" class="form-control" placeholder="{{ _('Contact Name') }}" value="{{ contact.contact_name or '' }}"></div><div class="col-md-3"><input name="contact_position[]" class="form-control" placeholder="{{ _('Position') }}" value="{{ contact.position or '' }}"></div><div class="col-md-5"><input name="contact_information[]" class="form-control" placeholder="{{ _('Contact Information') }}" value="{{ contact.contact_information or '' }}"></div></div>{% else %}<div class="row g-2 contact-row"><div class="col-md-4"><input name="contact_name[]" class="form-control" placeholder="{{ _('Contact Name') }}"></div><div class="col-md-3"><input name="contact_position[]" class="form-control" placeholder="{{ _('Position') }}"></div><div class="col-md-5"><input name="contact_information[]" class="form-control" placeholder="{{ _('Contact Information') }}"></div></div>{% endfor %}</div></div>
+                <div class="col-md-4"><label class="form-label">{{ _('Purpose / Project') }}</label><textarea name="purpose_project" class="form-control" rows="2">{{ activity.purpose_project or '' }}</textarea></div>
+                <div class="col-md-4"><label class="form-label">{{ _('Expected Result') }}</label><textarea name="expected_result" class="form-control" rows="2">{{ activity.expected_result or '' }}</textarea></div>
+                <div class="col-md-4"><label class="form-label">{{ _('Remarks') }}</label><textarea name="remarks" class="form-control" rows="2">{{ activity.remarks or '' }}</textarea></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button><button class="btn btn-primary">{{ _('Save Changes') }}</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade" id="cancelActivity{{ activity.id }}" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="{{ url_for('sales_activities.cancel', activity_id=activity.id) }}"><div class="modal-header"><h5 class="modal-title">{{ _('Cancel Activity') }} - {{ activity.company }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">{{ _('Cancellation Reason') }} *</label><textarea name="cancellation_reason" class="form-control" rows="4" required placeholder="{{ _('Record why the customer meeting or remote engagement was cancelled') }}"></textarea><div class="form-text">{{ _('The activity and linked Task will be marked Cancelled, not deleted.') }}</div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Keep Activity') }}</button><button class="btn btn-outline-danger">{{ _('Confirm Cancellation') }}</button></div></form></div></div></div>
+{% endfor %}
+
+{% for activity in activities if activity.display_status == 'Follow-up Required' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}
 <div class="modal fade" id="followupActivity{{ activity.id }}" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content">
         <form method="post" action="{{ url_for('sales_activities.followup', activity_id=activity.id) }}">
@@ -321,11 +359,11 @@ function renderCalendar() {
     const d = new Date(year, month, day); const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const data = calendarData[iso]; const el = document.createElement('div'); el.className = 'calendar-day' + (selectedDates.has(iso) ? ' selected' : '');
     if (data) {
-      // Pending follow-up turns red only after its registered deadline.
       if (data.overdue) el.classList.add('has-red');
-      else if (data.pending) el.classList.add('has-green');
+      else if (data.follow_up_required || data.due_today) { el.style.background = '#fff3cd'; }
+      else if (data.cancelled && data.cancelled === data.total) el.classList.add('has-gray');
+      else if (data.scheduled || data.completed) el.classList.add('has-green');
       else if (iso < todayIso) el.classList.add('has-gray');
-      else el.classList.add('has-green');
     }
     el.innerHTML = `<div class="day-number">${day}</div>${data ? `<div class="activity-count">${data.total}</div>` : ''}`;
     el.addEventListener('click', () => { if (selectedDates.has(iso)) selectedDates.delete(iso); else selectedDates.add(iso); const params = new URLSearchParams(window.location.search); params.delete('dates'); [...selectedDates].sort().forEach(value => params.append('dates', value)); window.location.search = params.toString(); });

@@ -1,13 +1,13 @@
 import os
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, datetime
 
 from app import create_app
 from extensions import db
 from sqlalchemy import text
 from models import ActivityLog, DeletedRecord, Pipeline, SalesActivity, SalesLead, Task, User
-from schema_updates import ensure_sales_activity_columns, ensure_sales_activity_terminology
+from schema_updates import ensure_sales_activity_columns, ensure_sales_activity_statuses, ensure_sales_activity_terminology
 
 
 class SalesActivitiesTests(unittest.TestCase):
@@ -76,7 +76,7 @@ class SalesActivitiesTests(unittest.TestCase):
                          ('Remote Engagement', 'Follow-up', 'Completed'))
         self.assertEqual(completed.completion_notes, 'Customer confirmed the technical scope.')
         self.assertEqual((pending.activity_type, pending.remote_engagement_subtype, pending.status),
-                         ('Remote Engagement', 'Next Steps / To-do', 'Pending Follow-up'))
+                         ('Remote Engagement', 'Next Steps / To-do', 'Scheduled'))
         self.assertEqual(pending.followup_notes, 'Send the revised quotation.')
 
         task = Task.query.one()
@@ -121,10 +121,10 @@ class SalesActivitiesTests(unittest.TestCase):
                 'source_type': 'Sales Leads',
                 'sales_lead_id': str(lead.id),
                 'company': lead.company,
-                'activity_date': '2026-08-07',
-                'start_date': '2026-08-07',
+                'activity_date': '2026-07-30',
+                'start_date': '2026-07-30',
                 'start_time': '23:00',
-                'end_date': '2026-08-08',
+                'end_date': '2026-07-31',
                 'end_time': '01:00',
                 'owner_id': str(self.admin_id),
                 'address': '88 Customer Road',
@@ -139,8 +139,8 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         activity = SalesActivity.query.one()
         task = Task.query.one()
-        self.assertEqual(activity.estimated_start_at.strftime('%Y-%m-%d %H:%M'), '2026-08-07 23:00')
-        self.assertEqual(activity.estimated_end_at.strftime('%Y-%m-%d %H:%M'), '2026-08-08 01:00')
+        self.assertEqual(activity.estimated_start_at.strftime('%Y-%m-%d %H:%M'), '2026-07-30 23:00')
+        self.assertEqual(activity.estimated_end_at.strftime('%Y-%m-%d %H:%M'), '2026-07-31 01:00')
         self.assertEqual(len(activity.contacts), 2)
         self.assertEqual(task.sales_activity_id, activity.id)
         self.assertIn('On-site Visit scheduled', lead.follow_up)
@@ -162,7 +162,7 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn('Send final migration plan.', lead.follow_up)
         self.assertEqual(SalesActivity.query.count(), 2)
         next_step_activity = SalesActivity.query.filter_by(remote_engagement_subtype='Next Steps / To-do').one()
-        self.assertEqual(next_step_activity.status, 'Pending Follow-up')
+        self.assertEqual(next_step_activity.status, 'Scheduled')
         self.assertEqual(Task.query.count(), 2)
 
     def test_invalid_on_site_visit_reopens_form_and_uses_start_date_as_activity_date(self):
@@ -321,6 +321,123 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(migrated.activity_type, 'Remote Engagement')
         self.assertEqual(migrated.remote_engagement_subtype, 'Follow-up')
         self.assertIn('On-site Visit follow-up', migrated_task.content)
+
+    def test_activity_status_and_deadline_indicators_are_time_based(self):
+        lead = self._lead(company='Status Rules Co')
+        future_visit = SalesActivity(
+            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 8, 6),
+            estimated_start_at=datetime(2026, 8, 6, 12, 0),
+            estimated_end_at=datetime(2026, 8, 6, 13, 0),
+            status='Scheduled', owner_id=self.admin_id,
+        )
+        past_visit = SalesActivity(
+            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 7, 31),
+            estimated_start_at=datetime(2026, 7, 31, 12, 0),
+            estimated_end_at=datetime(2026, 7, 31, 13, 0),
+            status='Scheduled', owner_id=self.admin_id,
+        )
+        due_today = SalesActivity(
+            activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+            remote_engagement_subtype='Next Steps / To-do', source_type='Sales Leads',
+            sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 8, 1),
+            status='Scheduled', owner_id=self.admin_id,
+        )
+        completed = SalesActivity(
+            activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+            remote_engagement_subtype='Follow-up', source_type='Sales Leads',
+            sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 7, 31),
+            status='Completed', owner_id=self.admin_id,
+        )
+        db.session.add_all([future_visit, past_visit, due_today, completed])
+        db.session.commit()
+        now = datetime(2026, 8, 1, 10, 0)
+
+        self.assertEqual(future_visit.get_display_status(now), 'Scheduled')
+        self.assertIsNone(future_visit.get_deadline_indicator(now))
+        self.assertEqual(past_visit.get_display_status(now), 'Follow-up Required')
+        self.assertEqual(past_visit.get_deadline_indicator(now), 'Overdue')
+        self.assertEqual(due_today.get_display_status(now), 'Follow-up Required')
+        self.assertEqual(due_today.get_deadline_indicator(now), 'Due Today')
+        self.assertEqual(completed.get_display_status(now), 'Completed')
+        self.assertIsNone(completed.get_deadline_indicator(now))
+
+    def test_open_activity_can_be_rescheduled_and_linked_task_is_synchronised(self):
+        lead = self._lead(company='Reschedule Co')
+        self.client.post('/sales-activities/add', data={
+            'activity_type': 'On-site Visit', 'source_type': 'Sales Leads',
+            'sales_lead_id': str(lead.id), 'company': lead.company,
+            'start_date': '2026-08-06', 'start_time': '10:00',
+            'end_date': '2026-08-06', 'end_time': '11:00',
+            'address': 'Old address', 'owner_id': str(self.admin_id),
+        })
+        activity = SalesActivity.query.one()
+        task = Task.query.one()
+
+        response = self.client.post(f'/sales-activities/{activity.id}/edit', data={
+            'start_date': '2026-08-07', 'start_time': '14:00',
+            'end_date': '2026-08-08', 'end_time': '09:30',
+            'address': 'New customer office', 'owner_id': str(self.admin_id),
+            'contact_name[]': ['Alice'], 'contact_position[]': ['CTO'],
+            'contact_information[]': ['alice@example.com'],
+            'purpose_project': 'Updated workshop', 'expected_result': 'Confirm scope',
+            'remarks': 'Customer requested a new time',
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        db.session.refresh(activity)
+        db.session.refresh(task)
+        self.assertEqual(activity.activity_date, date(2026, 8, 7))
+        self.assertEqual(activity.estimated_start_at, datetime(2026, 8, 7, 14, 0))
+        self.assertEqual(activity.estimated_end_at, datetime(2026, 8, 8, 9, 30))
+        self.assertEqual(activity.address, 'New customer office')
+        self.assertEqual(activity.contacts[0].contact_name, 'Alice')
+        self.assertEqual(task.due_date, date(2026, 8, 8))
+        self.assertEqual(activity.status, 'Scheduled')
+        self.assertIn(b'Sales Activity updated successfully!', response.data)
+        self.assertIsNotNone(ActivityLog.query.filter_by(action_type='Sales Activity - Rescheduled').first())
+
+    def test_cancelling_activity_retains_history_and_cancels_linked_task(self):
+        lead = self._lead(company='Cancelled Visit Co')
+        self.client.post('/sales-activities/add', data={
+            'activity_type': 'On-site Visit', 'source_type': 'Sales Leads',
+            'sales_lead_id': str(lead.id), 'company': lead.company,
+            'start_date': '2026-08-06', 'start_time': '10:00',
+            'end_date': '2026-08-06', 'end_time': '11:00',
+            'owner_id': str(self.admin_id),
+        })
+        activity = SalesActivity.query.one()
+        task = Task.query.one()
+
+        response = self.client.post(
+            f'/sales-activities/{activity.id}/cancel',
+            data={'cancellation_reason': 'Customer requested postponement without a new date.'},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        db.session.refresh(activity)
+        db.session.refresh(task)
+        self.assertEqual(activity.status, 'Cancelled')
+        self.assertEqual(task.status, 'Cancelled')
+        self.assertFalse(activity.is_deleted)
+        self.assertEqual(activity.get_display_status(datetime(2026, 8, 10)), 'Cancelled')
+        self.assertIsNone(activity.get_deadline_indicator(datetime(2026, 8, 10)))
+        self.assertIn('Customer requested postponement', activity.cancellation_reason)
+
+    def test_legacy_pending_status_is_migrated_to_scheduled(self):
+        lead = self._lead(company='Legacy Status Co')
+        activity = SalesActivity(
+            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 8, 6),
+            estimated_start_at=datetime(2026, 8, 6, 10, 0),
+            estimated_end_at=datetime(2026, 8, 6, 11, 0),
+            status='Pending Follow-up', owner_id=self.admin_id,
+        )
+        db.session.add(activity)
+        db.session.commit()
+        ensure_sales_activity_statuses()
+        db.session.refresh(activity)
+        self.assertEqual(activity.status, 'Scheduled')
 
     def test_legacy_activities_and_log_clear_routes_are_removed(self):
         self.assertEqual(self.client.get('/activities').status_code, 404)

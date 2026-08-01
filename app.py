@@ -179,8 +179,9 @@ def create_app(config_class=None):
         
         # 3.3 Create all tables and migrate stored Sales Activity terminology
         db.create_all()
-        from schema_updates import ensure_sales_activity_terminology
+        from schema_updates import ensure_sales_activity_statuses, ensure_sales_activity_terminology
         ensure_sales_activity_terminology()
+        ensure_sales_activity_statuses()
         
         # 4. Handle existing users - add default dashboard_filters value
         users = User.query.all()

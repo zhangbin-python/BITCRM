@@ -2,7 +2,7 @@
 BITCRM Database Models
 SQLAlchemy models for the CRM system.
 """
-from datetime import datetime, date
+from datetime import datetime, date, time
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
@@ -673,7 +673,7 @@ class Task(db.Model):
     due_date = db.Column(db.Date, nullable=True)
     
     # Status
-    status = db.Column(db.String(20), default='In Progress')  # In Progress, Overdue, Completed
+    status = db.Column(db.String(20), default='In Progress')  # In Progress, Overdue, Completed, Cancelled
     
     # Relationships
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -705,13 +705,14 @@ class Task(db.Model):
         status_colors = {
             'In Progress': 'success',
             'Overdue': 'danger',
-            'Completed': 'secondary'
+            'Completed': 'secondary',
+            'Cancelled': 'secondary',
         }
         return status_colors.get(self.status, 'secondary')
     
     def check_overdue(self):
         """Check if task is overdue."""
-        if self.status == 'Completed':
+        if self.status in ('Completed', 'Cancelled'):
             return False
         if self.due_date and date.today() > self.due_date:
             self.status = 'Overdue'
@@ -749,10 +750,13 @@ class SalesActivity(db.Model):
     remarks = db.Column(db.Text, nullable=True)
     followup_notes = db.Column(db.Text, nullable=True)
     completion_notes = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(30), nullable=False, default='Pending Follow-up', index=True)
+    status = db.Column(db.String(30), nullable=False, default='Scheduled', index=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     completed_at = db.Column(db.DateTime, nullable=True)
     completed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    cancelled_at = db.Column(db.DateTime, nullable=True)
+    cancelled_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    cancellation_reason = db.Column(db.Text, nullable=True)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False, index=True)
     deleted_at = db.Column(db.DateTime, nullable=True)
     deleted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -762,6 +766,7 @@ class SalesActivity(db.Model):
     sales_lead = db.relationship('SalesLead', foreign_keys=[sales_lead_id], backref='sales_activity_records')
     pipeline = db.relationship('Pipeline', foreign_keys=[pipeline_id], backref='sales_activity_records')
     completed_by = db.relationship('User', foreign_keys=[completed_by_id])
+    cancelled_by = db.relationship('User', foreign_keys=[cancelled_by_id])
     contacts = db.relationship('SalesActivityContact', backref='sales_activity', lazy='select', cascade='all, delete-orphan', order_by='SalesActivityContact.sort_order')
     linked_task = db.relationship('Task', foreign_keys='Task.sales_activity_id', backref='sales_activity', uselist=False)
 
@@ -774,7 +779,11 @@ class SalesActivity(db.Model):
     }
     REMOTE_ENGAGEMENT_SUBTYPE_OPTIONS = ['Follow-up', 'Next Steps / To-do']
     SOURCE_OPTIONS = ['Sales Leads', 'Pipeline', 'Existing Customer', 'Marketing Event', 'Other']
-    STATUS_OPTIONS = ['Pending Follow-up', 'Completed']
+    STATUS_SCHEDULED = 'Scheduled'
+    STATUS_FOLLOW_UP_REQUIRED = 'Follow-up Required'
+    STATUS_COMPLETED = 'Completed'
+    STATUS_CANCELLED = 'Cancelled'
+    STATUS_OPTIONS = [STATUS_SCHEDULED, STATUS_FOLLOW_UP_REQUIRED, STATUS_COMPLETED, STATUS_CANCELLED]
 
     @classmethod
     def normalize_type(cls, value):
@@ -784,6 +793,79 @@ class SalesActivity(db.Model):
     @property
     def primary_contact(self):
         return self.contacts[0] if self.contacts else None
+
+    def get_deadline(self):
+        """Return the business deadline used for time-based activity indicators."""
+        if self.activity_type == self.TYPE_ON_SITE_VISIT and self.estimated_end_at:
+            return self.estimated_end_at
+        if self.linked_task and self.linked_task.due_date:
+            return datetime.combine(self.linked_task.due_date, time.max)
+        if self.activity_date:
+            return datetime.combine(self.activity_date, time.max)
+        return None
+
+    def get_display_status(self, now=None):
+        """Return the current business status without requiring a background migration job."""
+        if self.status in (self.STATUS_COMPLETED, self.STATUS_CANCELLED):
+            return self.status
+
+        now = now or datetime.now()
+        if self.activity_type == self.TYPE_ON_SITE_VISIT:
+            return (
+                self.STATUS_FOLLOW_UP_REQUIRED
+                if self.estimated_end_at and now >= self.estimated_end_at
+                else self.STATUS_SCHEDULED
+            )
+
+        if (
+            self.activity_type == self.TYPE_REMOTE_ENGAGEMENT
+            and self.remote_engagement_subtype == 'Next Steps / To-do'
+        ):
+            due_date = self.linked_task.due_date if self.linked_task and self.linked_task.due_date else self.activity_date
+            return self.STATUS_FOLLOW_UP_REQUIRED if due_date and now.date() >= due_date else self.STATUS_SCHEDULED
+
+        # Remote Follow-up records are normally completed when created. This fallback
+        # keeps legacy/non-standard open records understandable.
+        return self.STATUS_FOLLOW_UP_REQUIRED if self.activity_date and now.date() >= self.activity_date else self.STATUS_SCHEDULED
+
+    def get_deadline_indicator(self, now=None):
+        """Return Due Today/Overdue as a separate reminder from the business status."""
+        if self.status in (self.STATUS_COMPLETED, self.STATUS_CANCELLED):
+            return None
+
+        now = now or datetime.now()
+        if self.activity_type == self.TYPE_ON_SITE_VISIT:
+            return 'Overdue' if self.estimated_end_at and now >= self.estimated_end_at else None
+
+        due_date = self.linked_task.due_date if self.linked_task and self.linked_task.due_date else self.activity_date
+        if not due_date:
+            return None
+        if now.date() > due_date:
+            return 'Overdue'
+        if now.date() == due_date:
+            return 'Due Today'
+        return None
+
+    @property
+    def display_status(self):
+        return self.get_display_status()
+
+    @property
+    def deadline_indicator(self):
+        return self.get_deadline_indicator()
+
+    @property
+    def status_color(self):
+        return {
+            self.STATUS_SCHEDULED: 'primary',
+            self.STATUS_FOLLOW_UP_REQUIRED: 'warning',
+            self.STATUS_COMPLETED: 'success',
+            self.STATUS_CANCELLED: 'secondary',
+        }.get(self.display_status, 'secondary')
+
+    @property
+    def can_edit(self):
+        return self.status not in (self.STATUS_COMPLETED, self.STATUS_CANCELLED)
 
     def __repr__(self):
         return f'<SalesActivity {self.activity_type} {self.company}>'

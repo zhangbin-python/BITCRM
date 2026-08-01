@@ -169,7 +169,7 @@ def create_remote_engagement_activities(
             expected_result=expected_result,
             remarks=remarks,
             followup_notes=todo_text,
-            status='Pending Follow-up',
+            status=SalesActivity.STATUS_SCHEDULED,
             owner_id=owner_id,
         )
         db.session.add(activity)
@@ -196,7 +196,7 @@ def complete_activity(activity, user_id, completion_notes, complete_linked_task=
     if not completion_notes:
         raise ValueError('Completion Notes are required.')
     now = datetime.utcnow()
-    activity.status = 'Completed'
+    activity.status = SalesActivity.STATUS_COMPLETED
     activity.completed_at = now
     activity.completed_by_id = user_id
     activity.completion_notes = completion_notes
@@ -206,6 +206,14 @@ def complete_activity(activity, user_id, completion_notes, complete_linked_task=
 
 def complete_task(task, completion_notes, user_id, update_activity=True):
     """Complete a Task with mandatory notes and update its linked activity."""
+    if task.status == 'Cancelled':
+        raise ValueError('Cancelled tasks cannot be completed.')
+    if (
+        update_activity
+        and task.sales_activity
+        and task.sales_activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
+    ):
+        raise ValueError('On-site Visit feedback must be completed from Sales Activities.')
     completion_notes = (completion_notes or '').strip()
     if not completion_notes:
         raise ValueError('Completion Notes are required.')
@@ -214,19 +222,21 @@ def complete_task(task, completion_notes, user_id, update_activity=True):
     task.completed_at = datetime.utcnow()
     task.completed_by_id = user_id
     if update_activity and task.sales_activity:
-        task.sales_activity.status = 'Completed'
+        task.sales_activity.status = SalesActivity.STATUS_COMPLETED
         task.sales_activity.completed_at = task.completed_at
         task.sales_activity.completed_by_id = user_id
         task.sales_activity.completion_notes = completion_notes
 
 
 def reopen_task(task):
+    if task.status != 'Completed':
+        raise ValueError('Only completed tasks can be reopened.')
     task.status = 'Overdue' if task.due_date and date.today() > task.due_date else 'In Progress'
     task.completion_notes = None
     task.completed_at = None
     task.completed_by_id = None
     if task.sales_activity:
-        task.sales_activity.status = 'Pending Follow-up'
+        task.sales_activity.status = SalesActivity.STATUS_SCHEDULED
         task.sales_activity.completed_at = None
         task.sales_activity.completed_by_id = None
         task.sales_activity.completion_notes = None

@@ -1324,3 +1324,87 @@ msgstr "远程沟通"
 #: templates/sales_activities/index.html
 msgid "On-site Visit"
 msgstr "外勤拜访"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Scheduled"
+msgstr "已安排"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Follow-up Required"
+msgstr "待跟进"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Due Today"
+msgstr "今日到期"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Cancelled"
+msgstr "已取消"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Cancelled linked activities retained for history"
+msgstr "保留已取消的关联活动以供历史追溯"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Cancelled Tasks"
+msgstr "已取消任务"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Follow-up Required / Due Today"
+msgstr "待跟进 / 今日到期"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Cancelled / past"
+msgstr "已取消 / 已过去"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Edit / Reschedule"
+msgstr "编辑 / 改期"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Cancel Activity"
+msgstr "取消活动"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Cancellation Reason"
+msgstr "取消原因"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Record why the customer meeting or remote engagement was cancelled"
+msgstr "请记录客户会议或远程沟通取消的原因"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "The activity and linked Task will be marked Cancelled, not deleted."
+msgstr "该活动及其关联任务将标记为已取消，不会被删除。"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Keep Activity"
+msgstr "保留活动"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Confirm Cancellation"
+msgstr "确认取消"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Company and source are fixed to preserve the activity history and linked records."
+msgstr "为保留活动历史和关联记录，公司及来源不可修改。"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Start Date"
+msgstr "开始日期"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "Start Time"
+msgstr "开始时间"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "End Date"
+msgstr "结束日期"
+
+#: templates/sales_activities/index.html templates/tasks.html
+msgid "End Time"
+msgstr "结束时间"
+
+#: templates/tasks.html
+msgid "Open Sales Activity"
+msgstr "打开销售活动"

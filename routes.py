@@ -2431,6 +2431,7 @@ def index():
     overdue_tasks = [t for t in tasks if t.status == 'Overdue']
     in_progress_tasks = [t for t in tasks if t.status == 'In Progress']
     completed_tasks = [t for t in tasks if t.status == 'Completed']
+    cancelled_tasks = [t for t in tasks if t.status == 'Cancelled']
     
     owner_filter_users = _get_owner_users_from_query(
         Task,
@@ -2443,6 +2444,7 @@ def index():
                           overdue_tasks=overdue_tasks,
                           in_progress_tasks=in_progress_tasks,
                           completed_tasks=completed_tasks,
+                          cancelled_tasks=cancelled_tasks,
                           users=owner_filter_users,
                           assignable_users=assignable_users,
                           current_user=current_user)
@@ -2566,6 +2568,8 @@ def edit_task(task_id):
         return redirect(url_for('tasks.index'))
     
     try:
+        if task.sales_activity:
+            raise ValueError('This Task is linked to a Sales Activity. Edit or reschedule it from Sales Activities.')
         task.content = request.form.get('content')
         task.company = request.form.get('company')
         task.owner_id = request.form.get('owner_id') if current_user.is_admin() else current_user.id
@@ -2599,6 +2603,8 @@ def delete(task_id):
         return redirect(url_for('tasks.index'))
     
     try:
+        if task.sales_activity:
+            raise ValueError('This Task is linked to a Sales Activity. Archive or cancel it from Sales Activities.')
         soft_delete(task, current_user.id, 'task', task.content[:200], request.form.get('deletion_reason'))
         log_activity(
             current_user, 'Task - Deleted', 'task', task.id, task.content[:200],
@@ -3070,7 +3076,7 @@ def toggle_task_status(task_id):
             if task.pipeline and not task.pipeline.is_deleted:
                 append_followup_history(task.pipeline, completion_history)
             action = 'Task - Completed'
-        elif new_status in ('In Progress', 'Overdue') or task.status == 'Completed':
+        elif task.status == 'Completed' and new_status in ('In Progress', 'Overdue'):
             reopen_task(task)
             action = 'Task - Reopened'
         else:
