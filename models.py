@@ -2,7 +2,7 @@
 BITCRM Database Models
 SQLAlchemy models for the CRM system.
 """
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
@@ -710,11 +710,25 @@ class Task(db.Model):
         }
         return status_colors.get(self.status, 'secondary')
     
-    def check_overdue(self):
-        """Check if task is overdue."""
+    def check_overdue(self, now=None):
+        """Check if task is overdue, including the On-site Visit feedback grace period."""
         if self.status in ('Completed', 'Cancelled'):
             return False
-        if self.due_date and date.today() > self.due_date:
+
+        now = now or datetime.now()
+        if (
+            self.sales_activity
+            and self.sales_activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
+            and self.sales_activity.estimated_end_at
+        ):
+            is_overdue = now >= (
+                self.sales_activity.estimated_end_at
+                + timedelta(hours=SalesActivity.ON_SITE_OVERDUE_GRACE_HOURS)
+            )
+        else:
+            is_overdue = bool(self.due_date and now.date() > self.due_date)
+
+        if is_overdue:
             self.status = 'Overdue'
             return True
         if self.status == 'Overdue':
@@ -784,6 +798,7 @@ class SalesActivity(db.Model):
     STATUS_COMPLETED = 'Completed'
     STATUS_CANCELLED = 'Cancelled'
     STATUS_OPTIONS = [STATUS_SCHEDULED, STATUS_FOLLOW_UP_REQUIRED, STATUS_COMPLETED, STATUS_CANCELLED]
+    ON_SITE_OVERDUE_GRACE_HOURS = 24
 
     @classmethod
     def normalize_type(cls, value):
@@ -835,7 +850,12 @@ class SalesActivity(db.Model):
 
         now = now or datetime.now()
         if self.activity_type == self.TYPE_ON_SITE_VISIT:
-            return 'Overdue' if self.estimated_end_at and now >= self.estimated_end_at else None
+            overdue_at = (
+                self.estimated_end_at + timedelta(hours=self.ON_SITE_OVERDUE_GRACE_HOURS)
+                if self.estimated_end_at
+                else None
+            )
+            return 'Overdue' if overdue_at and now >= overdue_at else None
 
         due_date = self.linked_task.due_date if self.linked_task and self.linked_task.due_date else self.activity_date
         if not due_date:

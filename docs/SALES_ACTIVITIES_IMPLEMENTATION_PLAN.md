@@ -130,7 +130,7 @@ An On-site Visit will support:
 - Expected Result.
 - Remarks.
 
-Creating an On-site Visit will create a `Scheduled` Sales Activity and a linked Task. Before the visit ends it remains `Scheduled`; after the end time it displays `Follow-up Required` with an `Overdue` reminder until feedback is submitted. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
+Creating an On-site Visit will create a `Scheduled` Sales Activity and a linked Task. Before the visit ends it remains `Scheduled`; immediately after the end time it displays `Follow-up Required`, and only becomes `Overdue` if feedback is still missing 24 hours after the estimated end time. The linked Task follows the same 24-hour grace period. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
 
 Open activities can be edited or rescheduled. Time, owner, contacts, address, activity details, and the linked Task deadline are kept synchronized. Completed and cancelled records remain immutable history. Cancelling an activity retains the record, cancellation reason, user, and time, and marks its linked Task `Cancelled`.
 

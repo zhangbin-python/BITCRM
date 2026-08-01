@@ -372,11 +372,18 @@ class SalesActivitiesTests(unittest.TestCase):
             estimated_end_at=datetime(2026, 8, 6, 13, 0),
             status='Scheduled', owner_id=self.admin_id,
         )
-        past_visit = SalesActivity(
+        recently_ended_visit = SalesActivity(
             activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
             sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 7, 31),
             estimated_start_at=datetime(2026, 7, 31, 12, 0),
             estimated_end_at=datetime(2026, 7, 31, 13, 0),
+            status='Scheduled', owner_id=self.admin_id,
+        )
+        overdue_visit = SalesActivity(
+            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 7, 31),
+            estimated_start_at=datetime(2026, 7, 31, 8, 0),
+            estimated_end_at=datetime(2026, 7, 31, 9, 0),
             status='Scheduled', owner_id=self.admin_id,
         )
         due_today = SalesActivity(
@@ -391,14 +398,30 @@ class SalesActivitiesTests(unittest.TestCase):
             sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 7, 31),
             status='Completed', owner_id=self.admin_id,
         )
-        db.session.add_all([future_visit, past_visit, due_today, completed])
+        db.session.add_all([future_visit, recently_ended_visit, overdue_visit, due_today, completed])
+        db.session.flush()
+        recently_ended_task = Task(
+            content='Recent visit feedback', due_date=recently_ended_visit.estimated_end_at.date(),
+            status='In Progress', owner_id=self.admin_id, sales_activity_id=recently_ended_visit.id,
+        )
+        overdue_task = Task(
+            content='Overdue visit feedback', due_date=overdue_visit.estimated_end_at.date(),
+            status='In Progress', owner_id=self.admin_id, sales_activity_id=overdue_visit.id,
+        )
+        db.session.add_all([recently_ended_task, overdue_task])
         db.session.commit()
         now = datetime(2026, 8, 1, 10, 0)
 
         self.assertEqual(future_visit.get_display_status(now), 'Scheduled')
         self.assertIsNone(future_visit.get_deadline_indicator(now))
-        self.assertEqual(past_visit.get_display_status(now), 'Follow-up Required')
-        self.assertEqual(past_visit.get_deadline_indicator(now), 'Overdue')
+        self.assertEqual(recently_ended_visit.get_display_status(now), 'Follow-up Required')
+        self.assertIsNone(recently_ended_visit.get_deadline_indicator(now))
+        self.assertFalse(recently_ended_task.check_overdue(now))
+        self.assertEqual(recently_ended_task.status, 'In Progress')
+        self.assertEqual(overdue_visit.get_display_status(now), 'Follow-up Required')
+        self.assertEqual(overdue_visit.get_deadline_indicator(now), 'Overdue')
+        self.assertTrue(overdue_task.check_overdue(now))
+        self.assertEqual(overdue_task.status, 'Overdue')
         self.assertEqual(due_today.get_display_status(now), 'Follow-up Required')
         self.assertEqual(due_today.get_deadline_indicator(now), 'Due Today')
         self.assertEqual(completed.get_display_status(now), 'Completed')
