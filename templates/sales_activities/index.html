@@ -71,10 +71,18 @@
 .activity-stat-card .card-body { padding: .7rem .85rem; }
 .activity-stat-card .fs-3 { font-size: 1.55rem !important; }
 .owner-summary-card .card-body { padding: .85rem 1rem; }
-.owner-summary-table { width: 100%; margin-bottom: 0; }
+.owner-summary-table { width: 100%; min-width: 760px; margin-bottom: 0; table-layout: fixed; }
+.owner-summary-table .summary-col-owner { width: 13.5%; }
+.owner-summary-table .summary-col-2 { width: 16%; }
+.owner-summary-table .summary-col-3 { width: 25%; }
+.owner-summary-table .summary-col-4 { width: 18%; }
+.owner-summary-table .summary-col-5 { width: 11%; }
+.owner-summary-table .summary-col-6 { width: 7.5%; }
+.owner-summary-table .summary-col-total { width: 9%; }
 .owner-summary-table thead th { white-space: nowrap; font-weight: 600; background-color: #f8f9fa; }
 .owner-summary-table tbody td, .owner-summary-table tfoot td { vertical-align: middle; }
 .owner-summary-table tfoot td { border-top: 2px solid #dee2e6; }
+.owner-summary-table .summary-spacer-column { padding-left: 0; padding-right: 0; }
 .owner-summary-table .summary-total-column { background: #eef2ff; color: #3730a3; font-weight: 700; border-left: 2px solid #c7d2fe; }
 .type-filter-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: .45rem; }
 .type-filter-option { display: flex; min-width: 0; }
@@ -201,17 +209,21 @@
 
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Activities by Owner') }}</h5>
                 <p class="small text-muted mb-2">{{ _('Due Today and Overdue activities are included in Follow-up Required totals; detailed reminders remain visible in the activity list.') }}</p>
-                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Completed') }}</th><th>{{ _('Cancelled') }}</th><th class="summary-total-column">{{ _('Total') }}</th></tr></thead>
+                <div class="table-responsive"><table class="table table-sm owner-summary-table"><colgroup>
+                    <col class="summary-col-owner"><col class="summary-col-2"><col class="summary-col-3"><col class="summary-col-4"><col class="summary-col-5"><col class="summary-col-6"><col class="summary-col-total">
+                </colgroup><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Completed') }}</th><th>{{ _('Cancelled') }}</th><th class="summary-spacer-column" aria-hidden="true"></th><th class="summary-total-column">{{ _('Total') }}</th></tr></thead>
                     <tbody>
-                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.scheduled }}</td><td>{{ item.follow_up_required }}</td><td>{{ item.completed }}</td><td>{{ item.cancelled }}</td><td class="summary-total-column">{{ item.total }}</td></tr>{% endfor %}
+                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.scheduled }}</td><td>{{ item.follow_up_required }}</td><td>{{ item.completed }}</td><td>{{ item.cancelled }}</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">{{ item.total }}</td></tr>{% endfor %}
                     </tbody>
-                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.scheduled }}</td><td>{{ stats.follow_up_required }}</td><td>{{ stats.completed }}</td><td>{{ stats.cancelled }}</td><td class="summary-total-column">{{ stats.total }}</td></tr></tfoot>
+                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.scheduled }}</td><td>{{ stats.follow_up_required }}</td><td>{{ stats.completed }}</td><td>{{ stats.cancelled }}</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">{{ stats.total }}</td></tr></tfoot>
                 </table></div>
                 {% if not owner_stats %}<div class="small text-muted mt-2">{{ _('No activities found') }}</div>{% endif %}
             </div></div>
 
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Source Type by Owner') }}</h5>
-                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr>
+                <div class="table-responsive"><table class="table table-sm owner-summary-table"><colgroup>
+                    <col class="summary-col-owner"><col class="summary-col-2"><col class="summary-col-3"><col class="summary-col-4"><col class="summary-col-5"><col class="summary-col-6"><col class="summary-col-total">
+                </colgroup><thead><tr>
                     <th>{{ _('Owner') }}</th>
                     {% for source in source_options %}<th>{{ _(source) }}</th>{% endfor %}
                     <th class="summary-total-column">{{ _('Total') }}</th>

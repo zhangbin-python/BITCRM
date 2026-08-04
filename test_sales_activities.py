@@ -552,11 +552,11 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertNotIn('>Due Today</th>', summary_html)
         self.assertNotIn('>Overdue</th>', summary_html)
         self.assertIn(
-            '<tr><td>Admin</td><td>1</td><td>3</td><td>1</td><td>1</td><td class="summary-total-column">6</td></tr>',
+            '<tr><td>Admin</td><td>1</td><td>3</td><td>1</td><td>1</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">6</td></tr>',
             summary_html,
         )
         self.assertIn(
-            '<td>Total</td><td>1</td><td>3</td><td>1</td><td>1</td><td class="summary-total-column">6</td>',
+            '<td>Total</td><td>1</td><td>3</td><td>1</td><td>1</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">6</td>',
             summary_html,
         )
         self.assertTrue(summary_html.index('>Cancelled</th>') < summary_html.index('>Total</th>'))
@@ -566,6 +566,10 @@ class SalesActivitiesTests(unittest.TestCase):
         source_summary_html = html[source_start:source_end]
         self.assertTrue(source_summary_html.index('>Other</th>') < source_summary_html.index('>Total</th>'))
         self.assertIn('<th class="summary-total-column">Total</th>', source_summary_html)
+        self.assertIn('summary-col-owner', summary_html)
+        self.assertIn('summary-col-owner', source_summary_html)
+        self.assertIn('summary-spacer-column', summary_html)
+        self.assertNotIn('summary-spacer-column', source_summary_html)
         self.assertIn('<td class="summary-total-column">6</td>', source_summary_html)
 
     def test_admin_owner_filter_supports_multiple_owners(self):
@@ -637,16 +641,16 @@ class SalesActivitiesTests(unittest.TestCase):
         summary_end = html.index('</table>', summary_start)
         summary_html = html[summary_start:summary_end]
         self.assertIn(
-            '<tr><td>Owner Alpha</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-total-column">1</td></tr>',
+            '<tr><td>Owner Alpha</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">1</td></tr>',
             summary_html,
         )
         self.assertIn(
-            '<tr><td>Owner Beta</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-total-column">1</td></tr>',
+            '<tr><td>Owner Beta</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">1</td></tr>',
             summary_html,
         )
         self.assertNotIn('<td>Admin</td>', summary_html)
         self.assertIn(
-            '<td>Total</td><td>0</td><td>0</td><td>2</td><td>0</td><td class="summary-total-column">2</td>',
+            '<td>Total</td><td>0</td><td>0</td><td>2</td><td>0</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">2</td>',
             summary_html,
         )
 
@@ -688,7 +692,7 @@ class SalesActivitiesTests(unittest.TestCase):
         summary_html = html[summary_start:summary_end]
 
         self.assertIn(
-            '<tr><td>Sales User</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-total-column">1</td></tr>',
+            '<tr><td>Sales User</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-spacer-column" aria-hidden="true"></td><td class="summary-total-column">1</td></tr>',
             summary_html,
         )
         self.assertNotIn('<td>Admin</td>', summary_html)
