@@ -331,6 +331,14 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.activity_date, date(2026, 8, 1))
         self.assertEqual(activity.estimated_start_at, datetime(2026, 8, 1, 10, 0))
         self.assertEqual(activity.estimated_end_at, datetime(2026, 8, 1, 12, 0))
+
+        activity_page = self.client.get('/sales-activities/')
+        self.assertEqual(activity_page.status_code, 200)
+        activity_html = activity_page.get_data(as_text=True)
+        self.assertIn('<strong class="activity-schedule-date">2026-08-01</strong>', activity_html)
+        self.assertIn('<span class="activity-schedule-time">10:00–12:00</span>', activity_html)
+        self.assertNotIn('2026-08-01 10:00', activity_html)
+
         self.assertIn('DC Site Visit follow-up', task.content)
         self.assertIn('DC Site Visit scheduled', lead.follow_up)
 

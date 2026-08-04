@@ -12,6 +12,9 @@
 .sales-activity-table th:nth-child(5), .sales-activity-table td:nth-child(5), .sales-activity-table th:nth-child(7), .sales-activity-table td:nth-child(7), .sales-activity-table th:nth-child(8), .sales-activity-table td:nth-child(8), .sales-activity-table th:nth-child(9), .sales-activity-table td:nth-child(9), .sales-activity-table th:nth-child(10), .sales-activity-table td:nth-child(10), .sales-activity-table th:nth-child(11), .sales-activity-table td:nth-child(11) { width: 170px; }
 .sales-activity-table th:nth-child(6), .sales-activity-table td:nth-child(6) { width: 220px; }
 .sales-activity-table th:nth-child(15), .sales-activity-table td:nth-child(15) { width: 120px; }
+.activity-schedule-date, .activity-schedule-time { display: block; white-space: nowrap; }
+.activity-schedule-date { line-height: 1.25; }
+.activity-schedule-time { margin-top: .12rem; color: #6c757d; font-size: .82rem; line-height: 1.25; }
 .activity-contact-cell .contact-entry { line-height: 1.25; }
 .activity-contact-cell .contact-entry + .contact-entry { border-top: 1px solid #e9ecef; margin-top: .4rem; padding-top: .4rem; }
 .activity-contact-cell .contact-name { display: block; font-size: .95rem; font-weight: 600; }
@@ -227,7 +230,19 @@
             <tbody>
             {% for activity in activities %}
             <tr>
-                <td>{% if activity.is_scheduled_visit and activity.estimated_start_at %}<strong class="activity-schedule-start">{{ activity.estimated_start_at.strftime('%Y-%m-%d %H:%M') }}</strong>{% if activity.estimated_end_at %}<br><small class="activity-schedule-end">→ {{ activity.estimated_end_at.strftime('%Y-%m-%d %H:%M') }}</small>{% endif %}{% else %}{{ activity.activity_date.strftime('%Y-%m-%d') }}{% endif %}</td>
+                <td>
+                    {% if activity.is_scheduled_visit and activity.estimated_start_at %}
+                        {% if not activity.estimated_end_at or activity.estimated_start_at.strftime('%Y-%m-%d') == activity.estimated_end_at.strftime('%Y-%m-%d') %}
+                            <strong class="activity-schedule-date">{{ activity.estimated_start_at.strftime('%Y-%m-%d') }}</strong>
+                            <span class="activity-schedule-time">{{ activity.estimated_start_at.strftime('%H:%M') }}{% if activity.estimated_end_at %}–{{ activity.estimated_end_at.strftime('%H:%M') }}{% endif %}</span>
+                        {% else %}
+                            <strong class="activity-schedule-start">{{ activity.estimated_start_at.strftime('%Y-%m-%d %H:%M') }}</strong>
+                            <br><small class="activity-schedule-end">→ {{ activity.estimated_end_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        {% endif %}
+                    {% else %}
+                        {{ activity.activity_date.strftime('%Y-%m-%d') }}
+                    {% endif %}
+                </td>
                 <td><span class="badge bg-{{ 'info' if activity.activity_type == 'Remote Engagement' else 'primary' }}">{{ _(activity.activity_type) }}</span></td>
                 <td>{{ _(activity.source_type) }}</td>
                 <td><strong>{{ activity.company }}</strong></td>
