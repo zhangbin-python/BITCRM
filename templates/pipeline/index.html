@@ -680,6 +680,7 @@
 </script>
 
 <!-- Single Modal Instance Script - AJAX Form Submit -->
+<script src="{{ url_for('static', filename='js/followup_activity_form.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('followupModal');
@@ -703,6 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(r => r.text())
             .then(html => {
                 content.innerHTML = html;
+                window.initializeFollowupActivityForms(content);
             })
             .catch(err => {
                 content.innerHTML = '<div class="alert alert-danger">{{ _('Error loading data') }}</div>';

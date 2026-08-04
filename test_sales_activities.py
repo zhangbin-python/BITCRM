@@ -62,7 +62,10 @@ class SalesActivitiesTests(unittest.TestCase):
             f'/leads/{lead.id}/add-followup',
             data={
                 'followup_text': 'Customer confirmed the technical scope.',
+                'followup_activity_type': 'Remote Engagement',
+                'followup_activity_date': '2026-08-04',
                 'todo_text': 'Send the revised quotation.',
+                'todo_activity_type': 'Remote Engagement',
                 'todo_due_date': '2026-08-05',
             },
         )
@@ -85,11 +88,112 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn('Customer confirmed the technical scope.', lead.follow_up)
         self.assertIn('Send the revised quotation.', lead.follow_up)
 
+    def test_lead_followup_supports_independent_visit_and_remote_types(self):
+        lead = self._lead(company='Mixed Lead Activity Co')
+        response = self.client.post(
+            f'/leads/{lead.id}/add-followup',
+            data={
+                'followup_text': 'Customer confirmed the rack requirement during the visit.',
+                'followup_activity_type': 'Customer Visit',
+                'followup_start_date': '2026-08-03',
+                'followup_start_time': '14:00',
+                'followup_end_date': '2026-08-03',
+                'followup_end_time': '15:30',
+                'followup_address': 'Customer Office',
+                'todo_text': 'Send the revised rack layout.',
+                'todo_activity_type': 'Remote Engagement',
+                'todo_due_date': '2026-08-06',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()['success'])
+
+        activities = SalesActivity.query.order_by(SalesActivity.id).all()
+        self.assertEqual(len(activities), 2)
+        completed_visit, remote_next_step = activities
+        self.assertEqual(completed_visit.activity_type, 'Customer Visit')
+        self.assertEqual(completed_visit.status, 'Completed')
+        self.assertEqual(completed_visit.estimated_start_at, datetime(2026, 8, 3, 14, 0))
+        self.assertEqual(completed_visit.estimated_end_at, datetime(2026, 8, 3, 15, 30))
+        self.assertEqual(completed_visit.address, 'Customer Office')
+        self.assertEqual(remote_next_step.activity_type, 'Remote Engagement')
+        self.assertEqual(remote_next_step.status, 'Scheduled')
+        self.assertEqual(Task.query.one().sales_activity_id, remote_next_step.id)
+        self.assertIn('Follow-up [Customer Visit]', lead.follow_up)
+        self.assertIn('To-do [Remote Engagement]', lead.follow_up)
+
+    def test_linked_lead_and_pipeline_share_one_activity_task_and_feedback(self):
+        lead = self._lead(company='Unified Linked Co')
+        pipeline = Pipeline(
+            name='Unified Opportunity', company=lead.company,
+            owner_id=self.admin_id, sales_lead_id=lead.id,
+            stage='1) Prospecting',
+        )
+        db.session.add(pipeline)
+        db.session.commit()
+
+        response = self.client.post(
+            f'/leads/{lead.id}/add-followup',
+            data={
+                'todo_text': 'Host the customer for a Data Center validation tour.',
+                'todo_activity_type': 'DC Site Visit',
+                'todo_start_date': '2026-08-12',
+                'todo_start_time': '09:00',
+                'todo_end_date': '2026-08-12',
+                'todo_end_time': '11:00',
+                'todo_address': 'Primary Data Center',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        activity = SalesActivity.query.one()
+        task = Task.query.one()
+        self.assertEqual(activity.sales_lead_id, lead.id)
+        self.assertEqual(activity.pipeline_id, pipeline.id)
+        self.assertEqual(task.sales_lead_id, lead.id)
+        self.assertEqual(task.pipeline_id, pipeline.id)
+        self.assertEqual(task.sales_activity_id, activity.id)
+        self.assertIn('To-do [DC Site Visit]', lead.follow_up)
+        self.assertIn('To-do [DC Site Visit]', pipeline.follow_up)
+
+        completion = self.client.post(
+            f'/tasks/{task.id}/complete',
+            data={'completion_notes': 'Customer completed the tour and approved the facility.'},
+            follow_redirects=True,
+        )
+        self.assertEqual(completion.status_code, 200)
+        db.session.refresh(lead)
+        db.session.refresh(pipeline)
+        self.assertEqual(SalesActivity.query.count(), 1)
+        self.assertEqual(Task.query.count(), 1)
+        self.assertIn('Customer completed the tour and approved the facility.', lead.follow_up)
+        self.assertIn('Customer completed the tour and approved the facility.', pipeline.follow_up)
+
+    def test_followup_types_and_visit_times_are_conditionally_required(self):
+        lead = self._lead(company='Validation Co')
+        missing_type = self.client.post(
+            f'/leads/{lead.id}/add-followup',
+            data={'followup_text': 'Completed a meeting.'},
+        )
+        self.assertEqual(missing_type.status_code, 400)
+        self.assertIn('Follow-up Activity Type', missing_type.get_json()['error'])
+
+        missing_visit_time = self.client.post(
+            f'/leads/{lead.id}/add-followup',
+            data={
+                'todo_text': 'Arrange a Data Center tour.',
+                'todo_activity_type': 'DC Site Visit',
+            },
+        )
+        self.assertEqual(missing_visit_time.status_code, 400)
+        self.assertIn('Start Date/Time and End Date/Time', missing_visit_time.get_json()['error'])
+        self.assertEqual(SalesActivity.query.count(), 0)
+        self.assertEqual(Task.query.count(), 0)
+
     def test_task_requires_feedback_and_preserves_original_next_steps(self):
         lead = self._lead()
         self.client.post(
             f'/leads/{lead.id}/add-followup',
-            data={'todo_text': 'Arrange solution workshop.', 'todo_due_date': '2026-08-06'},
+            data={'todo_text': 'Arrange solution workshop.', 'todo_activity_type': 'Remote Engagement', 'todo_due_date': '2026-08-06'},
         )
         task = Task.query.one()
         activity = SalesActivity.query.one()
@@ -111,6 +215,32 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.status, 'Completed')
         self.assertEqual(activity.followup_notes, 'Arrange solution workshop.')
         self.assertEqual(activity.completion_notes, 'Workshop completed; technical team approved the design.')
+
+    def test_legacy_task_without_sales_activity_link_still_completes(self):
+        lead = self._lead(company='Legacy Task Co')
+        task = Task(
+            content='Legacy task created before typed activity rollout.',
+            due_date=date(2026, 8, 3),
+            owner_id=self.admin_id,
+            sales_lead_id=lead.id,
+            company=lead.company,
+            status='In Progress',
+        )
+        db.session.add(task)
+        db.session.commit()
+
+        response = self.client.post(
+            f'/tasks/{task.id}/complete',
+            data={'completion_notes': 'Legacy task completed without creating an activity.'},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        db.session.refresh(task)
+        self.assertEqual(task.status, 'Completed')
+        self.assertIsNone(task.sales_activity_id)
+        self.assertEqual(SalesActivity.query.count(), 0)
+        self.assertIn('Task completed: Legacy task created before typed activity rollout.', lead.follow_up)
+        self.assertIn('Legacy task completed without creating an activity.', lead.follow_up)
 
     def test_customer_visit_supports_cross_date_schedule_and_feedback_sync(self):
         lead = self._lead()
@@ -204,27 +334,49 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn('DC Site Visit follow-up', task.content)
         self.assertIn('DC Site Visit scheduled', lead.follow_up)
 
-        response = self.client.post(
-            f'/tasks/{task.id}/complete',
-            data={'completion_notes': 'Completed directly from Tasks'},
-            follow_redirects=True,
+        task_page = self.client.get('/tasks/')
+        self.assertEqual(task_page.status_code, 200)
+        task_html = task_page.get_data(as_text=True)
+        self.assertIn(f'data-bs-target="#completeTaskModal{task.id}"', task_html)
+        self.assertIn('DC Site Visit', task_html)
+        self.assertIn('Feedback will also complete the linked Sales Activity.', task_html)
+
+        missing_feedback = self.client.post(
+            f'/tasks/{task.id}/complete', data={}, follow_redirects=True,
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(missing_feedback.status_code, 200)
         db.session.refresh(activity)
         db.session.refresh(task)
         self.assertEqual(activity.status, SalesActivity.STATUS_SCHEDULED)
         self.assertNotEqual(task.status, 'Completed')
 
         response = self.client.post(
-            f'/sales-activities/{activity.id}/followup',
+            f'/tasks/{task.id}/complete',
             data={'completion_notes': 'Customer approved the facility and security design.'},
+            follow_redirects=True,
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         db.session.refresh(activity)
         db.session.refresh(task)
         self.assertEqual(activity.status, SalesActivity.STATUS_COMPLETED)
         self.assertEqual(task.status, 'Completed')
-        self.assertIn('DC Site Visit feedback: Customer approved', lead.follow_up)
+        self.assertEqual(activity.completion_notes, 'Customer approved the facility and security design.')
+        self.assertEqual(activity.completed_by_id, self.admin_id)
+        self.assertEqual(task.completed_by_id, self.admin_id)
+        self.assertEqual(activity.completed_at, task.completed_at)
+        self.assertIn('Follow-up [DC Site Visit]', lead.follow_up)
+        self.assertIn('Customer approved the facility and security design.', lead.follow_up)
+
+        reopen_response = self.client.post(f'/tasks/{task.id}/reopen', follow_redirects=True)
+        self.assertEqual(reopen_response.status_code, 200)
+        db.session.refresh(activity)
+        db.session.refresh(task)
+        self.assertEqual(activity.status, SalesActivity.STATUS_SCHEDULED)
+        self.assertIn(task.status, ('In Progress', 'Overdue'))
+        self.assertIsNone(activity.completion_notes)
+        self.assertIsNone(activity.completed_at)
+        self.assertIsNone(task.completion_notes)
+        self.assertIsNone(task.completed_at)
 
     def test_invalid_customer_visit_reopens_form_and_uses_start_date_as_activity_date(self):
         lead = self._lead(company='Retained Visit Form Co')

@@ -36,13 +36,29 @@ from utils import (
 )
 from activity_logger import log_activity, log_lead_import, log_lead_created, log_lead_updated, log_pipeline_created, log_pipeline_stage_changed, log_task_created, log_task_completed, log_task_reopened, log_followup_created, log_account_created, log_lead_deleted, log_lead_exported, log_pipeline_deleted, log_pipeline_exported, log_pipeline_imported, log_task_edited, log_task_deleted, log_task_status_changed, log_password_changed, log_language_changed, log_user_created, log_user_status_changed, log_filter_applied, log_column_visibility_changed, log_login, log_logout
 from extensions import cache
-from sales_activity_service import append_followup_history, complete_task, reopen_task, create_remote_engagement_activities, soft_delete
+from sales_activity_service import (
+    append_followup_history, append_task_completion_history,
+    complete_task, reopen_task, create_followup_activities, soft_delete,
+)
 
 # ============================================================================
 # MAIN BLUEPRINT
 # ============================================================================
 
 main_bp = Blueprint('main', __name__)
+
+
+def _parse_followup_datetime(date_value, time_value):
+    """Parse separate follow-up date/time inputs; service-level rules handle omissions."""
+    if not date_value or not time_value:
+        return None
+    try:
+        return datetime.combine(
+            datetime.strptime(date_value, '%Y-%m-%d').date(),
+            datetime.strptime(time_value, '%H:%M').time(),
+        )
+    except ValueError as exc:
+        raise ValueError('Please enter a valid activity date and time.') from exc
 
 
 def _get_safe_redirect_target(default_endpoint):
@@ -1241,7 +1257,7 @@ def quick_update(lead_id):
 @leads_bp.route('/<int:lead_id>/add-followup', methods=['POST'])
 @login_required
 def add_lead_followup(lead_id):
-    """Add Follow-up Notes and/or Next Steps to a Sales Lead."""
+    """Add typed Follow-up Notes and/or Next Steps to a Sales Lead."""
     if not current_user.can_access_leads():
         return jsonify({'success': False, 'error': 'Permission denied'}), 403
     lead = SalesLead.query.filter_by(id=lead_id, is_deleted=False).first_or_404()
@@ -1249,27 +1265,68 @@ def add_lead_followup(lead_id):
     try:
         followup_text = request.form.get('followup_text', '').strip()
         todo_text = request.form.get('todo_text', '').strip()
-        todo_due_date = validate_date(request.form.get('todo_due_date'))
-        if todo_text and not todo_due_date:
-            return jsonify({'success': False, 'error': 'To-do Due Date is required when Next Steps / To-do is filled'}), 400
         if not followup_text and not todo_text:
             return jsonify({'success': False, 'error': 'Follow-up Notes or Next Steps / To-do is required'}), 400
 
-        activities = create_remote_engagement_activities(
+        followup_type = (
+            SalesActivity.normalize_type(request.form.get('followup_activity_type'))
+            if followup_text else None
+        )
+        todo_type = (
+            SalesActivity.normalize_type(request.form.get('todo_activity_type'))
+            if todo_text else None
+        )
+        followup_activity_date = validate_date(request.form.get('followup_activity_date'))
+        todo_due_date = validate_date(request.form.get('todo_due_date'))
+        followup_start_at = _parse_followup_datetime(
+            request.form.get('followup_start_date'), request.form.get('followup_start_time')
+        )
+        followup_end_at = _parse_followup_datetime(
+            request.form.get('followup_end_date'), request.form.get('followup_end_time')
+        )
+        todo_start_at = _parse_followup_datetime(
+            request.form.get('todo_start_date'), request.form.get('todo_start_time')
+        )
+        todo_end_at = _parse_followup_datetime(
+            request.form.get('todo_end_date'), request.form.get('todo_end_time')
+        )
+
+        activities = create_followup_activities(
             source_type='Sales Leads', owner_id=current_user.id,
             sales_lead_id=lead.id, company=lead.company or lead.name,
             followup_text=followup_text, todo_text=todo_text,
-            todo_due_date=todo_due_date, activity_date=date.today(),
+            followup_activity_type=followup_type, todo_activity_type=todo_type,
+            followup_activity_date=followup_activity_date,
+            followup_start_at=followup_start_at, followup_end_at=followup_end_at,
+            followup_address=request.form.get('followup_address'),
+            todo_due_date=todo_due_date, todo_start_at=todo_start_at,
+            todo_end_at=todo_end_at, todo_address=request.form.get('todo_address'),
         )
-        append_followup_history(lead, followup_text, todo_text, todo_due_date)
+        history_kwargs = {
+            'followup_activity_type': followup_type,
+            'todo_activity_type': todo_type,
+            'followup_start_at': followup_start_at,
+            'followup_end_at': followup_end_at,
+            'todo_start_at': todo_start_at,
+            'todo_end_at': todo_end_at,
+        }
+        append_followup_history(
+            lead, followup_text, todo_text, todo_due_date, **history_kwargs
+        )
         if lead.pipeline and not lead.pipeline.is_deleted:
-            append_followup_history(lead.pipeline, followup_text, todo_text, todo_due_date)
+            append_followup_history(
+                lead.pipeline, followup_text, todo_text, todo_due_date, **history_kwargs
+            )
+        created_types = [activity.activity_type for activity in activities]
         log_activity(
             current_user, 'Leads - Follow-up Added', 'lead', lead.id,
             lead.company or lead.name,
-            f'Added Sales Lead follow-up; created {len(activities)} Remote Engagement activity record(s)',
+            f'Added Sales Lead follow-up; created {len(activities)} typed Sales Activity record(s)',
             request.remote_addr,
-            extra_data={'followup_notes': bool(followup_text), 'next_steps': bool(todo_text)},
+            extra_data={
+                'followup_notes': bool(followup_text), 'next_steps': bool(todo_text),
+                'activity_types': created_types,
+            },
             commit=False,
         )
         db.session.commit()
@@ -1960,69 +2017,21 @@ def delete(pipeline_id):
 @pipeline_bp.route('/<int:pipeline_id>/followup-data')
 @login_required
 def get_followup_data(pipeline_id):
-    """Get follow-up data as HTML for modal."""
-    
+    """Render the shared typed follow-up form for Pipeline and Dashboard modals."""
     pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first_or_404()
-    
     if not current_user.can_access_pipeline(pipeline):
         return '<div class="alert alert-danger">Permission denied</div>'
-    
-    # Build follow-up history HTML
-    history_html = ''
-    if pipeline.follow_up:
-        history_html = f'''
-        <div class="mb-4">
-            <label class="form-label small text-muted mb-1">
-                <i class="fas fa-history me-1"></i>{_('Follow-up History')}
-            </label>
-            <textarea class="form-control bg-light" rows="10" readonly 
-                style="resize: vertical; font-size: 0.875rem; max-height: 300px; overflow-y: auto;">{pipeline.follow_up}</textarea>
-        </div>
-        '''
-    
-    # Build stage options
-    stage_options = ''.join([
-        f'<option value="{stage}" {"selected" if stage == pipeline.stage else ""}>{_(stage)}</option>'
-        for stage in Pipeline.STAGE_OPTIONS
-    ])
-    
-    # Build form HTML
-    form_html = f'''
-    {history_html}
-    <input type="hidden" name="pipeline_id" value="{pipeline.id}">
-    <div class="row g-3">
-        <div class="col-12">
-            <label class="form-label">{_('Follow-up Notes')}</label>
-            <textarea name="followup_text" class="form-control" rows="4" placeholder="{_('Describe what was discussed...')}"></textarea>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">{_('Current Stuckpoint')}</label>
-            <textarea name="stuckpoint_text" class="form-control" rows="2" placeholder="{_('What is blocking progress?')}">{pipeline.stuckpoint or ''}</textarea>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">{_('Next Steps / To-do')}</label>
-            <textarea name="todo_text" class="form-control" rows="2" placeholder="{_('What needs to be done next?')}"></textarea>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">{_('To-do Due Date')}</label>
-            <input type="date" name="todo_due_date" class="form-control">
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">{_('Current Stage')}</label>
-            <select name="stage" class="form-select">
-                {stage_options}
-            </select>
-        </div>
-    </div>
-    '''
-    
-    return form_html
+    return render_template(
+        'pipeline/_followup_form.html',
+        pipeline=pipeline,
+        stage_options=Pipeline.STAGE_OPTIONS,
+    )
 
 
 @pipeline_bp.route('/<int:pipeline_id>/add-followup', methods=['POST'])
 @login_required
 def add_followup(pipeline_id):
-    """Save Pipeline follow-up and create separate Remote Engagement activity records."""
+    """Save Pipeline changes and create independently typed Sales Activities."""
     pipeline = Pipeline.query.filter_by(id=pipeline_id, is_deleted=False).first_or_404()
     if not current_user.can_access_pipeline(pipeline):
         return jsonify({'success': False, 'error': 'Permission denied'}), 403
@@ -2031,43 +2040,85 @@ def add_followup(pipeline_id):
         followup_text = request.form.get('followup_text', '').strip()
         stuckpoint_text = request.form.get('stuckpoint_text', '').strip()
         todo_text = request.form.get('todo_text', '').strip()
-        todo_due_date = validate_date(request.form.get('todo_due_date'))
         new_stage = request.form.get('stage') or pipeline.stage
         old_stage = pipeline.stage
         old_stuckpoint = pipeline.stuckpoint or ''
         stage_changed = new_stage in Pipeline.STAGE_OPTIONS and new_stage != old_stage
         stuckpoint_changed = stuckpoint_text != old_stuckpoint
 
-        if todo_text and not todo_due_date:
-            return jsonify({'success': False, 'error': 'To-do Due Date is required when Next Steps / To-do is filled'}), 400
         if not (followup_text or todo_text or stage_changed or stuckpoint_changed):
             return jsonify({'success': False, 'error': 'Please update notes, stage, stuckpoint, or next steps before saving'}), 400
 
+        followup_type = (
+            SalesActivity.normalize_type(request.form.get('followup_activity_type'))
+            if followup_text else None
+        )
+        todo_type = (
+            SalesActivity.normalize_type(request.form.get('todo_activity_type'))
+            if todo_text else None
+        )
+        followup_activity_date = validate_date(request.form.get('followup_activity_date'))
+        todo_due_date = validate_date(request.form.get('todo_due_date'))
+        followup_start_at = _parse_followup_datetime(
+            request.form.get('followup_start_date'), request.form.get('followup_start_time')
+        )
+        followup_end_at = _parse_followup_datetime(
+            request.form.get('followup_end_date'), request.form.get('followup_end_time')
+        )
+        todo_start_at = _parse_followup_datetime(
+            request.form.get('todo_start_date'), request.form.get('todo_start_time')
+        )
+        todo_end_at = _parse_followup_datetime(
+            request.form.get('todo_end_date'), request.form.get('todo_end_time')
+        )
+
         activities = []
         if followup_text or todo_text:
-            activities = create_remote_engagement_activities(
+            activities = create_followup_activities(
                 source_type='Pipeline', owner_id=current_user.id,
                 pipeline_id=pipeline.id, company=pipeline.company or pipeline.name,
                 followup_text=followup_text, todo_text=todo_text,
-                todo_due_date=todo_due_date, activity_date=date.today(),
+                followup_activity_type=followup_type, todo_activity_type=todo_type,
+                followup_activity_date=followup_activity_date,
+                followup_start_at=followup_start_at, followup_end_at=followup_end_at,
+                followup_address=request.form.get('followup_address'),
+                todo_due_date=todo_due_date, todo_start_at=todo_start_at,
+                todo_end_at=todo_end_at, todo_address=request.form.get('todo_address'),
             )
-            append_followup_history(pipeline, followup_text, todo_text, todo_due_date)
+            history_kwargs = {
+                'followup_activity_type': followup_type,
+                'todo_activity_type': todo_type,
+                'followup_start_at': followup_start_at,
+                'followup_end_at': followup_end_at,
+                'todo_start_at': todo_start_at,
+                'todo_end_at': todo_end_at,
+            }
+            append_followup_history(
+                pipeline, followup_text, todo_text, todo_due_date, **history_kwargs
+            )
             if pipeline.sales_lead and not pipeline.sales_lead.is_deleted:
-                append_followup_history(pipeline.sales_lead, followup_text, todo_text, todo_due_date)
+                append_followup_history(
+                    pipeline.sales_lead, followup_text, todo_text, todo_due_date,
+                    **history_kwargs,
+                )
 
         pipeline.stuckpoint = stuckpoint_text or None
         if stage_changed:
             pipeline.stage = new_stage
             calculate_pipeline_metrics(pipeline)
 
+        created_types = [activity.activity_type for activity in activities]
         log_activity(
             current_user, 'Pipeline - Follow-up Added', 'pipeline', pipeline.id,
             pipeline.company or pipeline.name,
-            f'Updated Pipeline follow-up; created {len(activities)} Remote Engagement activity record(s)',
+            f'Updated Pipeline follow-up; created {len(activities)} typed Sales Activity record(s)',
             request.remote_addr,
             old_values={'stage': old_stage, 'stuckpoint': old_stuckpoint},
             new_values={'stage': pipeline.stage, 'stuckpoint': pipeline.stuckpoint},
-            extra_data={'followup_notes': bool(followup_text), 'next_steps': bool(todo_text)},
+            extra_data={
+                'followup_notes': bool(followup_text), 'next_steps': bool(todo_text),
+                'activity_types': created_types,
+            },
             commit=False,
         )
         db.session.commit()
@@ -2503,11 +2554,7 @@ def complete(task_id):
     try:
         completion_notes = request.form.get('completion_notes', '').strip()
         complete_task(task, completion_notes, current_user.id)
-        completion_history = f'Task completed: {task.content}; Feedback: {completion_notes}'
-        if task.sales_lead and not task.sales_lead.is_deleted:
-            append_followup_history(task.sales_lead, completion_history)
-        if task.pipeline and not task.pipeline.is_deleted:
-            append_followup_history(task.pipeline, completion_history)
+        append_task_completion_history(task, completion_notes)
         log_activity(
             current_user, 'Task - Completed', 'task', task.id,
             task.content[:200], f'Completed task with feedback: {completion_notes}',
@@ -3070,11 +3117,7 @@ def toggle_task_status(task_id):
         completion_notes = (data.get('completion_notes') or '').strip()
         if new_status == 'Completed':
             complete_task(task, completion_notes, current_user.id)
-            completion_history = f'Task completed: {task.content}; Feedback: {completion_notes}'
-            if task.sales_lead and not task.sales_lead.is_deleted:
-                append_followup_history(task.sales_lead, completion_history)
-            if task.pipeline and not task.pipeline.is_deleted:
-                append_followup_history(task.pipeline, completion_history)
+            append_task_completion_history(task, completion_notes)
             action = 'Task - Completed'
         elif task.status == 'Completed' and new_status in ('In Progress', 'Overdue'):
             reopen_task(task)

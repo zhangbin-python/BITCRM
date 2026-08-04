@@ -146,8 +146,8 @@
             <div class="table-wrap"><table>
                 <thead><tr><th>Type</th><th>Use it when</th><th>Time and completion rule</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>Customer Visit</strong></td><td>The salesperson leaves the office to visit the customer's office, project location, event location, or another external site.</td><td>Enter start and end date/time. After the visit ends, enter feedback in Sales Activities.</td></tr>
-                    <tr><td><strong>DC Site Visit</strong></td><td>The customer comes to our Data Center for a tour, technical discussion, security review, or facility inspection.</td><td>Enter the reception schedule, Data Center address, visitors/contacts, purpose, and expected result. Complete feedback in Sales Activities.</td></tr>
+                    <tr><td><strong>Customer Visit</strong></td><td>The salesperson leaves the office to visit the customer's office, project location, event location, or another external site.</td><td>Enter start and end date/time. Complete it either in Sales Activities or by entering required Completion Notes in the linked Task; status and feedback synchronize both ways.</td></tr>
+                    <tr><td><strong>DC Site Visit</strong></td><td>The customer comes to our Data Center for a tour, technical discussion, security review, or facility inspection.</td><td>Enter the reception schedule, Data Center address, visitors/contacts, purpose, and expected result. Complete it from Sales Activities or the linked Task; feedback synchronizes automatically.</td></tr>
                     <tr><td><strong>Remote Engagement</strong></td><td>Email, phone, online meeting, instant message, or another customer interaction that does not require a physical visit.</td><td>Use Activity Date. Completed communication can be saved as Follow-up; future action becomes a linked Task through Next Steps / To-do.</td></tr>
                 </tbody>
             </table></div>
@@ -158,8 +158,8 @@
                 <div class="step"><span class="step-number">1</span><div>Click <strong>Add Sales Activity</strong> and select one of the three activity types.</div></div>
                 <div class="step"><span class="step-number">2</span><div>Select Source Type. For Sales Leads or Pipeline, choose a permitted record from the search results instead of typing only a company name.</div></div>
                 <div class="step"><span class="step-number">3</span><div>Enter the schedule or Activity Date, contacts, purpose/project, expected result, and remarks.</div></div>
-                <div class="step"><span class="step-number">4</span><div>For Remote Engagement, enter completed Follow-up Notes, future Next Steps / To-do, or both. A To-do requires a due date.</div></div>
-                <div class="step"><span class="step-number">5</span><div>Save and verify the Activity List. Visit activities and Remote To-dos create linked Tasks automatically.</div></div>
+                <div class="step"><span class="step-number">4</span><div>You can also create activities from Add Follow-up in Sales Leads or Pipeline. Follow-up Notes means completed activity; Next Steps / To-do means planned activity. Select each type independently, and they may differ.</div></div>
+                <div class="step"><span class="step-number">5</span><div>A completed Follow-up creates no Task. A new Next Step creates a Scheduled Sales Activity and linked Task. Remote Engagement uses dates; Visits use start/end times, and the Task due date uses the Visit end date.</div></div>
             </div>
 
             <h3>5.3 Status and reminder logic</h3>
@@ -190,8 +190,8 @@
             <h3>5.5 Edit, complete, cancel, and archive</h3>
             <ul>
                 <li>Open activities can be edited or rescheduled when the customer changes the time. The linked Task date, Owner, company, and content are synchronized.</li>
-                <li>Complete a visit from Sales Activities and enter meaningful feedback. Do not complete its linked Task directly in Tasks.</li>
-                <li>Complete a Remote To-do from Tasks with mandatory Completion Notes; the Sales Activity updates automatically.</li>
+                <li>Customer Visit and DC Site Visit can be completed in Tasks with mandatory Completion Notes, synchronizing the linked Sales Activity status, feedback, completion time, and completing user. A Visit may also be completed in Sales Activities to synchronize the Task.</li>
+                <li>Complete a Remote To-do in Tasks with mandatory Completion Notes; its Sales Activity updates automatically. “Open Sales Activity” is a detail-view shortcut, not a required path for completing a Visit.</li>
                 <li>Cancel keeps the record and reason. Delete archives the activity and its linked Task from normal views.</li>
                 <li>For Sales Leads and Pipeline sources, plans and feedback are appended to Follow-up History, including the linked Lead/Pipeline where applicable.</li>
             </ul>
@@ -218,10 +218,11 @@
                 <tbody>
                     <tr><td>Manual Task</td><td>Manage directly in Tasks.</td></tr>
                     <tr><td>Remote Engagement — Next Steps / To-do</td><td>Complete in Tasks with Completion Notes; the Sales Activity is synchronized.</td></tr>
-                    <tr><td>Customer Visit or DC Site Visit</td><td>Enter visit feedback in Sales Activities; the linked Task is completed automatically.</td></tr>
+                    <tr><td>Customer Visit or DC Site Visit</td><td>Complete directly in Tasks with required Completion Notes and synchronize the Sales Activity, or enter feedback in Sales Activities and synchronize the Task.</td></tr>
                 </tbody>
             </table></div>
-            <div class="warning-box">A Task linked to a Sales Activity cannot be independently edited or deleted in a way that breaks the activity record. Return to Sales Activities for rescheduling, cancellation, or visit feedback.</div>
+            <div class="warning-box">A Task linked to a Sales Activity cannot be independently edited or deleted in a way that breaks the activity record. Completion is available from Tasks or Sales Activities; use Sales Activities for rescheduling, activity-detail changes, or cancellation.</div>
+            <div class="info-box"><strong>Historical-data compatibility:</strong> old Follow-up entries and Tasks created before rollout without a type or Sales Activity link remain unchanged. The system does not guess, backfill, or force them into Sales Activities. Only newly saved data with an explicit type uses the synchronization workflow.</div>
         </section>
 
         <section id="admin">

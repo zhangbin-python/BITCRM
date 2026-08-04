@@ -1445,3 +1445,99 @@ msgstr "位负责人已选择"
 #: templates/sales_activities/index.html
 msgid "Select one or more owners; changes apply automatically."
 msgstr "可勾选一个或多个负责人，选择后自动生效。"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Feedback will also complete the linked Sales Activity."
+msgstr "填写此反馈也会同步完成关联的销售活动。"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Address"
+msgstr "地址"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Activity Date"
+msgstr "活动日期"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Follow-up Notes records a completed Sales Activity. Next Steps / To-do creates a scheduled Sales Activity and a linked Task. Select each Activity Type independently."
+msgstr "Follow-up Notes 用于记录已完成的销售活动；Next Steps / To-do 用于创建计划中的销售活动和关联任务。两部分的活动类型需要分别选择。"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Completed Activity"
+msgstr "已完成活动"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "What already happened"
+msgstr "记录已经发生的情况"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Describe what was discussed and the result..."
+msgstr "说明沟通内容和实际结果……"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Follow-up Activity Type"
+msgstr "Follow-up 活动类型"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Select Activity Type"
+msgstr "请选择活动类型"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Required only when Follow-up Notes is filled."
+msgstr "填写 Follow-up Notes 时必须选择。"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Actual Start Date"
+msgstr "实际开始日期"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Actual Start Time"
+msgstr "实际开始时间"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Actual End Date"
+msgstr "实际结束日期"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Actual End Time"
+msgstr "实际结束时间"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Customer location or Data Center address"
+msgstr "客户地点或数据中心地址"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Planned Activity"
+msgstr "计划活动"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "What needs to happen next"
+msgstr "记录下一步需要完成的事项"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Next Step Activity Type"
+msgstr "Next Step 活动类型"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Required only when Next Steps / To-do is filled."
+msgstr "填写 Next Steps / To-do 时必须选择。"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Estimated Start Date"
+msgstr "预计开始日期"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Estimated Start Time"
+msgstr "预计开始时间"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Estimated End Date"
+msgstr "预计结束日期"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "Estimated End Time"
+msgstr "预计结束时间"
+
+#: templates/shared/_followup_activity_fields.html templates/tasks.html
+msgid "The linked Task due date will use the visit end date."
+msgstr "关联任务的到期日将使用 Visit 的结束日期。"

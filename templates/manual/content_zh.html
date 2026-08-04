@@ -87,8 +87,8 @@
             <ul>
                 <li>填写公司、联系人、Lead Source、Lead Status、Requirements 和 Owner。</li>
                 <li>少量字段变化可用 Quick Edit；多个关联字段需要一起检查时使用完整编辑页面。</li>
-                <li>已经发生的电话、邮件或会议结果写入 Follow-up Notes。</li>
-                <li>未来要完成的事情写入 Next Steps / To-do 并填写到期日，系统会同步创建 Remote Engagement 和 Task。</li>
+                <li>已经发生的活动写入 Follow-up Notes，并单独选择 Customer Visit、DC Site Visit 或 Remote Engagement。Visit 需要填写实际开始和结束时间，Remote Engagement 使用 Activity Date。</li>
+                <li>未来要完成的事情写入 Next Steps / To-do，并再次独立选择活动类型（可以与 Follow-up 不同）。Remote Engagement 填到期日；Visit 填预计开始和结束时间，系统按结束日期创建关联 Task。</li>
                 <li>Lead 更新为 <strong>Qualified</strong> 后，系统会按规则创建或关联对应的 Pipeline。</li>
             </ul>
 
@@ -132,7 +132,7 @@
                 <li>可按 Company、Signing Quarter、Activation Quarter、Stage、Level、Owner 筛选。</li>
                 <li>需要检查 Deal Lost 或通常隐藏的历史阶段时使用 Show All。</li>
                 <li>在 Dashboard Kanban 拖动卡片会改变业务阶段，操作前应先确认真实客户情况。</li>
-                <li>已完成沟通写 Follow-up；未来行动写 Next Steps / To-do。</li>
+                <li>已完成活动写 Follow-up，未来行动写 Next Steps / To-do；两部分分别选择活动类型，可以一项是 Visit、另一项是 Remote Engagement。</li>
                 <li>日期、金额、概率或卡点发生变化时及时更新，保证 Dashboard 预测有参考价值。</li>
                 <li>可使用 Import、Export、排序和 Column Settings 进行批量工作和检查。</li>
             </ul>
@@ -146,8 +146,8 @@
             <div class="table-wrap"><table>
                 <thead><tr><th>类型</th><th>什么情况下使用</th><th>时间与完成规则</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>Customer Visit<br>客户拜访</strong></td><td>销售人员离开办公室，到客户办公室、项目现场、活动地点或其他外部地点拜访。</td><td>填写开始和结束日期时间；拜访结束后在 Sales Activities 中填写反馈。</td></tr>
-                    <tr><td><strong>DC Site Visit<br>数据中心参观</strong></td><td>客户来到我们的 Data Center，进行机房参观、技术交流、安全评估或设施检查。</td><td>填写接待时间、Data Center 地址、来访人员、目的和预期结果；在 Sales Activities 中完成反馈。</td></tr>
+                    <tr><td><strong>Customer Visit<br>客户拜访</strong></td><td>销售人员离开办公室，到客户办公室、项目现场、活动地点或其他外部地点拜访。</td><td>填写开始和结束日期时间；可在 Sales Activities 填写反馈，也可在关联 Task 中填写必填 Completion Notes 完成，两边状态和反馈自动同步。</td></tr>
+                    <tr><td><strong>DC Site Visit<br>数据中心参观</strong></td><td>客户来到我们的 Data Center，进行机房参观、技术交流、安全评估或设施检查。</td><td>填写接待时间、Data Center 地址、来访人员、目的和预期结果；可从 Sales Activities 或关联 Task 完成，反馈自动同步。</td></tr>
                     <tr><td><strong>Remote Engagement<br>远程沟通</strong></td><td>邮件、电话、线上会议、即时通讯，以及不需要线下见面的其他客户沟通。</td><td>使用 Activity Date；已完成沟通可写 Follow-up，未来行动通过 Next Steps / To-do 生成关联 Task。</td></tr>
                 </tbody>
             </table></div>
@@ -158,8 +158,8 @@
                 <div class="step"><span class="step-number">1</span><div>点击 <strong>Add Sales Activity</strong>，选择三种活动类型之一。</div></div>
                 <div class="step"><span class="step-number">2</span><div>选择 Source Type。来源为 Sales Leads 或 Pipeline 时，必须从有权限的搜索结果中选择记录，不能只手工输入公司名。</div></div>
                 <div class="step"><span class="step-number">3</span><div>填写活动日期或开始/结束时间、联系人、Purpose / Project、Expected Result 和 Remarks。</div></div>
-                <div class="step"><span class="step-number">4</span><div>Remote Engagement 可填写已完成的 Follow-up Notes、未来的 Next Steps / To-do，或两者同时填写；To-do 必须有到期日。</div></div>
-                <div class="step"><span class="step-number">5</span><div>保存后检查 Activity List。两种 Visit 和 Remote To-do 都会自动创建关联 Task。</div></div>
+                <div class="step"><span class="step-number">4</span><div>也可从 Sales Leads 或 Pipeline 的 Add Follow-up 新建活动：Follow-up Notes 表示已经完成的活动，Next Steps / To-do 表示计划活动；两者分别选择类型，可以不同。</div></div>
+                <div class="step"><span class="step-number">5</span><div>已完成 Follow-up 不创建 Task；新的 Next Steps / To-do 会创建 Scheduled Sales Activity 和关联 Task。Remote 类型填写日期，Visit 类型填写开始/结束时间，Task 到期日使用 Visit 结束日期。</div></div>
             </div>
 
             <h3>5.3 状态和提醒逻辑</h3>
@@ -190,8 +190,8 @@
             <h3>5.5 修改、完成、取消和归档</h3>
             <ul>
                 <li>客户更改时间时，可对未完成活动使用 Edit / Reschedule；关联 Task 的日期、Owner、公司和内容会同步更新。</li>
-                <li>Visit 必须回到 Sales Activities 填写有意义的反馈，不能只在 Tasks 中勾选完成。</li>
-                <li>Remote To-do 在 Tasks 中填写必填的 Completion Notes 后完成，Sales Activity 会自动同步。</li>
+                <li>Customer Visit 和 DC Site Visit 可在 Tasks 中填写必填的 Completion Notes 后完成，关联 Sales Activity 的状态、反馈、完成时间和完成人会自动同步；也可在 Sales Activities 中填写 Visit 反馈并同步完成 Task。</li>
+                <li>Remote To-do 在 Tasks 中填写必填 Completion Notes 后完成，Sales Activity 自动同步。“打开 Sales Activity”用于查看完整活动信息，不是完成 Visit 的必经入口。</li>
                 <li>Cancel 会保留活动和取消原因；Delete 会将活动及关联 Task 从正常列表归档。</li>
                 <li>来源为 Sales Leads 或 Pipeline 时，计划和反馈会写入 Follow-up History，并按关联关系同步到对应 Lead / Pipeline。</li>
             </ul>
@@ -218,10 +218,11 @@
                 <tbody>
                     <tr><td>手工 Task</td><td>直接在 Tasks 中管理。</td></tr>
                     <tr><td>Remote Engagement — Next Steps / To-do</td><td>在 Tasks 中填写 Completion Notes 完成，Sales Activity 自动同步。</td></tr>
-                    <tr><td>Customer Visit 或 DC Site Visit</td><td>在 Sales Activities 中填写 Visit 反馈，关联 Task 自动完成。</td></tr>
+                    <tr><td>Customer Visit 或 DC Site Visit</td><td>可直接在 Tasks 中填写必填 Completion Notes 完成，Sales Activity 自动同步；也可在 Sales Activities 中填写反馈并同步完成 Task。</td></tr>
                 </tbody>
             </table></div>
-            <div class="warning-box">与 Sales Activity 关联的 Task 不能被单独修改或删除到破坏关联关系。改期、取消或填写 Visit 反馈时，请回到 Sales Activities 操作。</div>
+            <div class="warning-box">与 Sales Activity 关联的 Task 不能被单独修改或删除到破坏关联关系。完成可以从 Tasks 或 Sales Activities 操作；改期、修改活动资料或取消时，请回到 Sales Activities。</div>
+            <div class="info-box"><strong>历史数据兼容：</strong>上线前没有活动类型或 Sales Activity 关联的旧 Follow-up / Task 保持原样，不会被猜测、回填或强制显示到 Sales Activities。只有新保存且明确选择类型的数据进入同步逻辑。</div>
         </section>
 
         <section id="admin">

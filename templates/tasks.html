@@ -343,10 +343,13 @@
                                 <span class="task-content" data-bs-toggle="tooltip" data-bs-title="{{ task.content }}">
                                     {{ task.content }}
                                 </span>
+                                {% if task.sales_activity %}
+                                <span class="badge rounded-pill mt-1 {% if task.sales_activity.activity_type == 'Customer Visit' %}bg-primary{% elif task.sales_activity.activity_type == 'DC Site Visit' %}bg-info text-dark{% else %}bg-dark{% endif %}">{{ _(task.sales_activity.activity_type) }}</span>
+                                {% endif %}
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    {% if not task.sales_activity or not task.sales_activity.requires_activity_feedback %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
                                     {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
@@ -403,10 +406,13 @@
                                 <span class="task-content" data-bs-toggle="tooltip" data-bs-title="{{ task.content }}">
                                     {{ task.content }}
                                 </span>
+                                {% if task.sales_activity %}
+                                <span class="badge rounded-pill mt-1 {% if task.sales_activity.activity_type == 'Customer Visit' %}bg-primary{% elif task.sales_activity.activity_type == 'DC Site Visit' %}bg-info text-dark{% else %}bg-dark{% endif %}">{{ _(task.sales_activity.activity_type) }}</span>
+                                {% endif %}
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    {% if not task.sales_activity or not task.sales_activity.requires_activity_feedback %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
                                     {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
@@ -469,6 +475,9 @@
                                 <span class="task-content" data-bs-toggle="tooltip" data-bs-title="{{ task.content }}">
                                     {{ task.content }}
                                 </span>
+                                {% if task.sales_activity %}
+                                <span class="badge rounded-pill mt-1 {% if task.sales_activity.activity_type == 'Customer Visit' %}bg-primary{% elif task.sales_activity.activity_type == 'DC Site Visit' %}bg-info text-dark{% else %}bg-dark{% endif %}">{{ _(task.sales_activity.activity_type) }}</span>
+                                {% endif %}
                             </td>
                             <td class="text-start align-middle">
                                 <div class="small text-wrap"><strong>{{ _('Feedback') }}:</strong> {{ task.completion_notes or '-' }}</div>
@@ -621,7 +630,8 @@
             <form action="{{ url_for('tasks.complete', task_id=task.id) }}" method="POST">
                 <div class="modal-header"><h5 class="modal-title">{{ _('Complete Task') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <p class="small text-muted">{{ task.content }}</p>
+                    <p class="small text-muted mb-2">{{ task.content }}</p>
+                    {% if task.sales_activity %}<div class="mb-3"><span class="badge {% if task.sales_activity.activity_type == 'Customer Visit' %}bg-primary{% elif task.sales_activity.activity_type == 'DC Site Visit' %}bg-info text-dark{% else %}bg-dark{% endif %}">{{ _(task.sales_activity.activity_type) }}</span><span class="small text-muted ms-2">{{ _('Feedback will also complete the linked Sales Activity.') }}</span></div>{% endif %}
                     <label class="form-label">{{ _('Completion Notes') }} *</label>
                     <textarea name="completion_notes" class="form-control" rows="5" required placeholder="{{ _('Enter outcome, customer feedback, or completion details') }}"></textarea>
                 </div>

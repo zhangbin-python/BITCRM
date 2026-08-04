@@ -829,7 +829,7 @@ class SalesActivity(db.Model):
 
     @property
     def requires_activity_feedback(self):
-        """Scheduled visits must be completed from Sales Activities, not Tasks."""
+        """Return whether the activity requires visit feedback when completed."""
         return self.is_scheduled_visit
 
     @property

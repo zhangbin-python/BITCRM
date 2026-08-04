@@ -993,6 +993,7 @@
     });
 </script>
 
+<script src="{{ url_for('static', filename='js/followup_activity_form.js') }}"></script>
 <!-- ============================================================================
      FOLLOW-UP MODAL JAVASCRIPT
      ============================================================================ -->
@@ -1020,6 +1021,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(r => r.text())
             .then(html => {
                 content.innerHTML = html;
+                window.initializeFollowupActivityForms(content);
             })
             .catch(err => {
                 content.innerHTML = '<div class="alert alert-danger">{{ _('Error loading data') }}</div>';
@@ -1083,6 +1085,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(r => r.text())
                 .then(html => {
                     content.innerHTML = html;
+                    window.initializeFollowupActivityForms(content);
                     const bsModal = new bootstrap.Modal(modal);
                     bsModal.show();
                 })

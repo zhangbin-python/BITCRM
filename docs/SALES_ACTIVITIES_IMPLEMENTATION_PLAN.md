@@ -122,72 +122,65 @@ These sources may use a manually entered Company. Existing Customer and Event ma
 
 ## 6. Scheduled Visits: Customer Visit and DC Site Visit
 
-Both scheduled visit types will support:
+Both scheduled visit types support:
 
 - `Customer Visit`: our salesperson visits the customer office, project site, event site, or another external location.
 - `DC Site Visit`: the customer visits our Data Center for a tour, technical discussion, security review, or facility inspection.
 - Source type and linked CRM record where applicable.
-- Company.
-- Visit date.
-- Estimated start and end time.
-- Repeatable contacts with name, position, and contact information.
-- Detailed address.
-- Purpose / Project.
-- Expected Result.
-- Remarks.
+- Company, start/end date and time, repeatable contacts, detailed address, purpose/project, expected result, and remarks.
 
-Creating a Customer Visit or DC Site Visit will create a `Scheduled` Sales Activity and a linked Task. Before the visit ends it remains `Scheduled`; immediately after the end time it displays `Follow-up Required`, and only becomes `Overdue` if feedback is still missing 24 hours after the estimated end time. The linked Task follows the same 24-hour grace period. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
+A planned Customer Visit or DC Site Visit creates one `Scheduled` Sales Activity and one linked Task. The Task due date uses the visit end date. Before the visit ends the activity remains `Scheduled`; immediately after the end time it displays `Follow-up Required`, and it becomes `Overdue` only if feedback is still missing 24 hours after the estimated end time. The linked Task follows the same grace-period rule.
 
-Open activities can be edited or rescheduled. Time, owner, contacts, address, activity details, and the linked Task deadline are kept synchronized. Completed and cancelled records remain immutable history. Cancelling an activity retains the record, cancellation reason, user, and time, and marks its linked Task `Cancelled`.
+Open activities can be edited or rescheduled. Time, owner, contacts, address, activity details, and the linked Task deadline remain synchronized. Completed and cancelled records remain immutable history. Cancelling an activity retains the record, reason, user, and time and cancels its linked Task.
 
-Submitting the activity Follow-up will save the feedback, mark the activity completed, complete the linked Task, save Completion Notes, and synchronize the relevant Lead/Pipeline Follow-up History when applicable.
+Visit completion supports both operational entry points:
 
-## 7. Remote Engagement Activity Rules
+- Enter feedback in Sales Activities to complete the Activity and linked Task.
+- Enter mandatory Completion Notes in Tasks to complete the Task and linked Activity.
 
-Remote Engagement activities are created from Sales Lead/Pipeline Follow-up History or directly from the Sales Activities form. `Follow-up Notes` and `Next Steps / To-do` are separate activities.
+In either path, feedback, status, completion time, and completing user synchronize. The Tasks page displays the Activity Type and may offer an `Open Sales Activity` detail shortcut, but users are not required to leave Tasks to complete a Visit.
 
-### Follow-up Notes only
+## 7. Typed Follow-up and Next-Step Rules
 
-- Create one `Remote Engagement` activity with subtype `Follow-up`.
-- Mark it `Completed` immediately.
-- Do not create a pending Task.
-- Synchronize the relevant Sales Lead and Pipeline Follow-up History.
+Sales Lead and Pipeline `Add Follow-up` treat the two input areas independently:
 
-### Next Steps / To-do only
+### Follow-up Notes (completed activity)
 
-- Create one separate `Remote Engagement` activity with subtype `Next Steps / To-do`.
-- Create a linked Task.
-- Mark the stored activity `Scheduled`.
-- Display it as `Scheduled` before its due date, `Follow-up Required` with `Due Today` on the due date, and `Follow-up Required` with `Overdue` after the due date.
-- The activity becomes `Completed` only when the linked Task is completed with required Completion Notes.
+- Follow-up Activity Type is required when notes are entered.
+- The user independently selects `Customer Visit`, `DC Site Visit`, or `Remote Engagement`.
+- A Visit requires actual start and end date/time; Remote Engagement uses Activity Date.
+- Create one `Completed` Sales Activity with the notes saved as completion feedback.
+- Do not create a Task.
+
+### Next Steps / To-do (planned activity)
+
+- Next Step Activity Type is required when next-step text is entered and may differ from the Follow-up type.
+- Remote Engagement requires To-do Due Date.
+- Customer Visit and DC Site Visit require estimated start and end date/time.
+- Create one `Scheduled` Sales Activity and one linked Task.
+- For a Visit, the Task due date uses the visit end date; for Remote Engagement it uses To-do Due Date.
 
 ### Both fields
 
-Create two separate Remote Engagement activities: one completed Follow-up activity and one pending Next Steps / To-do activity linked to the Task.
+Create two separate activities: one completed Follow-up activity without a Task and one scheduled Next-Step activity with a linked Task. If a Lead and Pipeline are already associated, the new Activity and Task store both links and update both Follow-up Histories without creating duplicates.
 
-The new implementation will apply this rule only to newly created records. Existing Follow-up History will not be parsed or converted into historical Sales Activities.
+The synchronization logic applies only to newly saved records with an explicit activity type. Existing Follow-up History is never parsed, guessed, or backfilled, and legacy Tasks without a Sales Activity link continue to work unchanged.
 
-## 8. Sales Lead Follow-up
+## 8. Direct Sales Activities Entry
 
-Sales Leads will receive a Follow-up action using the existing Pipeline Follow-up vocabulary where applicable:
+The standalone Sales Activities form continues to support all three activity types. It is the primary location for full activity detail, rescheduling, cancellation, contacts, address, purpose/project, expected result, and remarks. Activity records created from Leads or Pipeline appear in the same Activity List and statistics, so reporting remains unified regardless of where the user entered the new activity.
 
-- Follow-up History.
-- Follow-up Notes.
-- Next Steps / To-do.
-- To-do Due Date.
+For Source Type `Sales Leads` or `Pipeline`, the selected CRM record is required and linked IDs are stored. When the Lead and Pipeline are already related, both links are retained. Historical records are not altered.
 
-The same two-activity Remote Engagement rule will be applied. If the Lead has a linked Pipeline, synchronization will update both records without creating duplicate activities or Tasks.
+## 9. Task Completion and Reopening
 
-## 9. Task Completion
-
-The current click-on-status completion behavior will be removed.
-
-- Status badges become display-only.
-- `In Progress` and `Overdue` tasks receive a `Complete` button.
-- Completion opens a dialog requiring `Completion Notes`.
-- Completed Tasks display Completion Notes, Completed At, and Completed By.
-- Reopening preserves the completion history and is logged.
-- Completing an activity-linked Task updates the linked Sales Activity status.
+- Status badges are display-only; open Tasks use the `Complete` action.
+- Completion always requires non-empty `Completion Notes`, including Customer Visit and DC Site Visit Tasks.
+- Completing an activity-linked Task synchronizes its Sales Activity status, completion notes, completion timestamp, and completing user.
+- The completion result is appended to every linked Lead/Pipeline Follow-up History once.
+- Completing a Visit from Sales Activities synchronizes the linked Task.
+- Reopening a completed Task reopens the linked Sales Activity and clears current completion metadata while preserving audit logging.
+- Legacy Tasks without `sales_activity_id` remain completable and are not forced into Sales Activities.
 
 ## 10. Requirements Validation during Qualified Conversion
 
