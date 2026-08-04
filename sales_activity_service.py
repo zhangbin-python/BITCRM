@@ -120,6 +120,27 @@ def _entity_context(source_type, sales_lead_id=None, pipeline_id=None, company=N
     return lead, pipeline, company
 
 
+def resolve_new_activity_owner_id(
+    source_type, *, lead=None, pipeline=None, requested_owner_id=None,
+    fallback_owner_id=None, allow_source_owner_override=False,
+):
+    """Resolve the owner for a newly created Sales Activity or linked Task.
+
+    CRM-backed activities inherit the current owner of their selected source.
+    The standalone Sales Activity form may explicitly allow an administrator
+    to override that default. Other sources may use a requested owner and
+    otherwise fall back to the user creating the record. Existing activities
+    are intentionally not rewritten when a Lead or Pipeline is reassigned.
+    """
+    if allow_source_owner_override and requested_owner_id:
+        return requested_owner_id
+    if source_type == 'Sales Leads' and lead and lead.owner_id:
+        return lead.owner_id
+    if source_type == 'Pipeline' and pipeline and pipeline.owner_id:
+        return pipeline.owner_id
+    return requested_owner_id or fallback_owner_id
+
+
 def create_activity_contacts(activity, contacts):
     """Create repeatable contact rows, retaining one blank row if none supplied."""
     normalized = []
@@ -163,7 +184,7 @@ def create_followup_activities(
     followup_activity_date=None, followup_start_at=None, followup_end_at=None,
     followup_address=None, todo_due_date=None, todo_start_at=None,
     todo_end_at=None, todo_address=None, purpose_project=None,
-    expected_result=None, remarks=None, contacts=None,
+    expected_result=None, remarks=None, contacts=None, actor_id=None,
 ):
     """Create typed Sales Activities from Follow-up Notes and Next Steps.
 
@@ -178,6 +199,12 @@ def create_followup_activities(
         raise ValueError('At least one of Follow-up Notes or Next Steps / To-do is required.')
 
     lead, pipeline, company = _entity_context(source_type, sales_lead_id, pipeline_id, company)
+    owner_id = resolve_new_activity_owner_id(
+        source_type, lead=lead, pipeline=pipeline,
+        requested_owner_id=owner_id, fallback_owner_id=owner_id,
+    )
+    if not owner_id:
+        raise ValueError('An owner is required for the Sales Activity.')
     created = []
 
     if followup_text:
@@ -210,7 +237,7 @@ def create_followup_activities(
             status=SalesActivity.STATUS_COMPLETED,
             owner_id=owner_id,
             completed_at=datetime.utcnow(),
-            completed_by_id=owner_id,
+            completed_by_id=actor_id or owner_id,
         )
         db.session.add(activity)
         db.session.flush()
@@ -273,7 +300,7 @@ def create_remote_engagement_activities(
     *, source_type, owner_id, sales_lead_id=None, pipeline_id=None,
     company=None, followup_text=None, todo_text=None, todo_due_date=None,
     activity_date=None, purpose_project=None, expected_result=None,
-    remarks=None, contacts=None,
+    remarks=None, contacts=None, actor_id=None,
 ):
     """Backward-compatible wrapper for Remote Engagement-only callers."""
     return create_followup_activities(
@@ -296,6 +323,7 @@ def create_remote_engagement_activities(
         expected_result=expected_result,
         remarks=remarks,
         contacts=contacts,
+        actor_id=actor_id,
     )
 
 

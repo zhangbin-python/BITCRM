@@ -555,12 +555,6 @@
                             {% endfor %}
                             <td style="min-width: 200px;">
                                 <div class="d-flex gap-2 align-items-center">
-                                    <a href="{{ url_for('pipeline.edit', pipeline_id=pipeline.id) }}" 
-                                       class="btn btn-sm btn-primary" 
-                                       title="{{ _('Edit') }}"
-                                       data-bs-toggle="tooltip">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
                                     <button type="button"
                                             class="btn btn-sm btn-success"
                                             title="{{ _('Follow-up') }}"
@@ -570,6 +564,12 @@
                                             data-company="{{ pipeline.company }}">
                                         <i class="bi bi-chat-dots"></i>
                                     </button>
+                                    <a href="{{ url_for('pipeline.edit', pipeline_id=pipeline.id) }}"
+                                       class="btn btn-sm btn-primary"
+                                       title="{{ _('Edit') }}"
+                                       data-bs-toggle="tooltip">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
                                     <button type="button" 
                                             class="btn btn-sm btn-danger" 
                                             title="{{ _('Delete') }}"

@@ -598,7 +598,14 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn(
             f'value="{owner_b.id}" checked', html
         )
-        self.assertNotIn('Owner Without Activity', html)
+        owner_filter_start = html.index('id="activityOwnerFilterButton"')
+        owner_filter_end = html.index('</form>', owner_filter_start)
+        owner_filter_html = html[owner_filter_start:owner_filter_end]
+        self.assertNotIn('Owner Without Activity', owner_filter_html)
+        self.assertIn('Owner Without Activity', html)  # Available to admins in Add Sales Activity.
+        self.assertIn('<select name="owner_id" id="activityOwner"', html)
+        self.assertIn('const canChooseActivityOwner = true;', html)
+        self.assertIn('activityOwner.disabled=!canChooseActivityOwner', html)
         self.assertIn('owner-filter-checkbox', html)
         self.assertIn('applyActivityFilterImmediately();', html)
         self.assertNotIn('window.setTimeout(applyActivityFilterImmediately', html)
@@ -800,6 +807,208 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn('Archived Company', archive.data_snapshot)
         page = self.client.get('/leads/')
         self.assertNotIn(b'Archived Company', page.data)
+
+    def test_lead_followup_inherits_owner_and_only_new_records_follow_reassignment(self):
+        jokie = User(username='Jokie', role='sales')
+        jokie.set_password('bitcrm')
+        alice = User(username='Alice', role='sales')
+        alice.set_password('bitcrm')
+        db.session.add_all([jokie, alice])
+        db.session.flush()
+        lead = SalesLead(
+            name='Owner Contact', company='Owner Lead Co', owner_id=jokie.id,
+            leads_status='Unqualified',
+        )
+        db.session.add(lead)
+        db.session.commit()
+
+        response = self.client.post(
+            f'/leads/{lead.id}/add-followup',
+            data={
+                'followup_text': 'Bruce recorded the completed customer discussion.',
+                'followup_activity_type': 'Remote Engagement',
+                'followup_activity_date': '2026-08-04',
+                'todo_text': 'Jokie should send the revised proposal.',
+                'todo_activity_type': 'Remote Engagement',
+                'todo_due_date': '2026-08-05',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()['success'])
+
+        first_activities = SalesActivity.query.order_by(SalesActivity.id).all()
+        self.assertEqual([activity.owner_id for activity in first_activities], [jokie.id, jokie.id])
+        self.assertEqual(first_activities[0].completed_by_id, self.admin_id)
+        first_task = Task.query.one()
+        self.assertEqual(first_task.owner_id, jokie.id)
+
+        lead.owner_id = alice.id
+        db.session.commit()
+        response = self.client.post(
+            f'/leads/{lead.id}/add-followup',
+            data={
+                'todo_text': 'Alice should arrange the next online meeting.',
+                'todo_activity_type': 'Remote Engagement',
+                'todo_due_date': '2026-08-06',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()['success'])
+
+        all_activities = SalesActivity.query.order_by(SalesActivity.id).all()
+        all_tasks = Task.query.order_by(Task.id).all()
+        self.assertEqual([activity.owner_id for activity in all_activities[:2]], [jokie.id, jokie.id])
+        self.assertEqual(all_tasks[0].owner_id, jokie.id)
+        self.assertEqual(all_activities[-1].owner_id, alice.id)
+        self.assertEqual(all_tasks[-1].owner_id, alice.id)
+
+    def test_pipeline_followup_inherits_pipeline_owner(self):
+        jokie = User(username='Jokie Pipeline', role='sales')
+        jokie.set_password('bitcrm')
+        db.session.add(jokie)
+        db.session.flush()
+        pipeline = Pipeline(
+            name='Pipeline Owner Contact', company='Pipeline Owner Co',
+            owner_id=jokie.id, stage='1) Prospecting',
+        )
+        db.session.add(pipeline)
+        db.session.commit()
+
+        response = self.client.post(
+            f'/pipeline/{pipeline.id}/add-followup',
+            data={
+                'todo_text': 'Prepare the pipeline solution workshop.',
+                'todo_activity_type': 'Remote Engagement',
+                'todo_due_date': '2026-08-06',
+                'stuckpoint_text': '',
+                'stage': pipeline.stage,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()['success'])
+        self.assertEqual(SalesActivity.query.one().owner_id, jokie.id)
+        self.assertEqual(Task.query.one().owner_id, jokie.id)
+
+    def test_sales_activity_add_defaults_to_crm_source_owner(self):
+        jokie = User(username='Jokie Direct', role='sales')
+        jokie.set_password('bitcrm')
+        db.session.add(jokie)
+        db.session.flush()
+        lead = SalesLead(
+            name='Direct Activity Contact', company='Direct Activity Co',
+            owner_id=jokie.id, leads_status='Unqualified',
+        )
+        db.session.add(lead)
+        db.session.commit()
+
+        response = self.client.post(
+            '/sales-activities/add',
+            data={
+                'activity_type': 'Customer Visit',
+                'source_type': 'Sales Leads',
+                'sales_lead_id': str(lead.id),
+                'company': lead.company,
+                'start_date': '2026-08-10',
+                'start_time': '10:00',
+                'end_date': '2026-08-10',
+                'end_time': '11:00',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        activity = SalesActivity.query.one()
+        task = Task.query.one()
+        self.assertEqual(activity.owner_id, jokie.id)
+        self.assertEqual(task.owner_id, jokie.id)
+
+        search_data = self.client.get(
+            '/sales-activities/source-search?source_type=Sales%20Leads&q=Direct%20Activity'
+        ).get_json()
+        item = next(item for item in search_data['items'] if item['id'] == lead.id)
+        self.assertEqual(item['owner_id'], jokie.id)
+        self.assertEqual(item['owner'], jokie.username)
+
+        alice = User(username='Alice Direct', role='sales')
+        alice.set_password('bitcrm')
+        db.session.add(alice)
+        db.session.commit()
+        override_response = self.client.post(
+            '/sales-activities/add',
+            data={
+                'activity_type': 'Customer Visit',
+                'source_type': 'Sales Leads',
+                'sales_lead_id': str(lead.id),
+                'company': lead.company,
+                'owner_id': str(alice.id),
+                'start_date': '2026-08-11',
+                'start_time': '10:00',
+                'end_date': '2026-08-11',
+                'end_time': '11:00',
+            },
+        )
+        self.assertEqual(override_response.status_code, 302)
+        overridden_activity = SalesActivity.query.order_by(SalesActivity.id.desc()).first()
+        self.assertEqual(overridden_activity.owner_id, alice.id)
+        self.assertEqual(overridden_activity.linked_task.owner_id, alice.id)
+
+    def test_deleting_sales_activity_archives_linked_task_but_keeps_followup_history(self):
+        lead = self._lead(company='Delete Link Co')
+        lead.follow_up = 'Follow-up, 2026-08-04 09:00: Historical customer discussion.'
+        activity = SalesActivity(
+            activity_type='Remote Engagement',
+            remote_engagement_subtype='Next Steps / To-do',
+            source_type='Sales Leads',
+            sales_lead_id=lead.id,
+            company=lead.company,
+            activity_date=date(2026, 8, 5),
+            followup_notes='Send the revised quotation.',
+            status='Scheduled',
+            owner_id=self.admin_id,
+        )
+        db.session.add(activity)
+        db.session.flush()
+        task = Task(
+            content='Send the revised quotation.',
+            due_date=date(2026, 8, 5),
+            owner_id=self.admin_id,
+            sales_lead_id=lead.id,
+            sales_activity_id=activity.id,
+            company=lead.company,
+            status='In Progress',
+        )
+        db.session.add(task)
+        db.session.commit()
+        original_history = lead.follow_up
+
+        response = self.client.post(f'/sales-activities/{activity.id}/delete')
+        self.assertEqual(response.status_code, 302)
+        db.session.refresh(activity)
+        db.session.refresh(task)
+        db.session.refresh(lead)
+        self.assertTrue(activity.is_deleted)
+        self.assertTrue(task.is_deleted)
+        self.assertEqual(lead.follow_up, original_history)
+        self.assertIsNotNone(DeletedRecord.query.filter_by(
+            entity_type='sales_activity', entity_id=activity.id,
+        ).one_or_none())
+        self.assertIsNotNone(DeletedRecord.query.filter_by(
+            entity_type='task', entity_id=task.id,
+        ).one_or_none())
+
+    def test_pipeline_actions_match_lead_order(self):
+        pipeline = Pipeline(
+            name='Action Order Contact', company='Action Order Co',
+            owner_id=self.admin_id, stage='1) Prospecting',
+        )
+        db.session.add(pipeline)
+        db.session.commit()
+
+        html = self.client.get('/pipeline/').get_data(as_text=True)
+        row_start = html.index('Action Order Co')
+        followup_position = html.index(f'data-pipeline-id="{pipeline.id}"', row_start)
+        edit_position = html.index(f'/pipeline/{pipeline.id}/edit', row_start)
+        delete_position = html.index(f'/pipeline/{pipeline.id}/delete', row_start)
+        self.assertLess(followup_position, edit_position)
+        self.assertLess(edit_position, delete_position)
 
     def test_legacy_sales_activity_terminology_is_migrated(self):
         lead = self._lead(company='Legacy Terminology Co')

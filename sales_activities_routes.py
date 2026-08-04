@@ -15,6 +15,7 @@ from sales_activity_service import (
     complete_activity,
     create_activity_contacts,
     create_remote_engagement_activities,
+    resolve_new_activity_owner_id,
     soft_delete,
 )
 from utils import calculate_pipeline_metrics, validate_date
@@ -286,13 +287,18 @@ def index():
         if current_user.is_admin()
         else []
     )
+    assignable_owners = (
+        User.query.filter_by(is_active=True).order_by(User.username).all()
+        if current_user.is_admin()
+        else [current_user]
+    )
     add_form_data = session.pop('sales_activity_form_data', {})
     reopen_add_modal = session.pop('sales_activity_reopen_form', False)
     return render_template(
         'sales_activities/index.html', activities=activities, pagination=pagination,
         pagination_query={key: values for key, values in request.args.to_dict(flat=False).items() if key != 'page'},
         stats=stats, owner_stats=owner_stats, source_owner_rows=source_owner_rows, source_totals=source_totals,
-        owners=owners, calendar_data=dict(calendar),
+        owners=owners, assignable_owners=assignable_owners, calendar_data=dict(calendar),
         selected_type=activity_type, start_date=start_date, end_date=end_date,
         selected_dates=[item.isoformat() for item in selected_dates], selected_owner_ids=owner_ids,
         source_options=SalesActivity.SOURCE_OPTIONS, calendar_month=calendar_month,
@@ -318,6 +324,7 @@ def source_search():
             results.append({
                 'id': lead.id, 'company': lead.company or lead.name, 'contact': lead.name,
                 'position': lead.position or '', 'contact_information': lead.email or lead.mobile_number or '',
+                'owner_id': lead.owner_id,
                 'owner': lead.owner.username if lead.owner else '', 'status': lead.leads_status,
             })
     elif source_type == 'Pipeline':
@@ -331,6 +338,7 @@ def source_search():
             results.append({
                 'id': pipeline.id, 'company': pipeline.company or pipeline.name, 'contact': pipeline.name,
                 'position': pipeline.position or '', 'contact_information': pipeline.email or pipeline.mobile_number or '',
+                'owner_id': pipeline.owner_id,
                 'owner': pipeline.owner.username if pipeline.owner else '', 'status': pipeline.stage,
             })
     elif source_type == 'Existing Customer':
@@ -379,8 +387,15 @@ def add():
             activity_date = validate_date(request.form.get('start_date'))
         if not activity_date:
             raise ValueError('Activity Date is required for Remote Engagement, or Estimated Start Date is required for a scheduled visit.')
-        owner_id = request.form.get('owner_id', type=int) if current_user.is_admin() else current_user.id
-        owner_id = owner_id or current_user.id
+        requested_owner_id = request.form.get('owner_id', type=int) if current_user.is_admin() else None
+        owner_id = resolve_new_activity_owner_id(
+            source_type, lead=lead, pipeline=pipeline,
+            requested_owner_id=requested_owner_id,
+            fallback_owner_id=current_user.id,
+            allow_source_owner_override=current_user.is_admin(),
+        )
+        if not db.session.get(User, owner_id):
+            raise ValueError('Please select a valid owner.')
         contacts = _contacts_from_form()
         purpose = request.form.get('purpose_project', '').strip()
         expected = request.form.get('expected_result', '').strip()
@@ -397,6 +412,7 @@ def add():
                 pipeline_id=pipeline_id, company=company, followup_text=followup_text,
                 todo_text=todo_text, todo_due_date=todo_due_date, activity_date=activity_date,
                 purpose_project=purpose, expected_result=expected, remarks=remarks, contacts=contacts,
+                actor_id=current_user.id,
             )
             for target in _sync_targets(lead, pipeline):
                 append_followup_history(target, followup_text, todo_text, todo_due_date)

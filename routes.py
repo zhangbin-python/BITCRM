@@ -1292,7 +1292,7 @@ def add_lead_followup(lead_id):
         )
 
         activities = create_followup_activities(
-            source_type='Sales Leads', owner_id=current_user.id,
+            source_type='Sales Leads', owner_id=current_user.id, actor_id=current_user.id,
             sales_lead_id=lead.id, company=lead.company or lead.name,
             followup_text=followup_text, todo_text=todo_text,
             followup_activity_type=followup_type, todo_activity_type=todo_type,
@@ -2075,7 +2075,7 @@ def add_followup(pipeline_id):
         activities = []
         if followup_text or todo_text:
             activities = create_followup_activities(
-                source_type='Pipeline', owner_id=current_user.id,
+                source_type='Pipeline', owner_id=current_user.id, actor_id=current_user.id,
                 pipeline_id=pipeline.id, company=pipeline.company or pipeline.name,
                 followup_text=followup_text, todo_text=todo_text,
                 followup_activity_type=followup_type, todo_activity_type=todo_type,
