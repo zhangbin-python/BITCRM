@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ g.lang if g.lang else 'en' }}">
 <head>
     <meta charset="UTF-8">
@@ -36,8 +36,64 @@
         
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            background: linear-gradient(180deg, #12182b 0%, #17233d 100%);
+            box-shadow: 2px 0 16px rgba(15,23,42,0.12);
+        }
+
+        .sidebar-brand {
+            margin: 0 .75rem .9rem;
+            padding: .1rem 0 .9rem;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+
+        .sidebar-brand-surface {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: .7rem;
+            height: 48px;
+            padding: .25rem .35rem;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 9px;
+            transition: background-color .2s ease;
+        }
+
+        .sidebar-brand-surface:hover {
+            color: #fff;
+            background: rgba(255,255,255,.055);
+        }
+
+        .sidebar-brand-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 38px;
+            width: 38px;
+            height: 38px;
+            overflow: hidden;
+            background: linear-gradient(145deg, #fff7ed 0%, #fee2e2 100%);
+            border: 1px solid rgba(255,255,255,.22);
+            border-radius: 10px;
+            box-shadow: 0 5px 14px rgba(2,6,23,.2);
+        }
+
+        .sidebar-brand-logo {
+            display: block;
+            width: auto;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .sidebar-brand-title {
+            overflow: hidden;
+            color: #f8fafc;
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: .09em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .sidebar .nav-link {
@@ -99,9 +155,18 @@
             border: none;
         }
         
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        .app-topbar {
+            min-height: 44px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .app-topbar .container-fluid {
+            min-height: 44px;
+            justify-content: flex-end;
+            padding-inline: 0 !important;
         }
         
         .language-switcher {
@@ -115,11 +180,27 @@
             background-color: #f8f9fa;
         }
 
-        .topbar-brand {
-            display: flex;
+        .topbar-mobile-brand {
+            display: inline-flex;
             align-items: center;
-            gap: 0.75rem;
+            flex: 0 0 auto;
             min-width: 0;
+            text-decoration: none;
+        }
+
+        .topbar-mobile-brand img {
+            display: block;
+            width: auto;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .topbar-mobile-brand span {
+            margin-left: .4rem;
+            color: #1e293b;
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .055em;
         }
 
         .topbar-actions {
@@ -127,8 +208,13 @@
             align-items: center;
             flex-wrap: wrap;
             justify-content: flex-end;
-            gap: 0.75rem;
+            gap: .2rem;
             margin-left: auto;
+            padding: .3rem;
+            background: rgba(255,255,255,.92);
+            border: 1px solid #e3e8ef;
+            border-radius: 11px;
+            box-shadow: 0 4px 14px rgba(15,23,42,.06);
         }
 
         .topbar-actions > *,
@@ -138,7 +224,25 @@
 
         .topbar-actions .btn,
         .topbar-actions .dropdown-toggle {
+            min-height: 36px;
+            padding: .4rem .7rem;
             white-space: nowrap;
+            color: #475569;
+            background: transparent;
+            border-color: transparent;
+            border-radius: 8px;
+            box-shadow: none;
+        }
+
+        .topbar-actions .btn:hover,
+        .topbar-actions .btn:focus,
+        .topbar-actions .dropdown-toggle:hover,
+        .topbar-actions .dropdown-toggle:focus,
+        .topbar-actions .dropdown-toggle.show {
+            color: #1e293b;
+            background: #f1f5f9;
+            border-color: transparent;
+            box-shadow: none;
         }
 
         .mobile-icon-label {
@@ -346,20 +450,23 @@
                 width: 100% !important;
             }
 
-            .navbar {
+            .app-topbar {
+                min-height: 48px;
                 margin-bottom: 15px !important;
-                padding: 10px 15px !important;
+                padding: 0 !important;
             }
 
-            .navbar .container-fluid {
+            .app-topbar .container-fluid {
                 display: flex;
                 align-items: center;
-                gap: 0.75rem;
-                flex-wrap: wrap;
+                justify-content: flex-start;
+                gap: 0.55rem;
+                flex-wrap: nowrap;
+                padding-inline: 0 !important;
             }
 
-            .topbar-brand {
-                flex: 0 1 auto;
+            .topbar-mobile-brand {
+                flex: 0 0 auto;
                 min-width: 0;
             }
 
@@ -368,9 +475,11 @@
                 flex: 1 1 auto;
                 flex-wrap: nowrap;
                 justify-content: flex-end;
-                gap: 0.35rem;
+                gap: .1rem;
                 margin-left: auto;
                 min-width: 0;
+                padding: .2rem;
+                border-radius: 10px;
             }
 
             .topbar-actions > *,
@@ -387,7 +496,8 @@
                 justify-content: center;
             }
 
-            .mobile-icon-label {
+            .mobile-icon-label,
+            .topbar-username {
                 display: none;
             }
 
@@ -499,13 +609,15 @@
             <!-- Sidebar -->
             <nav class="col-md-3 col-lg-2 d-md-block sidebar" id="sidebarMenu">
                 <div class="position-sticky pt-3">
-                    <div class="text-center mb-4 px-3">
-                        <!-- Logo using actual image -->
-                        <img src="{{ url_for('static', filename='logo.png') }}" 
-                             alt="BITCRM Logo"
-                             class="mb-2"
-                             style="height: 40px; width: auto; max-width: 100px; object-fit: contain;">
-                        <small class="text-white-50">{{ _('Customer Relationship Management') }}</small>
+                    <div class="sidebar-brand">
+                        <a class="sidebar-brand-surface" href="{{ url_for('main.dashboard') }}" aria-label="BITCRM dashboard">
+                            <span class="sidebar-brand-mark" aria-hidden="true">
+                                <img src="{{ url_for('static', filename='logo-mark.png') }}"
+                                     alt=""
+                                     class="sidebar-brand-logo">
+                            </span>
+                            <span class="sidebar-brand-title">BITCRM</span>
+                        </a>
                     </div>
 
                     <ul class="nav flex-column">
@@ -576,23 +688,17 @@
             <main class="{% if current_user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10 px-md-4{% endif %} main-content">
                 <!-- Top Navigation -->
                 {% if current_user.is_authenticated %}
-                <nav class="navbar navbar-expand-lg navbar-light mb-4 rounded">
+                <nav class="navbar navbar-expand-lg navbar-light mb-4 app-topbar">
                     <div class="container-fluid">
                         <!-- Hamburger Button (Mobile) -->
                         <button class="hamburger-btn me-3" type="button" onclick="toggleSidebar()" aria-label="Toggle sidebar">
                             <i class="bi bi-list"></i>
                         </button>
 
-                        <div class="topbar-brand">
-                            <img src="{{ url_for('static', filename='logo.png') }}" 
-                                 alt="BITCRM Logo"
-                                 class="d-none d-lg-block"
-                                 style="height: 40px; width: auto; max-width: 100px; object-fit: contain;">
-                            <img src="{{ url_for('static', filename='logo.png') }}" 
-                                 alt="BITCRM Logo"
-                                 class="d-lg-none"
-                                 style="height: 32px; width: auto; max-width: 80px; object-fit: contain;">
-                        </div>
+                        <a class="topbar-mobile-brand d-md-none" href="{{ url_for('main.dashboard') }}" aria-label="BITCRM">
+                            <img src="{{ url_for('static', filename='logo-mark.png') }}" alt="">
+                            <span>BITCRM</span>
+                        </a>
 
                         <div class="topbar-actions">
                             <!-- Manual Button -->
@@ -609,7 +715,7 @@
                                 <a class="btn btn-outline-secondary dropdown-toggle language-switcher"
                                    href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-globe"></i>
-                                    <span class="mobile-icon-label">{% if g.lang == 'zh' %}涓枃{% else %}EN{% endif %}</span>
+                                    <span class="mobile-icon-label">{% if g.lang == 'zh' %}中文{% else %}EN{% endif %}</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
@@ -630,7 +736,7 @@
                                 <a class="btn btn-outline-primary dropdown-toggle" href="#" role="button"
                                    data-bs-toggle="dropdown">
                                     <i class="bi bi-person-circle"></i>
-                                    {{ current_user.username }}
+                                    <span class="topbar-username">{{ current_user.username }}</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><span class="dropdown-item-text">

@@ -49,6 +49,23 @@ class AdminUsersTooltipTests(unittest.TestCase):
         self.ctx.pop()
         self.temp_dir.cleanup()
 
+    def test_authenticated_shell_uses_sidebar_brand_and_mobile_only_topbar_logo(self):
+        response = self.client.get('/dashboard')
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+
+        self.assertIn('class="sidebar-brand"', html)
+        self.assertIn('class="sidebar-brand-surface"', html)
+        self.assertIn('class="sidebar-brand-mark"', html)
+        self.assertIn('class="sidebar-brand-logo"', html)
+        self.assertIn('class="sidebar-brand-title"', html)
+        self.assertIn('logo-mark.png', html)
+        self.assertNotIn('sidebar-brand-name', html)
+        self.assertNotIn('sidebar-brand-subtitle', html)
+        self.assertIn('class="navbar navbar-expand-lg navbar-light mb-4 app-topbar"', html)
+        self.assertIn('class="topbar-mobile-brand d-md-none"', html)
+        self.assertNotIn('class="d-none d-lg-block"', html)
+
     def test_admin_user_actions_have_hover_tooltips(self):
         response = self.client.get('/admin/users')
         self.assertEqual(response.status_code, 200)
