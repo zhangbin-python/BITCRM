@@ -12,6 +12,23 @@
 .sales-activity-table th:nth-child(5), .sales-activity-table td:nth-child(5), .sales-activity-table th:nth-child(7), .sales-activity-table td:nth-child(7), .sales-activity-table th:nth-child(8), .sales-activity-table td:nth-child(8), .sales-activity-table th:nth-child(9), .sales-activity-table td:nth-child(9), .sales-activity-table th:nth-child(10), .sales-activity-table td:nth-child(10), .sales-activity-table th:nth-child(11), .sales-activity-table td:nth-child(11) { width: 170px; }
 .sales-activity-table th:nth-child(6), .sales-activity-table td:nth-child(6) { width: 220px; }
 .sales-activity-table th:nth-child(15), .sales-activity-table td:nth-child(15) { width: 120px; }
+.activity-cell-clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    max-height: 5.4em;
+    overflow: hidden;
+    line-height: 1.35;
+}
+.activity-cell-has-overflow { cursor: help; }
+.activity-cell-tooltip .tooltip-inner {
+    width: max-content;
+    max-width: min(420px, calc(100vw - 2rem));
+    text-align: left;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
 .activity-schedule-date, .activity-schedule-time { display: block; white-space: nowrap; }
 .activity-schedule-date { line-height: 1.25; }
 .activity-schedule-time { margin-top: .12rem; color: #6c757d; font-size: .82rem; line-height: 1.25; }
@@ -403,6 +420,45 @@
 
 <script src="{{ url_for('static', filename='lib/flatpickr/flatpickr.min.js') }}"></script>
 <script>
+function initializeActivityCellClamps() {
+  const contentCells = document.querySelectorAll('.sales-activity-table tbody td:not(:last-child)');
+  contentCells.forEach(cell => {
+    let content = cell.querySelector(':scope > .activity-cell-clamp');
+    if (!content) {
+      content = document.createElement('div');
+      content.className = 'activity-cell-clamp';
+      while (cell.firstChild) content.appendChild(cell.firstChild);
+      cell.appendChild(content);
+    }
+  });
+
+  window.requestAnimationFrame(() => {
+    contentCells.forEach(cell => {
+      const content = cell.querySelector(':scope > .activity-cell-clamp');
+      const fullText = content.innerText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+        .join('\n');
+      if (!fullText || content.scrollHeight <= content.clientHeight + 1) return;
+
+      cell.classList.add('activity-cell-has-overflow');
+      cell.setAttribute('title', fullText);
+      cell.setAttribute('data-bs-title', fullText);
+      cell.setAttribute('aria-label', fullText);
+      if (window.bootstrap && bootstrap.Tooltip) {
+        bootstrap.Tooltip.getOrCreateInstance(cell, {
+          container: 'body',
+          customClass: 'activity-cell-tooltip',
+          placement: 'auto',
+          trigger: 'hover focus'
+        });
+      }
+    });
+  });
+}
+initializeActivityCellClamps();
+
 const calendarData = {{ calendar_data|tojson }};
 const selectedDates = new Set({{ selected_dates|tojson }});
 const todayIso = '{{ today_iso }}';

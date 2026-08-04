@@ -56,6 +56,16 @@ class SalesActivitiesTests(unittest.TestCase):
         db.session.commit()
         return lead
 
+    def test_activity_list_clamps_all_content_cells_to_four_lines_with_full_text_tooltips(self):
+        response = self.client.get('/sales-activities/')
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn('-webkit-line-clamp: 4;', html)
+        self.assertIn(".sales-activity-table tbody td:not(:last-child)", html)
+        self.assertIn("content.className = 'activity-cell-clamp';", html)
+        self.assertIn("customClass: 'activity-cell-tooltip'", html)
+        self.assertIn("cell.setAttribute('data-bs-title', fullText);", html)
+
     def test_followup_and_todo_create_two_independent_remote_engagement_activities(self):
         lead = self._lead()
         response = self.client.post(
