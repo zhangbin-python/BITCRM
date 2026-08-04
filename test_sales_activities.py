@@ -260,6 +260,155 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn(b'Paged Activity 01', second_page.data)
         self.assertNotIn(b'Paged Activity 25', second_page.data)
 
+    def test_owner_summary_uses_complete_mutually_exclusive_status_categories(self):
+        now = datetime.now()
+        activities = [
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                source_type='Other', company='Scheduled Summary Activity',
+                activity_date=(now + timedelta(days=2)).date(),
+                estimated_start_at=now + timedelta(days=2),
+                estimated_end_at=now + timedelta(days=2, hours=1),
+                status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                source_type='Other', company='Follow-up Summary Activity',
+                activity_date=(now - timedelta(hours=2)).date(),
+                estimated_start_at=now - timedelta(hours=3),
+                estimated_end_at=now - timedelta(hours=2),
+                status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                source_type='Other', company='Overdue Summary Activity',
+                activity_date=(now - timedelta(days=2)).date(),
+                estimated_start_at=now - timedelta(days=2, hours=1),
+                estimated_end_at=now - timedelta(days=2),
+                status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Next Steps / To-do',
+                source_type='Other', company='Due Today Summary Activity',
+                activity_date=now.date(), status=SalesActivity.STATUS_SCHEDULED,
+                owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Completed Summary Activity', activity_date=now.date(),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Cancelled Summary Activity', activity_date=now.date(),
+                status=SalesActivity.STATUS_CANCELLED, owner_id=self.admin_id,
+            ),
+        ]
+        db.session.add_all(activities)
+        db.session.commit()
+
+        response = self.client.get('/sales-activities/')
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        summary_start = html.index('Activities by Owner')
+        summary_end = html.index('</table>', summary_start)
+        summary_html = html[summary_start:summary_end]
+
+        self.assertNotIn('Remote Engagement</th>', summary_html)
+        self.assertNotIn('On-site Visit</th>', summary_html)
+        for status in ('Scheduled', 'Follow-up Required', 'Due Today', 'Overdue', 'Completed', 'Cancelled'):
+            self.assertIn(f'>{status}</th>', summary_html)
+        self.assertIn(
+            '<tr><td>Admin</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="summary-total-column">6</td></tr>',
+            summary_html,
+        )
+        self.assertIn(
+            '<td>Total</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="summary-total-column">6</td>',
+            summary_html,
+        )
+        self.assertTrue(summary_html.index('>Cancelled</th>') < summary_html.index('>Total</th>'))
+
+        source_start = html.index('Source Type by Owner')
+        source_end = html.index('</table>', source_start)
+        source_summary_html = html[source_start:source_end]
+        self.assertTrue(source_summary_html.index('>Other</th>') < source_summary_html.index('>Total</th>'))
+        self.assertIn('<th class="summary-total-column">Total</th>', source_summary_html)
+        self.assertIn('<td class="summary-total-column">6</td>', source_summary_html)
+
+    def test_type_and_date_filters_include_overlapping_cross_date_visits(self):
+        records = [
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Remote In Range', activity_date=date(2026, 8, 10),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Remote Outside Range', activity_date=date(2026, 8, 8),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                source_type='Other', company='Cross-date Visit In Range',
+                activity_date=date(2026, 8, 9),
+                estimated_start_at=datetime(2026, 8, 9, 23, 0),
+                estimated_end_at=datetime(2026, 8, 10, 1, 0),
+                status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                source_type='Other', company='Visit Outside Range',
+                activity_date=date(2026, 8, 11),
+                estimated_start_at=datetime(2026, 8, 11, 9, 0),
+                estimated_end_at=datetime(2026, 8, 11, 10, 0),
+                status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
+            ),
+        ]
+        db.session.add_all(records)
+        db.session.commit()
+
+        visit_response = self.client.get(
+            '/sales-activities/?type=On-site+Visit&start_date=2026-08-10&end_date=2026-08-10'
+        )
+        self.assertEqual(visit_response.status_code, 200)
+        self.assertIn(b'Cross-date Visit In Range', visit_response.data)
+        self.assertNotIn(b'Remote In Range', visit_response.data)
+        self.assertNotIn(b'Remote Outside Range', visit_response.data)
+        self.assertNotIn(b'Visit Outside Range', visit_response.data)
+        self.assertIn(b'<td class="summary-total-column">1</td>', visit_response.data)
+
+        remote_response = self.client.get(
+            '/sales-activities/?type=Remote+Engagement&start_date=2026-08-10&end_date=2026-08-10'
+        )
+        self.assertEqual(remote_response.status_code, 200)
+        self.assertIn(b'Remote In Range', remote_response.data)
+        self.assertNotIn(b'Cross-date Visit In Range', remote_response.data)
+        self.assertNotIn(b'Remote Outside Range', remote_response.data)
+        self.assertIn(b'<td class="summary-total-column">1</td>', remote_response.data)
+
+        calendar_date_response = self.client.get('/sales-activities/?dates=2026-08-10')
+        self.assertEqual(calendar_date_response.status_code, 200)
+        self.assertIn(b'Remote In Range', calendar_date_response.data)
+        self.assertIn(b'Cross-date Visit In Range', calendar_date_response.data)
+        self.assertNotIn(b'Remote Outside Range', calendar_date_response.data)
+        self.assertNotIn(b'Visit Outside Range', calendar_date_response.data)
+
+        reversed_range_response = self.client.get(
+            '/sales-activities/?start_date=2026-08-10&end_date=2026-08-09'
+        )
+        self.assertEqual(reversed_range_response.status_code, 200)
+        self.assertIn(b'Remote In Range', reversed_range_response.data)
+        self.assertIn(b'Cross-date Visit In Range', reversed_range_response.data)
+        self.assertNotIn(b'Remote Outside Range', reversed_range_response.data)
+        self.assertNotIn(b'Visit Outside Range', reversed_range_response.data)
+        self.assertIn(b'name="start_date" value="2026-08-09"', reversed_range_response.data)
+        self.assertIn(b'name="end_date" value="2026-08-10"', reversed_range_response.data)
+
     def test_strict_sources_reject_manual_company_but_other_source_accepts_it(self):
         response = self.client.post(
             '/sales-activities/add',

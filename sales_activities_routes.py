@@ -1,10 +1,10 @@
 """Sales Activities routes."""
-from collections import Counter, defaultdict
-from datetime import date, datetime
+from collections import defaultdict
+from datetime import date, datetime, time, timedelta
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 
 from activity_logger import log_activity
 from extensions import db
@@ -31,6 +31,67 @@ def _visible_activity_query():
 
 def _can_manage(activity):
     return current_user.is_admin() or activity.owner_id == current_user.id
+
+
+def _activity_date_range_condition(start_date=None, end_date=None):
+    """Build an inclusive activity-date condition.
+
+    Remote Engagement records occur on ``activity_date``. On-site Visits may
+    span more than one day, so they match when their scheduled interval
+    overlaps the requested date range. Legacy visits without schedule times
+    fall back to ``activity_date``.
+    """
+    conditions = []
+    on_site_visit = SalesActivity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
+
+    if start_date:
+        start_at = datetime.combine(start_date, time.min)
+        conditions.append(or_(
+            and_(
+                on_site_visit,
+                SalesActivity.estimated_end_at.isnot(None),
+                SalesActivity.estimated_end_at >= start_at,
+            ),
+            and_(
+                on_site_visit,
+                SalesActivity.estimated_end_at.is_(None),
+                SalesActivity.activity_date >= start_date,
+            ),
+            and_(
+                SalesActivity.activity_type != SalesActivity.TYPE_ON_SITE_VISIT,
+                SalesActivity.activity_date >= start_date,
+            ),
+        ))
+
+    if end_date:
+        end_at = datetime.combine(end_date, time.max)
+        conditions.append(or_(
+            and_(
+                on_site_visit,
+                SalesActivity.estimated_start_at.isnot(None),
+                SalesActivity.estimated_start_at <= end_at,
+            ),
+            and_(
+                on_site_visit,
+                SalesActivity.estimated_start_at.is_(None),
+                SalesActivity.activity_date <= end_date,
+            ),
+            and_(
+                SalesActivity.activity_type != SalesActivity.TYPE_ON_SITE_VISIT,
+                SalesActivity.activity_date <= end_date,
+            ),
+        ))
+
+    return and_(*conditions) if conditions else None
+
+
+def _summary_status(display_status, deadline_indicator):
+    """Return one mutually exclusive status bucket for summary reporting."""
+    if display_status in (SalesActivity.STATUS_COMPLETED, SalesActivity.STATUS_CANCELLED):
+        return display_status
+    if deadline_indicator in ('Due Today', 'Overdue'):
+        return deadline_indicator
+    return display_status
 
 
 def _parse_datetime(date_value, time_value):
@@ -78,9 +139,12 @@ def _sync_targets(lead, pipeline):
 @login_required
 def index():
     query = _visible_activity_query()
-    activity_type = SalesActivity.normalize_type(request.args.get('type', 'All'))
+    requested_type = SalesActivity.normalize_type(request.args.get('type', 'All'))
+    activity_type = requested_type if requested_type in SalesActivity.TYPE_OPTIONS else 'All'
     start_date = validate_date(request.args.get('start_date'))
     end_date = validate_date(request.args.get('end_date'))
+    if start_date and end_date and start_date > end_date:
+        start_date, end_date = end_date, start_date
     owner_id = request.args.get('owner_id', type=int)
     calendar_month_value = request.args.get('calendar_month', '').strip()
     try:
@@ -93,10 +157,9 @@ def index():
 
     if activity_type in SalesActivity.TYPE_OPTIONS:
         query = query.filter(SalesActivity.activity_type == activity_type)
-    if start_date:
-        query = query.filter(SalesActivity.activity_date >= start_date)
-    if end_date:
-        query = query.filter(SalesActivity.activity_date <= end_date)
+    date_range_condition = _activity_date_range_condition(start_date, end_date)
+    if date_range_condition is not None:
+        query = query.filter(date_range_condition)
     if current_user.is_admin() and owner_id:
         query = query.filter(SalesActivity.owner_id == owner_id)
 
@@ -108,13 +171,16 @@ def index():
         if calendar_month.month == 12
         else calendar_month.replace(month=calendar_month.month + 1)
     )
+    calendar_month_end = next_calendar_month - timedelta(days=1)
     calendar_activities = query.filter(
-        SalesActivity.activity_date >= calendar_month,
-        SalesActivity.activity_date < next_calendar_month,
+        _activity_date_range_condition(calendar_month, calendar_month_end)
     ).all()
 
     if selected_dates:
-        query = query.filter(SalesActivity.activity_date.in_(selected_dates))
+        query = query.filter(or_(*(
+            _activity_date_range_condition(selected_date, selected_date)
+            for selected_date in selected_dates
+        )))
 
     ordered_query = query.order_by(
         SalesActivity.activity_date.desc(), SalesActivity.created_at.desc(), SalesActivity.id.desc()
@@ -124,37 +190,41 @@ def index():
     pagination = ordered_query.paginate(page=page, per_page=20, error_out=False)
     activities = pagination.items
 
-    type_counts = Counter(activity.activity_type for activity in matching_activities)
-    source_counts = Counter(activity.source_type for activity in matching_activities)
     now = datetime.now()
     display_statuses = {activity.id: activity.get_display_status(now) for activity in matching_activities}
     deadline_indicators = {activity.id: activity.get_deadline_indicator(now) for activity in matching_activities}
+    summary_statuses = {
+        activity.id: _summary_status(display_statuses[activity.id], deadline_indicators[activity.id])
+        for activity in matching_activities
+    }
     stats = {
         'total': len(matching_activities),
-        'remote_engagement': type_counts[SalesActivity.TYPE_REMOTE_ENGAGEMENT],
-        'on_site_visit': type_counts[SalesActivity.TYPE_ON_SITE_VISIT],
-        'scheduled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_SCHEDULED),
-        'follow_up_required': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED),
-        'completed': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_COMPLETED),
-        'cancelled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_CANCELLED),
-        'overdue': sum(1 for indicator in deadline_indicators.values() if indicator == 'Overdue'),
-        'sources': source_counts,
+        'scheduled': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_SCHEDULED),
+        'follow_up_required': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED),
+        'due_today': sum(1 for status in summary_statuses.values() if status == 'Due Today'),
+        'overdue': sum(1 for status in summary_statuses.values() if status == 'Overdue'),
+        'completed': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_COMPLETED),
+        'cancelled': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_CANCELLED),
     }
 
     owner_stats = []
     if current_user.is_admin():
         grouped = defaultdict(lambda: {
-            'total': 0, 'remote_engagement': 0, 'on_site_visit': 0,
-            'scheduled': 0, 'follow_up_required': 0, 'overdue': 0,
+            'total': 0, 'scheduled': 0, 'follow_up_required': 0,
+            'due_today': 0, 'overdue': 0, 'completed': 0, 'cancelled': 0,
         })
         for activity in matching_activities:
             item = grouped[activity.owner.username if activity.owner else 'Unknown']
             item['total'] += 1
-            item['remote_engagement'] += activity.activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT
-            item['on_site_visit'] += activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
-            item['scheduled'] += display_statuses[activity.id] == SalesActivity.STATUS_SCHEDULED
-            item['follow_up_required'] += display_statuses[activity.id] == SalesActivity.STATUS_FOLLOW_UP_REQUIRED
-            item['overdue'] += deadline_indicators[activity.id] == 'Overdue'
+            status_key = {
+                SalesActivity.STATUS_SCHEDULED: 'scheduled',
+                SalesActivity.STATUS_FOLLOW_UP_REQUIRED: 'follow_up_required',
+                'Due Today': 'due_today',
+                'Overdue': 'overdue',
+                SalesActivity.STATUS_COMPLETED: 'completed',
+                SalesActivity.STATUS_CANCELLED: 'cancelled',
+            }[summary_statuses[activity.id]]
+            item[status_key] += 1
         owner_stats = sorted(({'owner': owner, **counts} for owner, counts in grouped.items()), key=lambda item: item['owner'])
 
     # Keep the compact horizontal source summary, but show the owner names and
@@ -185,16 +255,29 @@ def index():
         'due_today': 0, 'overdue': 0, 'completed': 0, 'cancelled': 0,
     })
     for activity in calendar_activities:
-        key = activity.activity_date.isoformat()
         display_status = activity.get_display_status(now)
         indicator = activity.get_deadline_indicator(now)
-        calendar[key]['total'] += 1
-        calendar[key]['scheduled'] += display_status == SalesActivity.STATUS_SCHEDULED
-        calendar[key]['follow_up_required'] += display_status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED
-        calendar[key]['due_today'] += indicator == 'Due Today'
-        calendar[key]['overdue'] += indicator == 'Overdue'
-        calendar[key]['completed'] += display_status == SalesActivity.STATUS_COMPLETED
-        calendar[key]['cancelled'] += display_status == SalesActivity.STATUS_CANCELLED
+        first_activity_date = activity.activity_date
+        last_activity_date = activity.activity_date
+        if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
+            if activity.estimated_start_at:
+                first_activity_date = activity.estimated_start_at.date()
+            if activity.estimated_end_at:
+                last_activity_date = activity.estimated_end_at.date()
+
+        first_activity_date = max(first_activity_date, calendar_month)
+        last_activity_date = min(last_activity_date, calendar_month_end)
+        activity_calendar_date = first_activity_date
+        while activity_calendar_date <= last_activity_date:
+            key = activity_calendar_date.isoformat()
+            calendar[key]['total'] += 1
+            calendar[key]['scheduled'] += display_status == SalesActivity.STATUS_SCHEDULED
+            calendar[key]['follow_up_required'] += display_status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED
+            calendar[key]['due_today'] += indicator == 'Due Today'
+            calendar[key]['overdue'] += indicator == 'Overdue'
+            calendar[key]['completed'] += display_status == SalesActivity.STATUS_COMPLETED
+            calendar[key]['cancelled'] += display_status == SalesActivity.STATUS_CANCELLED
+            activity_calendar_date += timedelta(days=1)
 
     owners = User.query.filter_by(is_active=True).order_by(User.username).all() if current_user.is_admin() else []
     add_form_data = session.pop('sales_activity_form_data', {})

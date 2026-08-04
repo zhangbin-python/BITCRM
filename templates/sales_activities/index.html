@@ -53,6 +53,7 @@
 .owner-summary-table thead th { white-space: nowrap; font-weight: 600; background-color: #f8f9fa; }
 .owner-summary-table tbody td, .owner-summary-table tfoot td { vertical-align: middle; }
 .owner-summary-table tfoot td { border-top: 2px solid #dee2e6; }
+.owner-summary-table .summary-total-column { background: #eef2ff; color: #3730a3; font-weight: 700; border-left: 2px solid #c7d2fe; }
 .type-filter-options { display: flex; flex-wrap: nowrap; width: 100%; gap: .45rem; }
 .type-filter-option { display: flex; flex: 1 1 0; min-width: 0; }
 .type-filter-option input { position: absolute; opacity: 0; pointer-events: none; }
@@ -135,11 +136,12 @@
 
             {% if current_user.is_admin() %}
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Activities by Owner') }}</h5>
-                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Total') }}</th><th>{{ _('Remote Engagement') }}</th><th>{{ _('On-site Visit') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Overdue') }}</th></tr></thead>
+                <p class="small text-muted mb-2">{{ _('Each activity is counted once; Due Today and Overdue are shown as separate status categories.') }}</p>
+                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Due Today') }}</th><th>{{ _('Overdue') }}</th><th>{{ _('Completed') }}</th><th>{{ _('Cancelled') }}</th><th class="summary-total-column">{{ _('Total') }}</th></tr></thead>
                     <tbody>
-                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.total }}</td><td>{{ item.remote_engagement }}</td><td>{{ item.on_site_visit }}</td><td>{{ item.scheduled }}</td><td>{{ item.follow_up_required }}</td><td>{{ item.overdue }}</td></tr>{% endfor %}
+                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.scheduled }}</td><td>{{ item.follow_up_required }}</td><td>{{ item.due_today }}</td><td>{{ item.overdue }}</td><td>{{ item.completed }}</td><td>{{ item.cancelled }}</td><td class="summary-total-column">{{ item.total }}</td></tr>{% endfor %}
                     </tbody>
-                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.total }}</td><td>{{ stats.remote_engagement }}</td><td>{{ stats.on_site_visit }}</td><td>{{ stats.scheduled }}</td><td>{{ stats.follow_up_required }}</td><td>{{ stats.overdue }}</td></tr></tfoot>
+                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.scheduled }}</td><td>{{ stats.follow_up_required }}</td><td>{{ stats.due_today }}</td><td>{{ stats.overdue }}</td><td>{{ stats.completed }}</td><td>{{ stats.cancelled }}</td><td class="summary-total-column">{{ stats.total }}</td></tr></tfoot>
                 </table></div>
                 {% if not owner_stats %}<div class="small text-muted mt-2">{{ _('No activities found') }}</div>{% endif %}
             </div></div>
@@ -149,19 +151,19 @@
                 <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr>
                     <th>{{ _('Owner') }}</th>
                     {% for source in ['Sales Leads', 'Pipeline', 'Existing Customer', 'Marketing Event', 'Other'] %}<th>{{ _(source) }}</th>{% endfor %}
-                    <th>{{ _('Total') }}</th>
+                    <th class="summary-total-column">{{ _('Total') }}</th>
                 </tr></thead>
                     <tbody>
                     {% for item in source_owner_rows %}<tr>
                         <td>{{ item.owner }}</td>
                         {% for source in ['Sales Leads', 'Pipeline', 'Existing Customer', 'Marketing Event', 'Other'] %}<td>{{ item.sources.get(source, 0) }}</td>{% endfor %}
-                        <td>{{ item.total }}</td>
+                        <td class="summary-total-column">{{ item.total }}</td>
                     </tr>{% endfor %}
                     </tbody>
                     <tfoot><tr class="table-light fw-semibold">
                         <td>{{ _('Total') }}</td>
                         {% for source in ['Sales Leads', 'Pipeline', 'Existing Customer', 'Marketing Event', 'Other'] %}<td>{{ source_totals.get(source, 0) }}</td>{% endfor %}
-                        <td>{{ stats.total }}</td>
+                        <td class="summary-total-column">{{ stats.total }}</td>
                     </tr></tfoot>
                 </table></div>
                 {% if not source_owner_rows %}<div class="small text-muted mt-2">{{ _('No activities found') }}</div>{% endif %}

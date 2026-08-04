@@ -61,11 +61,13 @@ Each record will include the user, timestamp, action, subject, subject ID, detai
 The module will provide:
 
 - `All`, `Remote Engagement`, and `On-site Visit` quick filters.
-- Start/end date filtering.
+- Inclusive start/end date filtering. Remote Engagement uses Activity Date;
+  On-site Visit uses schedule overlap so cross-date visits are not omitted.
 - Owner filtering for administrators.
-- Summary statistics by activity type and source type.
-- Scheduled, follow-up-required, completed, cancelled, and overdue counts.
-- An administrator-only per-owner summary.
+- Summary statistics by source type.
+- An administrator-only per-owner summary with mutually exclusive `Scheduled`,
+  `Follow-up Required`, `Due Today`, `Overdue`, `Completed`, and `Cancelled`
+  categories. Each activity is counted exactly once in the status summary.
 - A month calendar with multi-date selection.
 - A reverse-chronological activity table.
 - An `Add Sales Activity` action.

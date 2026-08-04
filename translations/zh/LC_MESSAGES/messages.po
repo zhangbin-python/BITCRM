@@ -1353,6 +1353,10 @@ msgstr "已取消任务"
 msgid "Follow-up Required / Due Today"
 msgstr "待跟进 / 今日到期"
 
+#: templates/sales_activities/index.html
+msgid "Each activity is counted once; Due Today and Overdue are shown as separate status categories."
+msgstr "每条活动只统计一次；今日到期和已逾期作为独立状态分类显示。"
+
 #: templates/sales_activities/index.html templates/tasks.html
 msgid "Cancelled / past"
 msgstr "已取消 / 已过去"
