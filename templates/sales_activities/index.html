@@ -42,6 +42,8 @@
 .calendar-day.has-red { background: #f8d7da; }
 .calendar-day.has-gray { background: #dee2e6; }
 .calendar-day .day-number { font-weight: 600; line-height: 1.1; font-size: .86rem; }
+.calendar-day.is-today .day-number { display: inline-flex; align-items: center; justify-content: center; width: 1.55rem; height: 1.55rem; border-radius: 50%; background: #0d6efd; color: #fff; }
+.calendar-day .today-label { position: absolute; top: .2rem; right: .25rem; color: #0d6efd; font-size: .58rem; font-weight: 700; line-height: 1; letter-spacing: .01em; }
 .calendar-day .activity-count { font-size: .7rem; color: #495057; margin-top: .18rem; }
 .calendar-weekday { text-align: center; font-size: .72rem; color: #6c757d; font-weight: 600; }
 .contact-row + .contact-row { margin-top: .5rem; }
@@ -367,6 +369,7 @@
 const calendarData = {{ calendar_data|tojson }};
 const selectedDates = new Set({{ selected_dates|tojson }});
 const todayIso = '{{ today_iso }}';
+const todayLabel = {{ _('Today')|tojson }};
 let calendarMonth = new Date({{ calendar_month.year }}, {{ calendar_month.month - 1 }}, 1);
 function setCalendarMonth(delta) {
   calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + delta, 1);
@@ -383,7 +386,8 @@ function renderCalendar() {
   for (let i=0; i<offset; i++) root.insertAdjacentHTML('beforeend', '<div></div>');
   for (let day=1; day<=lastDay; day++) {
     const d = new Date(year, month, day); const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const data = calendarData[iso]; const el = document.createElement('div'); el.className = 'calendar-day' + (selectedDates.has(iso) ? ' selected' : '');
+    const data = calendarData[iso]; const isToday = iso === todayIso; const el = document.createElement('div'); el.className = 'calendar-day' + (selectedDates.has(iso) ? ' selected' : '') + (isToday ? ' is-today' : '');
+    if (isToday) { el.setAttribute('aria-current', 'date'); el.title = todayLabel; }
     if (data) {
       if (data.overdue) el.classList.add('has-red');
       else if (data.follow_up_required || data.due_today) { el.style.background = '#fff3cd'; }
@@ -391,7 +395,7 @@ function renderCalendar() {
       else if (data.scheduled || data.completed) el.classList.add('has-green');
       else if (iso < todayIso) el.classList.add('has-gray');
     }
-    el.innerHTML = `<div class="day-number">${day}</div>${data ? `<div class="activity-count">${data.total}</div>` : ''}`;
+    el.innerHTML = `<div class="day-number">${day}</div>${isToday ? `<div class="today-label">${todayLabel}</div>` : ''}${data ? `<div class="activity-count">${data.total}</div>` : ''}`;
     el.addEventListener('click', () => { if (selectedDates.has(iso)) selectedDates.delete(iso); else selectedDates.add(iso); const params = new URLSearchParams(window.location.search); params.delete('dates'); params.delete('page'); [...selectedDates].sort().forEach(value => params.append('dates', value)); window.location.search = params.toString(); });
     root.appendChild(el);
   }

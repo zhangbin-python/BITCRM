@@ -1,0 +1,244 @@
+<div class="manual-layout">
+    <nav class="manual-nav" aria-label="User guide contents">
+        <h2>Contents</h2>
+        <ol>
+            <li><a href="#overview">Understand the overall flow</a></li>
+            <li><a href="#sales-activities">What Sales Activities means</a></li>
+            <li><a href="#create-activity">Create an activity</a></li>
+            <li><a href="#status">Statuses and reminders</a></li>
+            <li><a href="#calendar-reporting">Calendar, filters, and reports</a></li>
+            <li><a href="#connections">Connections to other modules</a></li>
+            <li><a href="#workflows">Recommended workflows</a></li>
+            <li><a href="#permissions-faq">Permissions and FAQ</a></li>
+        </ol>
+    </nav>
+
+    <main class="manual-content">
+        <section class="manual-hero">
+            <h1>BITCRM User Guide</h1>
+            <p>A practical guide centered on Sales Activities, showing how customer conversations, visits, follow-up tasks, and CRM history work together.</p>
+            <p class="version">Updated August 2026 · English edition</p>
+        </section>
+
+        <section id="overview">
+            <h2>1. Understand the overall flow</h2>
+            <p class="lead">BITCRM does more than store customer names. It records where a customer came from, what the team did, and who must complete the next action by when.</p>
+            <div class="workflow">
+                <div class="workflow-step">Sales Leads<br>Potential customers</div>
+                <div class="workflow-step">Pipeline<br>Sales opportunities</div>
+                <div class="workflow-step">Sales Activities<br>Customer interactions</div>
+                <div class="workflow-step">Follow-up / Tasks<br>Results and actions</div>
+                <div class="workflow-step">Dashboard<br>Management view</div>
+            </div>
+            <div class="info-box"><strong>In simple terms:</strong> Sales Leads and Pipeline tell you who you are working with and where the opportunity stands. Sales Activities tells you what actually happened. Tasks tells you what still needs to happen.</div>
+        </section>
+
+        <section id="sales-activities">
+            <h2>2. What Sales Activities means</h2>
+            <p>Sales Activities is the shared record of real customer interactions. It is more useful than a general note because every activity has an owner, source, date, status, and possible next action.</p>
+
+            <h3>2.1 The two activity types</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Type</th><th>Use it for</th><th>Date rule</th><th>How it is completed</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>On-site Visit</strong></td><td>Face-to-face meetings, site surveys, customer-office visits, and meetings at an event location.</td><td>Enter the start and end date/time. A separate duplicate activity date is not required.</td><td>After the visit ends, enter the visit feedback in Sales Activities.</td></tr>
+                    <tr><td><strong>Remote Engagement</strong></td><td>Email, phone calls, online meetings, instant messaging, and any customer communication that does not require a site visit.</td><td>Use Activity Date. If Next Steps / To-do is entered, a due date is also required.</td><td>A completed communication can be recorded immediately; a pending to-do is completed through its linked Task.</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>2.2 What a useful activity should answer</h3>
+            <ul>
+                <li><strong>Who owns it?</strong> The Owner.</li>
+                <li><strong>Where did the customer come from?</strong> Sales Leads, Pipeline, Existing Customer, Marketing Event, or Other.</li>
+                <li><strong>When does it happen?</strong> The remote activity date or the on-site start/end schedule.</li>
+                <li><strong>Who was contacted?</strong> One or more contacts, positions, and contact details.</li>
+                <li><strong>Why are we doing it?</strong> Purpose / Project and Expected Result.</li>
+                <li><strong>What happened and what is next?</strong> Follow-up Notes, Completion Notes, and Next Steps / To-do.</li>
+            </ul>
+        </section>
+
+        <section id="create-activity">
+            <h2>3. Create a Sales Activity</h2>
+            <div class="step-list">
+                <div class="step"><span class="step-number">1</span><div>Open <strong>Sales Activities</strong> from the left menu and click <strong>Add Sales Activity</strong>.</div></div>
+                <div class="step"><span class="step-number">2</span><div>Select <strong>On-site Visit</strong> or <strong>Remote Engagement</strong>.</div></div>
+                <div class="step"><span class="step-number">3</span><div>Select the Source Type, then search for or enter the company. For Sales Leads and Pipeline, you must select an actual system search result rather than only typing a name.</div></div>
+                <div class="step"><span class="step-number">4</span><div>Enter the date, contacts, purpose, expected result, and remarks. An on-site visit requires both the complete start and end time.</div></div>
+                <div class="step"><span class="step-number">5</span><div>For a remote engagement, enter at least one item: completed <strong>Follow-up Notes</strong>, or a future <strong>Next Steps / To-do</strong>.</div></div>
+                <div class="step"><span class="step-number">6</span><div>Save and check the Activity List and calendar. If a to-do was created, a linked Task is also created automatically.</div></div>
+            </div>
+
+            <h3>3.1 Choosing the correct Source Type</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Source</th><th>When to use it</th><th>System connection</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Sales Leads</strong></td><td>The customer is still a potential lead.</td><td>Select an existing Lead. The activity and feedback are linked to that Lead.</td></tr>
+                    <tr><td><strong>Pipeline</strong></td><td>The customer is already a defined sales opportunity.</td><td>Select an existing Pipeline record. The activity and feedback are linked to that opportunity.</td></tr>
+                    <tr><td><strong>Existing Customer</strong></td><td>Renewal, customer care, or a new request from a won or activated customer.</td><td>The system suggests Deal Won / Activated customers, while still allowing a company to be entered when appropriate.</td></tr>
+                    <tr><td><strong>Marketing Event</strong></td><td>Customer contact at a trade show, seminar, or marketing event.</td><td>The system suggests Leads that contain Event information.</td></tr>
+                    <tr><td><strong>Other</strong></td><td>A customer or partner interaction that does not fit the other sources.</td><td>The company name can be entered manually.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="warning-box"><strong>Avoid duplicate customer records:</strong> If the customer already exists in Sales Leads or Pipeline, use that source and select the search result. This allows feedback and next steps to sync correctly.</div>
+        </section>
+
+        <section id="status">
+            <h2>4. Statuses and reminders</h2>
+            <p>The list separates the business status from the time reminder. That is why one activity can be Follow-up Required and also display Due Today or Overdue.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Display</th><th>What it means</th><th>Recommended action</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-blue">Scheduled</span></td><td>The activity has not reached the time when feedback or action is required.</td><td>Carry out the plan. Use Edit / Reschedule if the customer changes the time.</td></tr>
+                    <tr><td><span class="badge badge-yellow">Follow-up Required</span></td><td>The activity has reached the stage where feedback or a next action is required.</td><td>Enter visit results or complete the linked Task.</td></tr>
+                    <tr><td><span class="badge badge-yellow">Due Today</span></td><td>A remote to-do is due today. It is also part of Follow-up Required.</td><td>Complete it today and enter completion notes.</td></tr>
+                    <tr><td><span class="badge badge-red">Overdue</span></td><td>A remote to-do is past its due date, or an on-site visit ended more than 24 hours ago without feedback.</td><td>Prioritize it and record the real result.</td></tr>
+                    <tr><td><span class="badge badge-green">Completed</span></td><td>The activity is finished and its result has been saved.</td><td>Create a new to-do if another action is needed.</td></tr>
+                    <tr><td><span class="badge badge-gray">Cancelled</span></td><td>The activity was cancelled and the reason is retained.</td><td>If it still needs to happen, reschedule before cancelling or create a new activity.</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>4.1 Timing rules for On-site Visits</h3>
+            <ul>
+                <li>Before the end time: <strong>Scheduled</strong>.</li>
+                <li>At or after the end time: <strong>Follow-up Required</strong>.</li>
+                <li>More than 24 hours after the end time without feedback: <strong>Follow-up Required + Overdue</strong>.</li>
+                <li>After feedback is submitted: <strong>Completed</strong>, and the linked Task is completed too.</li>
+            </ul>
+
+            <h3>4.2 Why Due Today and Overdue are not separate summary columns</h3>
+            <p>They remain visible as detailed reminders in the Activity List. In the Activities by Owner report, both are grouped into Follow-up Required so that:</p>
+            <div class="success-box"><strong>Scheduled + Follow-up Required + Completed + Cancelled = Total</strong>, and every activity is counted only once in the business summary.</div>
+        </section>
+
+        <section id="calendar-reporting">
+            <h2>5. Calendar, filters, and reports</h2>
+
+            <h3>5.1 Top filters</h3>
+            <ul>
+                <li><strong>Type:</strong> All, On-site Visit, or Remote Engagement.</li>
+                <li><strong>Date Range:</strong> Remote Engagement uses Activity Date. A cross-date On-site Visit is included whenever its schedule overlaps the selected range.</li>
+                <li><strong>Owner:</strong> Administrators can hold Ctrl / Cmd to select multiple owners, then click Filter. No selection means All Owners.</li>
+                <li><strong>Regular users:</strong> The Owner filter is hidden because they can only view their own activities.</li>
+            </ul>
+
+            <h3>5.2 Reading the calendar</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Marker</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-green">Green background</span></td><td>The date has a Scheduled or Completed activity.</td></tr>
+                    <tr><td><span class="badge badge-yellow">Yellow background</span></td><td>The date has Follow-up Required or Due Today activity.</td></tr>
+                    <tr><td><span class="badge badge-red">Red background</span></td><td>The date has an Overdue activity.</td></tr>
+                    <tr><td><span class="badge badge-gray">Gray background</span></td><td>All activities on that date are cancelled, or it is a historical date that no longer needs emphasis.</td></tr>
+                    <tr><td><span class="badge badge-blue">Blue date circle + Today</span></td><td>Marks the current date without replacing its activity-status background.</td></tr>
+                    <tr><td>Purple outer border</td><td>A calendar date you selected. Multiple dates can be selected as a filter.</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>5.3 The two summary tables</h3>
+            <ul>
+                <li><strong>Activities by Owner:</strong> Summarizes Scheduled, Follow-up Required, Completed, and Cancelled. Regular users see only themselves; administrators see all owners in the current filter.</li>
+                <li><strong>Source Type by Owner:</strong> Summarizes Sales Leads, Pipeline, Existing Customer, Marketing Event, and Other.</li>
+                <li><strong>Total:</strong> Always appears in the final column with a different background for quick recognition.</li>
+            </ul>
+
+            <h3>5.4 Activity List</h3>
+            <p>The Activity List shows 20 records per page. Pagination retains the current type, date, owner, and selected calendar-date filters. Activities that are not Completed or Cancelled can be edited or rescheduled. Cancelling requires a reason. Deleting archives the activity and linked Task instead of silently removing the business history.</p>
+        </section>
+
+        <section id="connections">
+            <h2>6. Connections to other modules</h2>
+
+            <h3>6.1 Sales Leads</h3>
+            <p>Sales Leads manages potential customers that have not yet become a defined opportunity. When Sales Leads is selected as the activity source:</p>
+            <ul>
+                <li>You can only select a Lead you are allowed to view.</li>
+                <li>Remote follow-ups, to-dos, on-site visit plans, and visit feedback are written to Follow-up History.</li>
+                <li>If the Lead is linked to a Pipeline record, the relevant history is also synchronized to that Pipeline.</li>
+            </ul>
+
+            <h3>6.2 Pipeline</h3>
+            <p>Pipeline manages defined opportunities, stages, amounts, expected signing dates, and activation dates. When Pipeline is selected as the activity source:</p>
+            <ul>
+                <li>The activity is attached to the specific opportunity, preserving its business context.</li>
+                <li>Feedback can update the current Stuckpoint and, when available in the form, the Stage.</li>
+                <li>Owners and Support members can select Pipeline records they are allowed to access; administrators can select all.</li>
+                <li>If the Pipeline came from a Lead, feedback is also synchronized back to that Lead.</li>
+            </ul>
+
+            <h3>6.3 Existing Customer, Marketing Event, and Other</h3>
+            <p>These options mainly classify the activity source:</p>
+            <ul>
+                <li><strong>Existing Customer:</strong> Customer care, renewal, or expansion work for won/activated customers. It is currently a source category rather than a separate customer-master module.</li>
+                <li><strong>Marketing Event:</strong> Interactions from a trade show or event, with suggestions from Leads that contain Event information.</li>
+                <li><strong>Other:</strong> Partners, temporary projects, or contacts that do not fit another source.</li>
+            </ul>
+
+            <h3>6.4 Follow-up History</h3>
+            <p>Follow-up History is the long-term communication timeline on a Lead or Pipeline. It answers “what happened before.” Its role differs from Sales Activities:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Sales Activities</th><th>Follow-up History</th></tr></thead>
+                <tbody><tr><td>Can be reported by owner, date, status, and source; can be rescheduled, completed, or cancelled.</td><td>Is appended chronologically to the Lead / Pipeline for context and is not an independent pending task.</td></tr></tbody>
+            </table></div>
+
+            <h3>6.5 Tasks / To-do</h3>
+            <ul>
+                <li>Entering Next Steps / To-do in a Remote Engagement creates one pending Sales Activity and one linked Task.</li>
+                <li>Saving an On-site Visit also creates a linked Task due on the visit end date.</li>
+                <li>A Remote To-do should be completed in Tasks with mandatory Completion Notes. Its Sales Activity then becomes Completed automatically.</li>
+                <li>An On-site Visit must be completed from Sales Activities by entering visit feedback; the linked Task is then completed automatically.</li>
+                <li>Rescheduling synchronizes the Task date, owner, or content. Cancelling an activity cancels its unfinished linked Task.</li>
+            </ul>
+
+            <h3>6.6 Dashboard</h3>
+            <p>Dashboard focuses on the overall Leads, Pipeline, amount, and stage metrics. Sales Activities execution is currently reviewed mainly through this module's calendar, Activities by Owner, and Source Type by Owner reports.</p>
+        </section>
+
+        <section id="workflows">
+            <h2>7. Recommended workflows</h2>
+
+            <div class="example-card">
+                <h4>Example 1: Schedule an On-site Visit</h4>
+                <ol>
+                    <li>Select Sales Leads or Pipeline and choose the customer from the search results.</li>
+                    <li>Enter the start/end schedule, address, contacts, purpose, and expected result.</li>
+                    <li>If the customer changes the time, use Edit / Reschedule. The linked Task is synchronized.</li>
+                    <li>After the visit, enter feedback promptly. Create Next Steps / To-do if another action is required.</li>
+                    <li>Do not wait until the visit becomes Overdue after 24 hours.</li>
+                </ol>
+            </div>
+
+            <div class="example-card">
+                <h4>Example 2: Record an online meeting and its next action</h4>
+                <ol>
+                    <li>Select Remote Engagement.</li>
+                    <li>Write what was discussed and confirmed in Follow-up Notes.</li>
+                    <li>Write the next action and due date in Next Steps / To-do, for example, “Send the revised quotation by August 7.”</li>
+                    <li>Saving creates one Completed communication record plus one Scheduled to-do and linked Task.</li>
+                    <li>When finishing the Task, record the actual result instead of only changing the status.</li>
+                </ol>
+            </div>
+
+            <div class="success-box"><strong>Recommended rule:</strong> Put completed communication in Follow-up; put future work in Next Steps / To-do; use On-site Visit when someone must go to the customer location.</div>
+        </section>
+
+        <section id="permissions-faq">
+            <h2>8. Permissions and FAQ</h2>
+            <h3>8.1 Permissions</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>User</th><th>What they can see</th><th>Owner capability</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Administrator</strong></td><td>All Sales Activities, with one or more Owner filters.</td><td>Can assign an Owner when creating or rescheduling.</td></tr>
+                    <tr><td><strong>Non-administrator</strong></td><td>Only their own activities, calendar, and summaries.</td><td>Owner is fixed to themselves; changing the URL cannot expose another user's data.</td></tr>
+                </tbody>
+            </table></div>
+
+            <div class="faq"><strong>Why is there no Follow-up button on a Remote To-do?</strong>Because the To-do and its Task represent the same pending action. Complete it in Tasks to avoid conflicting updates in two places.</div>
+            <div class="faq"><strong>What if the customer changes the time?</strong>As long as the activity is not Completed or Cancelled, use Edit / Reschedule to change its date, time, owner, and related information.</div>
+            <div class="faq"><strong>Can a cross-date visit be missed by the date filter?</strong>No. It is included whenever any part of its scheduled interval overlaps the selected date range.</div>
+            <div class="faq"><strong>What is the difference between Cancel and Delete?</strong>Cancel records a business cancellation and keeps the reason visible. Delete archives the item from the normal list and also archives its linked Task.</div>
+            <div class="faq"><strong>Why does a regular user see only one row in Activities by Owner?</strong>Regular users can only view their own activities. Administrators are the only users who see multiple owners.</div>
+        </section>
+
+        <footer class="manual-footer">BITCRM User Guide · Updated August 2026</footer>
+    </main>
+</div>

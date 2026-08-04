@@ -774,6 +774,54 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(page.status_code, 200)
         self.assertIn(b'Login', page.data)
 
+    def test_sales_activity_manual_is_available_in_english_and_chinese(self):
+        english = self.client.get('/manual')
+        self.assertEqual(english.status_code, 200)
+        english_html = english.get_data(as_text=True)
+        for phrase in (
+            'BITCRM User Guide',
+            'What Sales Activities means',
+            'Connections to other modules',
+            'On-site Visit',
+            'Remote Engagement',
+            'Follow-up History',
+            'Tasks / To-do',
+            'Blue date circle + Today',
+            'Updated August 2026',
+        ):
+            self.assertIn(phrase, english_html)
+
+        with self.client.session_transaction() as session:
+            session['lang'] = 'zh'
+        chinese = self.client.get('/manual')
+        self.assertEqual(chinese.status_code, 200)
+        chinese_html = chinese.get_data(as_text=True)
+        for phrase in (
+            'BITCRM 使用说明',
+            'Sales Activities（销售活动）是什么',
+            '与其他模块的关系',
+            '外勤拜访',
+            '远程沟通',
+            'Follow-up History（跟进历史）',
+            'Tasks / To-do（待办任务）',
+            '蓝色日期圆圈 + 今天',
+            '更新于2026年8月',
+        ):
+            self.assertIn(phrase, chinese_html)
+
+    def test_calendar_marks_today_without_replacing_status_backgrounds(self):
+        response = self.client.get('/sales-activities/')
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn('.calendar-day.is-today .day-number', html)
+        self.assertIn('background: #0d6efd', html)
+        self.assertIn('.calendar-day.has-red { background: #f8d7da; }', html)
+        self.assertIn('.calendar-day.has-green { background: #d1e7dd; }', html)
+        self.assertIn('const isToday = iso === todayIso', html)
+        self.assertIn("' is-today'", html)
+        self.assertIn('class="today-label"', html)
+        self.assertIn('aria-current', html)
+
     def test_calendar_month_navigation_context_and_multi_date_selection(self):
         lead = self._lead()
         for activity_day in ('2026-08-02', '2026-08-11'):
