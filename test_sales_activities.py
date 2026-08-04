@@ -435,6 +435,9 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertNotIn('Admin Excluded Activity', html)
         self.assertIn('id="activityOwnerFilterButton"', html)
         self.assertIn('id="allOwnersFilter"', html)
+        self.assertIn('card mb-4 activity-filter-card', html)
+        self.assertIn('.activity-filter-card { position: relative; z-index: 20; overflow: visible; }', html)
+        self.assertIn('.owner-filter-dropdown { position: relative; z-index: 1020; }', html)
         self.assertIn(
             f'value="{owner_a.id}" checked', html
         )
