@@ -444,6 +444,9 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn(b'<th>Date</th>', response.data)
         self.assertIn(b'min-width: 1900px', response.data)
         self.assertIn(b'sales-activity-table-wrapper', response.data)
+        self.assertIn(b'activity-type-badge', response.data)
+        self.assertIn(b'activity-status-badge', response.data)
+        self.assertIn(b'white-space: nowrap', response.data)
         self.assertNotIn(b'<th>Remote Engagement Subtype</th>', response.data)
         self.assertLess(
             response.data.index(b'for="typeCustomerVisit"'),

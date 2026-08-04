@@ -80,7 +80,23 @@
 .type-filter-option { display: flex; min-width: 0; }
 .type-filter-option input { position: absolute; opacity: 0; pointer-events: none; }
 .type-filter-option label { display: flex; align-items: center; justify-content: center; min-height: 48px; height: 100%; width: 100%; padding: .45rem .65rem; border: 1px solid #ced4da; border-radius: .45rem; background: #fff; color: #495057; cursor: pointer; white-space: normal; overflow-wrap: anywhere; text-align: center; line-height: 1.15; transition: all .15s ease-in-out; }
-.sales-activity-table .badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
+.sales-activity-table .activity-type-badge,
+.sales-activity-table .activity-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 28px;
+    width: 100%;
+    padding: .32rem .42rem;
+    font-size: .72rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+.activity-status-stack { display: flex; flex-direction: column; align-items: stretch; gap: .25rem; width: 100%; }
 .type-filter-option label:hover { border-color: #667eea; color: #4f46b5; }
 .type-filter-option input:checked + label { border-color: #667eea; background: #667eea; color: #fff; box-shadow: 0 2px 5px rgba(102,126,234,.25); }
 .type-filter-option input:focus-visible + label { outline: 2px solid rgba(102,126,234,.45); outline-offset: 2px; }
@@ -260,7 +276,7 @@
                         {{ activity.activity_date.strftime('%Y-%m-%d') }}
                     {% endif %}
                 </td>
-                <td><span class="badge bg-{{ 'info' if activity.activity_type == 'Remote Engagement' else 'primary' }}">{{ _(activity.activity_type) }}</span></td>
+                <td><span class="badge activity-type-badge bg-{{ 'info' if activity.activity_type == 'Remote Engagement' else 'primary' }}">{{ _(activity.activity_type) }}</span></td>
                 <td>{{ _(activity.source_type) }}</td>
                 <td><strong>{{ activity.company }}</strong></td>
                 <td class="activity-description">{{ activity.address or '-' }}</td>
@@ -272,8 +288,10 @@
                 <td class="activity-description">{{ activity.remarks or '-' }}</td>
                 <td>{{ activity.owner.username if activity.owner else '-' }}</td>
                 <td>
-                    <span class="badge bg-{{ activity.status_color }}">{{ _(activity.display_status) }}</span>
-                    {% if activity.deadline_indicator %}<span class="badge bg-{{ 'danger' if activity.deadline_indicator == 'Overdue' else 'info' }} mt-1">{{ _(activity.deadline_indicator) }}</span>{% endif %}
+                    <div class="activity-status-stack">
+                        <span class="badge activity-status-badge bg-{{ activity.status_color }}">{{ _(activity.display_status) }}</span>
+                        {% if activity.deadline_indicator %}<span class="badge activity-status-badge bg-{{ 'danger' if activity.deadline_indicator == 'Overdue' else 'info' }}">{{ _(activity.deadline_indicator) }}</span>{% endif %}
+                    </div>
                     {% if activity.status == 'Cancelled' and activity.cancellation_reason %}<small class="d-block text-muted mt-1" title="{{ activity.cancellation_reason }}">{{ activity.cancellation_reason }}</small>{% endif %}
                 </td>
                 <td>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
