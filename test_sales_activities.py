@@ -112,12 +112,12 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.followup_notes, 'Arrange solution workshop.')
         self.assertEqual(activity.completion_notes, 'Workshop completed; technical team approved the design.')
 
-    def test_on_site_visit_supports_cross_date_schedule_and_feedback_sync(self):
+    def test_customer_visit_supports_cross_date_schedule_and_feedback_sync(self):
         lead = self._lead()
         response = self.client.post(
             '/sales-activities/add',
             data={
-                'activity_type': 'On-site Visit',
+                'activity_type': 'Customer Visit',
                 'source_type': 'Sales Leads',
                 'sales_lead_id': str(lead.id),
                 'company': lead.company,
@@ -149,7 +149,7 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn('<small class="activity-schedule-end">→ 2026-07-31 01:00</small>', activity_html)
         self.assertEqual(len(activity.contacts), 2)
         self.assertEqual(task.sales_activity_id, activity.id)
-        self.assertIn('On-site Visit scheduled', lead.follow_up)
+        self.assertIn('Customer Visit scheduled', lead.follow_up)
 
         response = self.client.post(
             f'/sales-activities/{activity.id}/followup',
@@ -164,17 +164,72 @@ class SalesActivitiesTests(unittest.TestCase):
         db.session.refresh(task)
         self.assertEqual(activity.status, 'Completed')
         self.assertEqual(task.status, 'Completed')
-        self.assertIn('On-site Visit feedback: Customer approved', lead.follow_up)
+        self.assertIn('Customer Visit feedback: Customer approved', lead.follow_up)
         self.assertIn('Send final migration plan.', lead.follow_up)
         self.assertEqual(SalesActivity.query.count(), 2)
         next_step_activity = SalesActivity.query.filter_by(remote_engagement_subtype='Next Steps / To-do').one()
         self.assertEqual(next_step_activity.status, 'Scheduled')
         self.assertEqual(Task.query.count(), 2)
 
-    def test_invalid_on_site_visit_reopens_form_and_uses_start_date_as_activity_date(self):
+    def test_dc_site_visit_uses_visit_schedule_task_and_feedback_workflow(self):
+        lead = self._lead(company='DC Visitor Co')
+        response = self.client.post(
+            '/sales-activities/add',
+            data={
+                'activity_type': 'DC Site Visit',
+                'source_type': 'Sales Leads',
+                'sales_lead_id': str(lead.id),
+                'company': lead.company,
+                'start_date': '2026-08-01',
+                'start_time': '10:00',
+                'end_date': '2026-08-01',
+                'end_time': '12:00',
+                'owner_id': str(self.admin_id),
+                'address': 'BIT Data Center - Lobby',
+                'contact_name[]': ['Customer CTO'],
+                'contact_position[]': ['CTO'],
+                'contact_information[]': ['cto@example.com'],
+                'purpose_project': 'Facility and security tour',
+                'expected_result': 'Confirm technical requirements',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        activity = SalesActivity.query.one()
+        task = Task.query.one()
+        self.assertEqual(activity.activity_type, SalesActivity.TYPE_DC_SITE_VISIT)
+        self.assertTrue(activity.is_scheduled_visit)
+        self.assertEqual(activity.activity_date, date(2026, 8, 1))
+        self.assertEqual(activity.estimated_start_at, datetime(2026, 8, 1, 10, 0))
+        self.assertEqual(activity.estimated_end_at, datetime(2026, 8, 1, 12, 0))
+        self.assertIn('DC Site Visit follow-up', task.content)
+        self.assertIn('DC Site Visit scheduled', lead.follow_up)
+
+        response = self.client.post(
+            f'/tasks/{task.id}/complete',
+            data={'completion_notes': 'Completed directly from Tasks'},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        db.session.refresh(activity)
+        db.session.refresh(task)
+        self.assertEqual(activity.status, SalesActivity.STATUS_SCHEDULED)
+        self.assertNotEqual(task.status, 'Completed')
+
+        response = self.client.post(
+            f'/sales-activities/{activity.id}/followup',
+            data={'completion_notes': 'Customer approved the facility and security design.'},
+        )
+        self.assertEqual(response.status_code, 302)
+        db.session.refresh(activity)
+        db.session.refresh(task)
+        self.assertEqual(activity.status, SalesActivity.STATUS_COMPLETED)
+        self.assertEqual(task.status, 'Completed')
+        self.assertIn('DC Site Visit feedback: Customer approved', lead.follow_up)
+
+    def test_invalid_customer_visit_reopens_form_and_uses_start_date_as_activity_date(self):
         lead = self._lead(company='Retained Visit Form Co')
         data = {
-            'activity_type': 'On-site Visit',
+            'activity_type': 'Customer Visit',
             'source_type': 'Sales Leads',
             'sales_lead_id': str(lead.id),
             'company': lead.company,
@@ -212,16 +267,16 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.estimated_start_at.strftime('%H:%M'), '15:00')
         self.assertEqual(activity.estimated_end_at.strftime('%H:%M'), '16:00')
 
-    def test_add_sales_activity_defaults_to_on_site_visit(self):
+    def test_add_sales_activity_defaults_to_customer_visit(self):
         response = self.client.get('/sales-activities/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'<option value="On-site Visit" selected>', response.data)
+        self.assertIn(b'<option value="Customer Visit" selected>', response.data)
         self.assertIn(b'<th>Date</th>', response.data)
         self.assertIn(b'min-width: 1900px', response.data)
         self.assertIn(b'sales-activity-table-wrapper', response.data)
         self.assertNotIn(b'<th>Remote Engagement Subtype</th>', response.data)
         self.assertLess(
-            response.data.index(b'for="typeOnSiteVisit"'),
+            response.data.index(b'for="typeCustomerVisit"'),
             response.data.index(b'for="typeRemoteEngagement"'),
         )
 
@@ -264,7 +319,7 @@ class SalesActivitiesTests(unittest.TestCase):
         now = datetime.now()
         activities = [
             SalesActivity(
-                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                activity_type=SalesActivity.TYPE_CUSTOMER_VISIT,
                 source_type='Other', company='Scheduled Summary Activity',
                 activity_date=(now + timedelta(days=2)).date(),
                 estimated_start_at=now + timedelta(days=2),
@@ -272,7 +327,7 @@ class SalesActivitiesTests(unittest.TestCase):
                 status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
             ),
             SalesActivity(
-                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                activity_type=SalesActivity.TYPE_CUSTOMER_VISIT,
                 source_type='Other', company='Follow-up Summary Activity',
                 activity_date=(now - timedelta(hours=2)).date(),
                 estimated_start_at=now - timedelta(hours=3),
@@ -280,7 +335,7 @@ class SalesActivitiesTests(unittest.TestCase):
                 status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
             ),
             SalesActivity(
-                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                activity_type=SalesActivity.TYPE_CUSTOMER_VISIT,
                 source_type='Other', company='Overdue Summary Activity',
                 activity_date=(now - timedelta(days=2)).date(),
                 estimated_start_at=now - timedelta(days=2, hours=1),
@@ -318,7 +373,7 @@ class SalesActivitiesTests(unittest.TestCase):
         summary_html = html[summary_start:summary_end]
 
         self.assertNotIn('Remote Engagement</th>', summary_html)
-        self.assertNotIn('On-site Visit</th>', summary_html)
+        self.assertNotIn('Customer Visit</th>', summary_html)
         for status in ('Scheduled', 'Follow-up Required', 'Completed', 'Cancelled'):
             self.assertIn(f'>{status}</th>', summary_html)
         self.assertNotIn('>Due Today</th>', summary_html)
@@ -378,12 +433,19 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn('Alpha Selected Activity', html)
         self.assertIn('Beta Selected Activity', html)
         self.assertNotIn('Admin Excluded Activity', html)
+        self.assertIn('id="activityOwnerFilterButton"', html)
+        self.assertIn('id="allOwnersFilter"', html)
         self.assertIn(
-            f'<option value="{owner_a.id}" selected>Owner Alpha</option>', html
+            f'value="{owner_a.id}" checked', html
         )
         self.assertIn(
-            f'<option value="{owner_b.id}" selected>Owner Beta</option>', html
+            f'value="{owner_b.id}" checked', html
         )
+        self.assertIn('owner-filter-checkbox', html)
+        self.assertIn('applyActivityFilterImmediately();', html)
+        self.assertNotIn('window.setTimeout(applyActivityFilterImmediately', html)
+        self.assertNotIn('Hold Ctrl/Cmd to select multiple', html)
+        self.assertNotIn('type="submit" class="btn btn-primary">Filter', html)
 
         summary_start = html.index('Activities by Owner')
         summary_end = html.index('</table>', summary_start)
@@ -462,7 +524,7 @@ class SalesActivitiesTests(unittest.TestCase):
                 status=SalesActivity.STATUS_COMPLETED, owner_id=self.admin_id,
             ),
             SalesActivity(
-                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                activity_type=SalesActivity.TYPE_CUSTOMER_VISIT,
                 source_type='Other', company='Cross-date Visit In Range',
                 activity_date=date(2026, 8, 9),
                 estimated_start_at=datetime(2026, 8, 9, 23, 0),
@@ -470,7 +532,7 @@ class SalesActivitiesTests(unittest.TestCase):
                 status=SalesActivity.STATUS_SCHEDULED, owner_id=self.admin_id,
             ),
             SalesActivity(
-                activity_type=SalesActivity.TYPE_ON_SITE_VISIT,
+                activity_type=SalesActivity.TYPE_CUSTOMER_VISIT,
                 source_type='Other', company='Visit Outside Range',
                 activity_date=date(2026, 8, 11),
                 estimated_start_at=datetime(2026, 8, 11, 9, 0),
@@ -482,7 +544,7 @@ class SalesActivitiesTests(unittest.TestCase):
         db.session.commit()
 
         visit_response = self.client.get(
-            '/sales-activities/?type=On-site+Visit&start_date=2026-08-10&end_date=2026-08-10'
+            '/sales-activities/?type=Out+of+Building+Visit&start_date=2026-08-10&end_date=2026-08-10'
         )
         self.assertEqual(visit_response.status_code, 200)
         self.assertIn(b'Cross-date Visit In Range', visit_response.data)
@@ -593,16 +655,28 @@ class SalesActivitiesTests(unittest.TestCase):
             status='Completed',
             owner_id=self.admin_id,
         )
+        legacy_visit = SalesActivity(
+            activity_type=SalesActivity.TYPE_CUSTOMER_VISIT,
+            source_type='Sales Leads',
+            sales_lead_id=lead.id,
+            company=lead.company,
+            activity_date=date(2026, 8, 1),
+            estimated_start_at=datetime(2026, 8, 1, 9, 0),
+            estimated_end_at=datetime(2026, 8, 1, 10, 0),
+            status='Scheduled',
+            owner_id=self.admin_id,
+        )
         task = Task(
-            content='Field Visit follow-up: Legacy Terminology Co',
+            content='Field Visit from Marketing Event follow-up: Legacy Terminology Co',
             due_date=date(2026, 8, 1),
             owner_id=self.admin_id,
             sales_lead_id=lead.id,
             company=lead.company,
         )
-        db.session.add_all([activity, task])
+        db.session.add_all([activity, legacy_visit, task])
         db.session.commit()
         activity_id = activity.id
+        legacy_visit_id = legacy_visit.id
         task_id = task.id
 
         db.session.execute(text(
@@ -613,6 +687,14 @@ class SalesActivitiesTests(unittest.TestCase):
             text('UPDATE sales_activities SET activity_type = :legacy_type WHERE id = :activity_id'),
             {'legacy_type': 'Online', 'activity_id': activity_id},
         )
+        db.session.execute(
+            text('UPDATE sales_activities SET activity_type = :legacy_type WHERE id = :activity_id'),
+            {'legacy_type': 'On-site Visit', 'activity_id': legacy_visit_id},
+        )
+        db.session.execute(
+            text('UPDATE sales_activities SET source_type = :legacy_source WHERE id = :activity_id'),
+            {'legacy_source': 'Marketing Event', 'activity_id': legacy_visit_id},
+        )
         db.session.commit()
 
         ensure_sales_activity_columns()
@@ -620,29 +702,65 @@ class SalesActivitiesTests(unittest.TestCase):
         db.session.expire_all()
 
         migrated = db.session.get(SalesActivity, activity_id)
+        migrated_visit = db.session.get(SalesActivity, legacy_visit_id)
         migrated_task = db.session.get(Task, task_id)
         self.assertEqual(migrated.activity_type, 'Remote Engagement')
         self.assertEqual(migrated.remote_engagement_subtype, 'Follow-up')
-        self.assertIn('On-site Visit follow-up', migrated_task.content)
+        self.assertEqual(migrated_visit.activity_type, 'Customer Visit')
+        self.assertEqual(migrated_visit.source_type, 'Event')
+        self.assertIn('Customer Visit from Event follow-up', migrated_task.content)
+
+    def test_event_source_is_available_and_legacy_requests_are_normalized(self):
+        lead = self._lead(company='Event Prospect')
+        lead.event = 'Cloud Expo'
+        db.session.commit()
+
+        event_search = self.client.get(
+            '/sales-activities/source-search?source_type=Event&q=Cloud%20Expo'
+        ).get_json()
+        legacy_search = self.client.get(
+            '/sales-activities/source-search?source_type=Marketing%20Event&q=Cloud%20Expo'
+        ).get_json()
+        self.assertIn('Event Prospect', [item['company'] for item in event_search['items']])
+        self.assertEqual(event_search, legacy_search)
+
+        response = self.client.post(
+            '/sales-activities/add',
+            data={
+                'activity_type': 'Remote Engagement',
+                'source_type': 'Marketing Event',
+                'company': 'Legacy Event Company',
+                'activity_date': '2026-08-04',
+                'followup_text': 'Legacy source request remains compatible.',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        activity = SalesActivity.query.filter_by(company='Legacy Event Company').one()
+        self.assertEqual(activity.source_type, 'Event')
+
+        page = self.client.get('/sales-activities/').get_data(as_text=True)
+        self.assertIn('>Event</th>', page)
+        self.assertIn('value="Event"', page)
+        self.assertNotIn('Marketing Event', page)
 
     def test_activity_status_and_deadline_indicators_are_time_based(self):
         lead = self._lead(company='Status Rules Co')
         future_visit = SalesActivity(
-            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            activity_type=SalesActivity.TYPE_CUSTOMER_VISIT, source_type='Sales Leads',
             sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 8, 6),
             estimated_start_at=datetime(2026, 8, 6, 12, 0),
             estimated_end_at=datetime(2026, 8, 6, 13, 0),
             status='Scheduled', owner_id=self.admin_id,
         )
         recently_ended_visit = SalesActivity(
-            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            activity_type=SalesActivity.TYPE_CUSTOMER_VISIT, source_type='Sales Leads',
             sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 7, 31),
             estimated_start_at=datetime(2026, 7, 31, 12, 0),
             estimated_end_at=datetime(2026, 7, 31, 13, 0),
             status='Scheduled', owner_id=self.admin_id,
         )
         overdue_visit = SalesActivity(
-            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            activity_type=SalesActivity.TYPE_CUSTOMER_VISIT, source_type='Sales Leads',
             sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 7, 31),
             estimated_start_at=datetime(2026, 7, 31, 8, 0),
             estimated_end_at=datetime(2026, 7, 31, 9, 0),
@@ -692,7 +810,7 @@ class SalesActivitiesTests(unittest.TestCase):
     def test_open_activity_can_be_rescheduled_and_linked_task_is_synchronised(self):
         lead = self._lead(company='Reschedule Co')
         self.client.post('/sales-activities/add', data={
-            'activity_type': 'On-site Visit', 'source_type': 'Sales Leads',
+            'activity_type': 'Customer Visit', 'source_type': 'Sales Leads',
             'sales_lead_id': str(lead.id), 'company': lead.company,
             'start_date': '2026-08-06', 'start_time': '10:00',
             'end_date': '2026-08-06', 'end_time': '11:00',
@@ -726,7 +844,7 @@ class SalesActivitiesTests(unittest.TestCase):
     def test_cancelling_activity_retains_history_and_cancels_linked_task(self):
         lead = self._lead(company='Cancelled Visit Co')
         self.client.post('/sales-activities/add', data={
-            'activity_type': 'On-site Visit', 'source_type': 'Sales Leads',
+            'activity_type': 'Customer Visit', 'source_type': 'Sales Leads',
             'sales_lead_id': str(lead.id), 'company': lead.company,
             'start_date': '2026-08-06', 'start_time': '10:00',
             'end_date': '2026-08-06', 'end_time': '11:00',
@@ -753,7 +871,7 @@ class SalesActivitiesTests(unittest.TestCase):
     def test_legacy_pending_status_is_migrated_to_scheduled(self):
         lead = self._lead(company='Legacy Status Co')
         activity = SalesActivity(
-            activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type='Sales Leads',
+            activity_type=SalesActivity.TYPE_CUSTOMER_VISIT, source_type='Sales Leads',
             sales_lead_id=lead.id, company=lead.company, activity_date=date(2026, 8, 6),
             estimated_start_at=datetime(2026, 8, 6, 10, 0),
             estimated_end_at=datetime(2026, 8, 6, 11, 0),
@@ -780,14 +898,20 @@ class SalesActivitiesTests(unittest.TestCase):
         english_html = english.get_data(as_text=True)
         for phrase in (
             'BITCRM User Guide',
-            'What Sales Activities means',
-            'Connections to other modules',
-            'On-site Visit',
+            'Getting started',
+            'Dashboard',
+            'Sales Leads',
+            'Pipeline',
+            'Sales Activities',
+            'Tasks',
+            'User Management',
+            'Login Logs &amp; Archive',
+            'Customer Visit',
+            'DC Site Visit',
             'Remote Engagement',
-            'Follow-up History',
-            'Tasks / To-do',
-            'Blue date circle + Today',
-            'Updated August 2026',
+            'Owner',
+            '20 records per page',
+            'Updated August 4, 2026',
         ):
             self.assertIn(phrase, english_html)
 
@@ -798,14 +922,19 @@ class SalesActivitiesTests(unittest.TestCase):
         chinese_html = chinese.get_data(as_text=True)
         for phrase in (
             'BITCRM 使用说明',
-            'Sales Activities（销售活动）是什么',
-            '与其他模块的关系',
-            '外勤拜访',
+            '快速开始',
+            'Dashboard（管理看板）',
+            'Sales Leads（潜在客户）',
+            'Pipeline（销售机会）',
+            'Sales Activities（销售活动）',
+            'Tasks（待办任务）',
+            '用户管理',
+            '登录日志和操作归档',
+            '客户拜访',
+            '数据中心参观',
             '远程沟通',
-            'Follow-up History（跟进历史）',
-            'Tasks / To-do（待办任务）',
-            '蓝色日期圆圈 + 今天',
-            '更新于2026年8月',
+            '20条',
+            '更新于2026年8月4日',
         ):
             self.assertIn(phrase, chinese_html)
 

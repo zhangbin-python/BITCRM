@@ -20,12 +20,13 @@ New labels will be introduced only where the current system has no equivalent:
 
 - `Sales Activities`
 - `Remote Engagement`
-- `On-site Visit`
+- `Customer Visit`
+- `DC Site Visit`
 - `Remote Engagement Subtype`
 - `Scheduled`, `Follow-up Required`, `Completed`, and `Cancelled`
 - `Due Today` and `Overdue` reminder indicators
 - `Existing Customer`
-- `Marketing Event`
+- `Event`
 - `Expected Result`
 - `Completion Notes`
 - `Address`
@@ -60,9 +61,9 @@ Each record will include the user, timestamp, action, subject, subject ID, detai
 
 The module will provide:
 
-- `All`, `Remote Engagement`, and `On-site Visit` quick filters.
+- `All`, `Customer Visit`, `DC Site Visit`, and `Remote Engagement` quick filters.
 - Inclusive start/end date filtering. Remote Engagement uses Activity Date;
-  On-site Visit uses schedule overlap so cross-date visits are not omitted.
+  Customer Visit and DC Site Visit use schedule overlap so cross-date visits are not omitted.
 - Owner filtering for administrators.
 - Summary statistics by source type.
 - An administrator-only per-owner summary with mutually exclusive `Scheduled`,
@@ -76,7 +77,7 @@ The module will provide:
 The table will display:
 
 - `Activity Date / Visit Date`.
-- Visit start/end time for `On-site Visit`.
+- Visit start/end time for `Customer Visit` and `DC Site Visit`.
 - `Type`.
 - `Remote Engagement Subtype` where applicable.
 - `Source Type`.
@@ -115,14 +116,16 @@ When `Source Type` is `Pipeline`:
 - Search results will include all non-deleted Pipeline records, including Deal Won and Deal Lost stages.
 - Contact, position, contact information, address, and activity details may be entered or adjusted manually for the activity.
 
-### Existing Customer, Marketing Event, and Other
+### Existing Customer, Event, and Other
 
-These sources may use a manually entered Company. Existing Customer and Marketing Event may also offer fuzzy suggestions from existing CRM data, but manual entry remains allowed.
+These sources may use a manually entered Company. Existing Customer and Event may also offer fuzzy suggestions from existing CRM data, but manual entry remains allowed.
 
-## 6. On-site Visit
+## 6. Scheduled Visits: Customer Visit and DC Site Visit
 
-An On-site Visit will support:
+Both scheduled visit types will support:
 
+- `Customer Visit`: our salesperson visits the customer office, project site, event site, or another external location.
+- `DC Site Visit`: the customer visits our Data Center for a tour, technical discussion, security review, or facility inspection.
 - Source type and linked CRM record where applicable.
 - Company.
 - Visit date.
@@ -133,7 +136,7 @@ An On-site Visit will support:
 - Expected Result.
 - Remarks.
 
-Creating an On-site Visit will create a `Scheduled` Sales Activity and a linked Task. Before the visit ends it remains `Scheduled`; immediately after the end time it displays `Follow-up Required`, and only becomes `Overdue` if feedback is still missing 24 hours after the estimated end time. The linked Task follows the same 24-hour grace period. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
+Creating a Customer Visit or DC Site Visit will create a `Scheduled` Sales Activity and a linked Task. Before the visit ends it remains `Scheduled`; immediately after the end time it displays `Follow-up Required`, and only becomes `Overdue` if feedback is still missing 24 hours after the estimated end time. The linked Task follows the same 24-hour grace period. For Sales Leads and Pipeline sources, the planned visit will also be appended to the relevant Follow-up History. For other sources, only the activity and Task will be linked.
 
 Open activities can be edited or rescheduled. Time, owner, contacts, address, activity details, and the linked Task deadline are kept synchronized. Completed and cancelled records remain immutable history. Cancelling an activity retains the record, cancellation reason, user, and time, and marks its linked Task `Cancelled`.
 
@@ -222,7 +225,7 @@ The implementation will add:
 - Pipeline soft-delete fields.
 - Optional structured old/new audit values on ActivityLog.
 
-The migration will be safe for the existing SQLite database and compatible with PostgreSQL. Historical Follow-up History will remain unchanged and will not be parsed.
+The migration will be safe for the existing SQLite database and compatible with PostgreSQL. Legacy activity names (`Online`, `Field Visit`, `On-site Visit`, and the interim `Out of Building Visit`) will be migrated to the current canonical names without losing linked records or generated history text. Historical Follow-up History will remain unchanged and will not be parsed.
 
 ## 14. Verification
 

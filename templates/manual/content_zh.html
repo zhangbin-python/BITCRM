@@ -1,244 +1,307 @@
 <div class="manual-layout">
-    <nav class="manual-nav" aria-label="使用说明目录">
+    <aside class="manual-nav">
         <h2>目录</h2>
         <ol>
-            <li><a href="#overview">先理解整体流程</a></li>
-            <li><a href="#sales-activities">销售活动是什么</a></li>
-            <li><a href="#create-activity">如何新建活动</a></li>
-            <li><a href="#status">状态与提醒</a></li>
-            <li><a href="#calendar-reporting">日历、筛选与统计</a></li>
-            <li><a href="#connections">与其他模块的关系</a></li>
-            <li><a href="#workflows">推荐工作方式</a></li>
-            <li><a href="#permissions-faq">权限与常见问题</a></li>
+            <li><a href="#getting-started">快速开始</a></li>
+            <li><a href="#dashboard">Dashboard 管理看板</a></li>
+            <li><a href="#sales-leads">Sales Leads 潜在客户</a></li>
+            <li><a href="#pipeline">Pipeline 销售机会</a></li>
+            <li><a href="#sales-activities">Sales Activities 销售活动</a></li>
+            <li><a href="#tasks">Tasks 待办任务</a></li>
+            <li><a href="#admin">用户管理</a></li>
+            <li><a href="#operation-archive">登录日志与操作归档</a></li>
+            <li><a href="#common-tools">通用功能</a></li>
+            <li><a href="#workflow">推荐业务流程</a></li>
+            <li><a href="#permissions">权限与可见范围</a></li>
+            <li><a href="#faq">常见问题</a></li>
         </ol>
-    </nav>
+    </aside>
 
     <main class="manual-content">
         <section class="manual-hero">
             <h1>BITCRM 使用说明</h1>
-            <p>以 Sales Activities（销售活动）为中心，帮助团队把客户沟通、拜访、后续任务和业务记录连成一个闭环。</p>
-            <p class="version">更新：2026年8月 · 中文版</p>
+            <p>面向销售、市场、运营和管理员的完整操作指南。</p>
+            <p>帮助大家理解每个模块记录什么、模块之间怎样关联，以及一项业务动作应该在哪里完成。</p>
+            <div class="version">完整中英文说明 · 更新于2026年8月4日</div>
         </section>
 
-        <section id="overview">
-            <h2>1. 先理解整体流程</h2>
-            <p class="lead">BITCRM 不只是保存客户名单。更重要的是记录“客户从哪里来、我们做了什么、下一步由谁在什么时候完成”。</p>
+        <section id="getting-started">
+            <h2>1. 快速开始</h2>
+            <p class="lead">BITCRM 把客户全过程连接起来：客户是谁、是否形成机会、我们与客户做了什么、下一步由谁在什么时候完成。</p>
             <div class="workflow">
                 <div class="workflow-step">Sales Leads<br>潜在客户</div>
                 <div class="workflow-step">Pipeline<br>销售机会</div>
                 <div class="workflow-step">Sales Activities<br>客户互动</div>
-                <div class="workflow-step">Follow-up / Tasks<br>反馈与待办</div>
+                <div class="workflow-step">Tasks<br>下一步行动</div>
                 <div class="workflow-step">Dashboard<br>管理汇总</div>
             </div>
-            <div class="info-box"><strong>最简单的理解：</strong>Sales Leads 和 Pipeline 说明“我们在跟谁、机会到了哪里”；Sales Activities 说明“我们实际做了什么”；Tasks 说明“下一步还要做什么”。</div>
+            <div class="info-box"><strong>最简单的理解：</strong>Sales Leads 和 Pipeline 说明“我们在跟谁、是什么机会”；Sales Activities 说明“我们实际与客户做了什么”；Tasks 说明“后面还有什么事情要完成”。</div>
+
+            <h3>1.1 第一次登录</h3>
+            <ul>
+                <li>使用管理员提供的用户名和初始密码登录。</li>
+                <li>进入右上角用户菜单，尽快修改初始密码。</li>
+                <li>使用 <strong>中文 / EN</strong> 切换界面语言，使用说明也会跟随切换。</li>
+                <li>左侧菜单会根据你的角色和数据权限显示可用模块。</li>
+            </ul>
+
+            <h3>1.2 录入数据前的基本原则</h3>
+            <ul>
+                <li>先搜索是否已有同一家公司，避免重复建立 Lead 或 Pipeline。</li>
+                <li>选择正确的 Owner。Owner 不只是负责人，也会影响数据可见范围。</li>
+                <li>已经发生的沟通写 Follow-up；未来要做的事情写 Next Steps / To-do。</li>
+                <li>业务上取消的事项使用 Cancel；只有确实不应继续出现在正常列表时才使用 Delete 归档。</li>
+            </ul>
+        </section>
+
+        <section id="dashboard">
+            <h2>2. Dashboard（管理看板）</h2>
+            <p>Dashboard 用于管理汇总，集中展示 Leads、Pipeline 金额、预测、阶段和 Owner 表现；详细客户资料仍应回到对应模块维护。</p>
+
+            <h3>2.1 主要指标</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>指标</th><th>含义</th><th>如何使用</th></tr></thead>
+                <tbody>
+                    <tr><td>Total Leads</td><td>当前权限和筛选范围内的潜在客户数量。</td><td>判断销售漏斗顶部是否有足够客户。</td></tr>
+                    <tr><td>Qualified Leads</td><td>已经确认合格的 Leads 数量。</td><td>检查有多少 Lead 已具备转为销售机会的条件。</td></tr>
+                    <tr><td>Pipeline #</td><td>当前可见销售机会数量。</td><td>需要结合金额和阶段一起分析，不能只看数量。</td></tr>
+                    <tr><td>TCV / Revenue</td><td>根据 Pipeline 金额和合同信息计算的商业价值。</td><td>要保证 Pipeline 金额、合同年限和日期填写准确。</td></tr>
+                    <tr><td>Current / Next QTR Revenue</td><td>按季度展示的收入预测。</td><td>客户计划变化时要及时更新预计签约和开通日期。</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>2.2 Pipeline 看板与 Sales by Owner</h3>
+            <ul>
+                <li>Pipeline Kanban 按阶段展示机会，只有业务阶段确实变化时才移动卡片。</li>
+                <li>Sales by Owner 用于比较不同负责人的 Pipeline 结果。</li>
+                <li>Dashboard 的 Owner 选择可能保存在当前浏览器中，需要查看全部时请使用对应的清除或重置功能。</li>
+                <li>如果 Dashboard 数字看起来不对，先检查 Pipeline 的状态、金额、合同年限、签约日期、开通日期、Owner 和当前筛选。</li>
+            </ul>
+        </section>
+
+        <section id="sales-leads">
+            <h2>3. Sales Leads（潜在客户）</h2>
+            <p>Sales Leads 用来管理还没有形成明确销售机会的客户。Lead 内容应足以让其他同事看懂客户是谁、从哪里来、有什么需求、谁负责以及最近进展。</p>
+
+            <h3>3.1 新建和维护 Lead</h3>
+            <ul>
+                <li>填写公司、联系人、Lead Source、Lead Status、Requirements 和 Owner。</li>
+                <li>少量字段变化可用 Quick Edit；多个关联字段需要一起检查时使用完整编辑页面。</li>
+                <li>已经发生的电话、邮件或会议结果写入 Follow-up Notes。</li>
+                <li>未来要完成的事情写入 Next Steps / To-do 并填写到期日，系统会同步创建 Remote Engagement 和 Task。</li>
+                <li>Lead 更新为 <strong>Qualified</strong> 后，系统会按规则创建或关联对应的 Pipeline。</li>
+            </ul>
+
+            <h3>3.2 查找和检查 Leads</h3>
+            <ul>
+                <li>可以按 Company、Status、Source、Owner 筛选；需要检查通常隐藏的记录时使用 Show All。</li>
+                <li>顶部汇总卡片会跟随当前权限和筛选范围变化。</li>
+                <li>Column Settings 只控制显示哪些列，不会删除字段或数据。</li>
+                <li>Follow-up History 是客户沟通的时间线。建议写清结果和下一步，不要只写“已联系客户”。</li>
+            </ul>
+
+            <h3>3.3 导入、导出和归档</h3>
+            <ul>
+                <li>批量导入前先下载当前 Import Template，不要修改必填表头。</li>
+                <li>导入后检查 Owner、状态、来源以及是否产生重复公司。</li>
+                <li>Export 适合离线检查，但不能代替在 CRM 中维护正式数据。</li>
+                <li>Delete 会将 Lead 从正常列表归档并保留审计快照，不是无痕彻底删除。</li>
+            </ul>
+        </section>
+
+        <section id="pipeline">
+            <h2>4. Pipeline（销售机会）</h2>
+            <p>Pipeline 用于管理已经确认的销售机会，包括服务、商业金额、成功概率、预计时间、阶段、支持人员、卡点和跟进历史。</p>
+
+            <h3>4.1 重要字段</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>字段组</th><th>业务用途</th></tr></thead>
+                <tbody>
+                    <tr><td>Company / Contact / Service</td><td>说明是哪一个机会，以及客户可能购买什么。</td></tr>
+                    <tr><td>MRC、OTC、合同年限、TCV</td><td>构成汇总和预测使用的商业价值。</td></tr>
+                    <tr><td>Estimated Signing / Activation</td><td>决定预计收入归入哪个时间段。</td></tr>
+                    <tr><td>Stage / Level / Win Probability</td><td>分别表示成熟度、优先级和成功信心，三者应保持逻辑一致。</td></tr>
+                    <tr><td>Owner / Support Team</td><td>明确主负责人，并赋予支持成员对应机会的访问范围。</td></tr>
+                    <tr><td>Current Stuckpoint</td><td>说明当前阻碍机会推进的主要问题。</td></tr>
+                    <tr><td>Follow-up History / Comments</td><td>保留客户反馈、决定和业务上下文。</td></tr>
+                </tbody>
+            </table></div>
+
+            <h3>4.2 日常维护机会</h3>
+            <ul>
+                <li>可按 Company、Signing Quarter、Activation Quarter、Stage、Level、Owner 筛选。</li>
+                <li>需要检查 Deal Lost 或通常隐藏的历史阶段时使用 Show All。</li>
+                <li>在 Dashboard Kanban 拖动卡片会改变业务阶段，操作前应先确认真实客户情况。</li>
+                <li>已完成沟通写 Follow-up；未来行动写 Next Steps / To-do。</li>
+                <li>日期、金额、概率或卡点发生变化时及时更新，保证 Dashboard 预测有参考价值。</li>
+                <li>可使用 Import、Export、排序和 Column Settings 进行批量工作和检查。</li>
+            </ul>
         </section>
 
         <section id="sales-activities">
-            <h2>2. Sales Activities（销售活动）是什么</h2>
-            <p>Sales Activities 用来统一管理销售人员与客户发生的实际互动。它不是普通备注，而是一条有负责人、客户来源、日期、状态和后续动作的业务记录。</p>
+            <h2>5. Sales Activities（销售活动）</h2>
+            <p>Sales Activities 是客户互动的执行记录。每条活动都有类型、来源、公司、Owner、日期或时间段、状态，并可能关联一个 Task。</p>
 
-            <h3>2.1 两种活动类型</h3>
+            <h3>5.1 三种活动类型</h3>
             <div class="table-wrap"><table>
-                <thead><tr><th>类型</th><th>适合记录什么</th><th>日期规则</th><th>完成方式</th></tr></thead>
+                <thead><tr><th>类型</th><th>什么情况下使用</th><th>时间与完成规则</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>On-site Visit<br>外勤拜访</strong></td><td>到客户办公室、项目现场、活动现场进行面对面会议或勘察。</td><td>填写开始日期时间和结束日期时间；不再重复填写单独的活动日期。</td><td>拜访结束后，在 Sales Activities 中填写拜访反馈。</td></tr>
-                    <tr><td><strong>Remote Engagement<br>远程沟通</strong></td><td>邮件、电话、线上会议、即时通讯，以及不需要到现场的客户沟通。</td><td>使用 Activity Date；如果填写 Next Steps / To-do，还必须填写到期日期。</td><td>沟通记录可立即完成；待办事项通过关联的 Task 完成。</td></tr>
+                    <tr><td><strong>Customer Visit<br>客户拜访</strong></td><td>销售人员离开办公室，到客户办公室、项目现场、活动地点或其他外部地点拜访。</td><td>填写开始和结束日期时间；拜访结束后在 Sales Activities 中填写反馈。</td></tr>
+                    <tr><td><strong>DC Site Visit<br>数据中心参观</strong></td><td>客户来到我们的 Data Center，进行机房参观、技术交流、安全评估或设施检查。</td><td>填写接待时间、Data Center 地址、来访人员、目的和预期结果；在 Sales Activities 中完成反馈。</td></tr>
+                    <tr><td><strong>Remote Engagement<br>远程沟通</strong></td><td>邮件、电话、线上会议、即时通讯，以及不需要线下见面的其他客户沟通。</td><td>使用 Activity Date；已完成沟通可写 Follow-up，未来行动通过 Next Steps / To-do 生成关联 Task。</td></tr>
                 </tbody>
             </table></div>
+            <div class="info-box"><strong>DC Site Visit 不属于客户拜访：</strong>它表示客户来到我们的 Data Center。请写清机房地点和客户来访人员，方便接待、技术、安全和后续工作协同。</div>
 
-            <h3>2.2 一条活动应回答哪些问题</h3>
-            <ul>
-                <li><strong>谁负责：</strong>Owner。</li>
-                <li><strong>客户从哪里来：</strong>Sales Leads、Pipeline、Existing Customer、Marketing Event 或 Other。</li>
-                <li><strong>什么时候发生：</strong>远程沟通日期，或外勤拜访的开始与结束时间。</li>
-                <li><strong>联系了谁：</strong>联系人、职位和联系方式，可添加多位联系人。</li>
-                <li><strong>为什么做：</strong>Purpose / Project 与 Expected Result。</li>
-                <li><strong>结果和下一步：</strong>Follow-up Notes、Completion Notes、Next Steps / To-do。</li>
-            </ul>
-        </section>
-
-        <section id="create-activity">
-            <h2>3. 如何新建销售活动</h2>
+            <h3>5.2 新建销售活动</h3>
             <div class="step-list">
-                <div class="step"><span class="step-number">1</span><div>进入左侧菜单 <strong>Sales Activities</strong>，点击 <strong>Add Sales Activity</strong>。</div></div>
-                <div class="step"><span class="step-number">2</span><div>选择 <strong>On-site Visit</strong> 或 <strong>Remote Engagement</strong>。</div></div>
-                <div class="step"><span class="step-number">3</span><div>选择 Source Type，并搜索或填写公司。选择 Sales Leads / Pipeline 时，必须从系统搜索结果中选择，不能只手工输入名称。</div></div>
-                <div class="step"><span class="step-number">4</span><div>填写日期、联系人、目的、预期结果和备注。外勤拜访要完整填写开始和结束时间。</div></div>
-                <div class="step"><span class="step-number">5</span><div>远程沟通至少填写一项：已完成的 <strong>Follow-up Notes</strong>，或未来要完成的 <strong>Next Steps / To-do</strong>。</div></div>
-                <div class="step"><span class="step-number">6</span><div>保存后检查 Activity List 和日历。如果创建了待办，系统也会同步生成 Task。</div></div>
+                <div class="step"><span class="step-number">1</span><div>点击 <strong>Add Sales Activity</strong>，选择三种活动类型之一。</div></div>
+                <div class="step"><span class="step-number">2</span><div>选择 Source Type。来源为 Sales Leads 或 Pipeline 时，必须从有权限的搜索结果中选择记录，不能只手工输入公司名。</div></div>
+                <div class="step"><span class="step-number">3</span><div>填写活动日期或开始/结束时间、联系人、Purpose / Project、Expected Result 和 Remarks。</div></div>
+                <div class="step"><span class="step-number">4</span><div>Remote Engagement 可填写已完成的 Follow-up Notes、未来的 Next Steps / To-do，或两者同时填写；To-do 必须有到期日。</div></div>
+                <div class="step"><span class="step-number">5</span><div>保存后检查 Activity List。两种 Visit 和 Remote To-do 都会自动创建关联 Task。</div></div>
             </div>
 
-            <h3>3.1 Source Type 应该怎么选</h3>
+            <h3>5.3 状态和提醒逻辑</h3>
             <div class="table-wrap"><table>
-                <thead><tr><th>来源</th><th>什么时候使用</th><th>系统关联</th></tr></thead>
+                <thead><tr><th>显示</th><th>含义</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>Sales Leads</strong></td><td>客户仍处于潜在客户阶段。</td><td>必须选择系统中的 Lead；活动和反馈会关联到该 Lead。</td></tr>
-                    <tr><td><strong>Pipeline</strong></td><td>客户已经是明确的销售机会。</td><td>必须选择系统中的 Pipeline；活动和反馈会关联到该机会。</td></tr>
-                    <tr><td><strong>Existing Customer</strong></td><td>与已成交或已开通客户进行续约、维护或新需求沟通。</td><td>系统会提供 Deal Won / Activated 客户建议，也允许按实际情况填写公司。</td></tr>
-                    <tr><td><strong>Marketing Event</strong></td><td>展会、研讨会、市场活动中的客户互动。</td><td>系统会从带 Event 信息的 Leads 中提供建议。</td></tr>
-                    <tr><td><strong>Other</strong></td><td>不属于以上类型的客户或合作方互动。</td><td>公司名称可以手工填写。</td></tr>
+                    <tr><td><span class="badge badge-blue">Scheduled</span></td><td>活动已经安排，还没有到需要反馈或处理的时间。</td></tr>
+                    <tr><td><span class="badge badge-yellow">Follow-up Required</span></td><td>Visit 已经结束但还没有填写反馈，或 Remote To-do 已经到期。</td></tr>
+                    <tr><td><span class="badge badge-yellow">Due Today</span></td><td>Remote To-do 今天到期的详细提醒；在汇总表中计入 Follow-up Required。</td></tr>
+                    <tr><td><span class="badge badge-red">Overdue</span></td><td>Remote To-do 已超过到期日，或 Visit 结束超过24小时仍未填写反馈；汇总时计入 Follow-up Required。</td></tr>
+                    <tr><td><span class="badge badge-green">Completed</span></td><td>已经记录实际结果或要求的完成反馈。</td></tr>
+                    <tr><td><span class="badge badge-gray">Cancelled</span></td><td>活动已填写原因并取消，记录仍保留用于追溯。</td></tr>
                 </tbody>
             </table></div>
-            <div class="warning-box"><strong>避免重复客户：</strong>如果客户已经存在于 Sales Leads 或 Pipeline，请优先选择对应来源并从搜索结果中选中，这样后续反馈才能正确同步。</div>
+            <div class="warning-box"><strong>Visit 规则：</strong>Customer Visit 和 DC Site Visit 都会在结束时间到达后立即显示 Follow-up Required；只有结束超过24小时仍未反馈时才显示 Overdue。</div>
+
+            <h3>5.4 筛选、日历、汇总和列表</h3>
+            <ul>
+                <li><strong>Type：</strong>All、Customer Visit、DC Site Visit、Remote Engagement。</li>
+                <li><strong>Date Range：</strong>Remote Engagement 按 Activity Date 筛选；Visit 只要开始/结束时间段与所选范围有任何重叠就会显示，包括跨日活动。</li>
+                <li><strong>Owner：</strong>管理员使用一个下拉框，在里面勾选一个或多个 Owner。每次勾选都会自动生效，不需要再点击 Filter；选择 All Owners 会清除具体 Owner。</li>
+                <li><strong>Calendar：</strong>绿色表示计划中或已完成，黄色表示需要跟进或今日到期，红色表示逾期，灰色表示取消或历史。<strong>蓝色日期圆圈 + 今天</strong>只标记当前日期，不覆盖原状态背景；也可选择多个日历日期。</li>
+                <li><strong>Activities by Owner：</strong>按 Scheduled、Follow-up Required、Completed、Cancelled 和 Total 汇总。Due Today 与 Overdue 均包含在 Follow-up Required 中。</li>
+                <li><strong>Source Type by Owner：</strong>按 Sales Leads、Pipeline、Existing Customer、Event、Other 和 Total 汇总。</li>
+                <li><strong>Activity List：</strong>每页20条，翻页时保留当前筛选条件。</li>
+            </ul>
+
+            <h3>5.5 修改、完成、取消和归档</h3>
+            <ul>
+                <li>客户更改时间时，可对未完成活动使用 Edit / Reschedule；关联 Task 的日期、Owner、公司和内容会同步更新。</li>
+                <li>Visit 必须回到 Sales Activities 填写有意义的反馈，不能只在 Tasks 中勾选完成。</li>
+                <li>Remote To-do 在 Tasks 中填写必填的 Completion Notes 后完成，Sales Activity 会自动同步。</li>
+                <li>Cancel 会保留活动和取消原因；Delete 会将活动及关联 Task 从正常列表归档。</li>
+                <li>来源为 Sales Leads 或 Pipeline 时，计划和反馈会写入 Follow-up History，并按关联关系同步到对应 Lead / Pipeline。</li>
+            </ul>
         </section>
 
-        <section id="status">
-            <h2>4. 状态与提醒</h2>
-            <p>列表中的状态分为“业务状态”和“时间提醒”。因此一条待跟进活动还可能同时显示 Due Today 或 Overdue。</p>
+        <section id="tasks">
+            <h2>6. Tasks（待办任务）</h2>
+            <p>Tasks 是日常执行清单，既包括手工新建任务，也包括 Sales Activities 自动生成的任务。</p>
+
+            <h3>6.1 分组和操作</h3>
+            <ul>
+                <li><strong>Overdue：</strong>超过业务截止时间仍未完成的工作。</li>
+                <li><strong>In Progress：</strong>正在处理且尚未完成或取消的工作。</li>
+                <li><strong>Completed：</strong>已经填写 Completion Notes 和完成信息的工作。</li>
+                <li><strong>Cancelled：</strong>明确停止执行的工作。</li>
+                <li>可使用 Owner 筛选聚焦任务；非管理员只能看到自己的 Tasks。</li>
+                <li>完成时必须填写 Completion Notes，让其他人知道实际结果。</li>
+                <li>只有确实需要继续工作时才 Reopen 已完成或已取消任务。</li>
+            </ul>
+
+            <h3>6.2 关联 Task 的处理规则</h3>
             <div class="table-wrap"><table>
-                <thead><tr><th>显示</th><th>代表什么</th><th>建议动作</th></tr></thead>
+                <thead><tr><th>Task 来源</th><th>应该在哪里完成或修改</th></tr></thead>
                 <tbody>
-                    <tr><td><span class="badge badge-blue">Scheduled</span></td><td>活动尚未到需要反馈或处理的时间。</td><td>按计划执行；如客户改期，使用 Edit / Reschedule 修改。</td></tr>
-                    <tr><td><span class="badge badge-yellow">Follow-up Required</span></td><td>活动已经到了需要填写反馈或完成下一步的阶段。</td><td>尽快填写拜访结果，或处理关联 Task。</td></tr>
-                    <tr><td><span class="badge badge-yellow">Due Today</span></td><td>远程 To-do 今天到期。它同时属于 Follow-up Required。</td><td>今天完成并填写完成说明。</td></tr>
-                    <tr><td><span class="badge badge-red">Overdue</span></td><td>远程 To-do 已过到期日，或外勤拜访结束超过24小时仍未填写反馈。</td><td>优先处理，并补充真实反馈。</td></tr>
-                    <tr><td><span class="badge badge-green">Completed</span></td><td>活动已经完成并保存结果。</td><td>如有下一步，继续建立 To-do。</td></tr>
-                    <tr><td><span class="badge badge-gray">Cancelled</span></td><td>活动取消，取消原因会保留。</td><td>如需重新安排，建议新建或在取消前改期。</td></tr>
+                    <tr><td>手工 Task</td><td>直接在 Tasks 中管理。</td></tr>
+                    <tr><td>Remote Engagement — Next Steps / To-do</td><td>在 Tasks 中填写 Completion Notes 完成，Sales Activity 自动同步。</td></tr>
+                    <tr><td>Customer Visit 或 DC Site Visit</td><td>在 Sales Activities 中填写 Visit 反馈，关联 Task 自动完成。</td></tr>
                 </tbody>
             </table></div>
-
-            <h3>4.1 外勤拜访的时间规则</h3>
-            <ul>
-                <li>结束时间之前：<strong>Scheduled</strong>。</li>
-                <li>到达结束时间：<strong>Follow-up Required</strong>。</li>
-                <li>结束超过24小时仍未反馈：<strong>Follow-up Required + Overdue</strong>。</li>
-                <li>填写反馈后：<strong>Completed</strong>，关联 Task 也会完成。</li>
-            </ul>
-
-            <h3>4.2 为什么统计表没有单独的 Due Today 和 Overdue</h3>
-            <p>在 Activity List 中，它们会作为详细提醒单独显示；但在 Activities by Owner 汇总中，Due Today 和 Overdue 都计入 Follow-up Required。这样可以保证：</p>
-            <div class="success-box"><strong>Scheduled + Follow-up Required + Completed + Cancelled = Total</strong>，每条活动只在业务汇总中计算一次。</div>
+            <div class="warning-box">与 Sales Activity 关联的 Task 不能被单独修改或删除到破坏关联关系。改期、取消或填写 Visit 反馈时，请回到 Sales Activities 操作。</div>
         </section>
 
-        <section id="calendar-reporting">
-            <h2>5. 日历、筛选与统计</h2>
-
-            <h3>5.1 顶部筛选</h3>
+        <section id="admin">
+            <h2>7. Admin / User Management（用户管理）</h2>
+            <p>用户管理仅管理员可用，用于管理登录账号、角色、启用状态和密码重置。</p>
             <ul>
-                <li><strong>Type：</strong>All、On-site Visit、Remote Engagement。</li>
-                <li><strong>Date Range：</strong>远程沟通按 Activity Date 筛选；跨日外勤拜访只要与日期范围有重叠就会被找到。</li>
-                <li><strong>Owner：</strong>管理员可按住 Ctrl / Cmd 多选负责人，再点击 Filter；不选择代表 All Owners。</li>
-                <li><strong>普通用户：</strong>不显示 Owner 筛选，只能查看自己的活动。</li>
+                <li>新建用户时填写唯一用户名、需要时填写邮箱、选择角色并设置初始密码。</li>
+                <li>按照真实工作职责选择角色，不要只是为了绕过数据权限而赋予 Admin。</li>
+                <li>人员不再使用系统时可以停用账号，历史 Owner 和业务记录仍会保留。</li>
+                <li>用户无法登录时可由管理员 Reset Password，并要求用户登录后修改临时密码。</li>
+                <li>不要为了报表好看而删除或替换历史 Owner；保留真实负责人有助于审计和责任追踪。</li>
             </ul>
+        </section>
 
-            <h3>5.2 日历颜色怎么理解</h3>
+        <section id="operation-archive">
+            <h2>8. Login Logs 与 Operation Archive（登录日志和操作归档）</h2>
+            <p>该区域仅管理员可用，用于追踪访问和重要操作。它是审计页面，不是修改客户业务数据的页面。</p>
+            <ul>
+                <li>可按 Keyword、Action Type、Username、Start Date、End Date 筛选。</li>
+                <li>常见记录包括登录、新建、修改、跟进、完成、取消和归档/删除。</li>
+                <li>需要确认“谁在什么时候改了什么”时先查日志，再回到来源模块核对当前业务记录。</li>
+                <li>归档快照可以帮助调查已删除记录，同时保持日常列表整洁。</li>
+            </ul>
+        </section>
+
+        <section id="common-tools">
+            <h2>9. 通用功能</h2>
             <div class="table-wrap"><table>
-                <thead><tr><th>标识</th><th>含义</th></tr></thead>
+                <thead><tr><th>功能</th><th>正确使用方式</th></tr></thead>
                 <tbody>
-                    <tr><td><span class="badge badge-green">绿色背景</span></td><td>该日存在 Scheduled 或 Completed 活动。</td></tr>
-                    <tr><td><span class="badge badge-yellow">黄色背景</span></td><td>该日存在 Follow-up Required 或 Due Today。</td></tr>
-                    <tr><td><span class="badge badge-red">红色背景</span></td><td>该日存在 Overdue 活动。</td></tr>
-                    <tr><td><span class="badge badge-gray">灰色背景</span></td><td>该日活动全部取消，或属于不再需要突出处理的历史日期。</td></tr>
-                    <tr><td><span class="badge badge-blue">蓝色日期圆圈 + 今天</span></td><td>表示今天，不会覆盖原来的状态背景色。</td></tr>
-                    <tr><td>紫色外框</td><td>表示你点击选中的日历日期，可选择多个日期进行筛选。</td></tr>
+                    <tr><td>中文 / EN</td><td>切换界面和使用说明语言，不会自动翻译用户录入的客户内容。</td></tr>
+                    <tr><td>Filters / Clear Filters</td><td>筛选用于缩小当前范围；Clear Filters 返回模块默认视图。</td></tr>
+                    <tr><td>Owner 多选</td><td>选择一个或多个负责人；Sales Activities 的复选下拉框勾选后立即生效。</td></tr>
+                    <tr><td>Column Settings</td><td>只控制显示或隐藏列，不会删除字段。</td></tr>
+                    <tr><td>Import Template / Import</td><td>使用最新模板、保持表头不变，并在导入后检查结果。</td></tr>
+                    <tr><td>Export</td><td>生成离线检查文件，正式数据仍应继续在 CRM 中维护。</td></tr>
+                    <tr><td>Change Password</td><td>使用个人私密密码，并及时修改临时密码。</td></tr>
+                    <tr><td>Cancel 与 Delete</td><td>Cancel 记录业务取消；Delete 将错误或不需要的记录从正常列表归档。</td></tr>
                 </tbody>
             </table></div>
-
-            <h3>5.3 两张汇总表</h3>
-            <ul>
-                <li><strong>Activities by Owner：</strong>按 Scheduled、Follow-up Required、Completed、Cancelled 汇总。普通用户只看到自己，管理员可看到筛选范围内的所有人。</li>
-                <li><strong>Source Type by Owner：</strong>按 Sales Leads、Pipeline、Existing Customer、Marketing Event、Other 汇总活动来源。</li>
-                <li><strong>Total：</strong>统一放在最后一列，并使用不同背景帮助识别。</li>
-            </ul>
-
-            <h3>5.4 Activity List</h3>
-            <p>活动列表每页显示20条。分页会保留当前的类型、日期、Owner 和日历日期筛选。未完成、未取消的活动可以修改或改期；取消需要填写原因；删除会归档记录及关联 Task，而不是无痕删除。</p>
         </section>
 
-        <section id="connections">
-            <h2>6. 与其他模块的关系</h2>
-
-            <h3>6.1 Sales Leads（潜在客户）</h3>
-            <p>Sales Leads 用来管理尚未形成明确机会的客户。选择 Sales Leads 作为活动来源后：</p>
-            <ul>
-                <li>只能从你有权限查看的 Lead 中选择。</li>
-                <li>远程 Follow-up、To-do、外勤拜访计划和拜访反馈会写入 Follow-up History。</li>
-                <li>如果 Lead 已关联 Pipeline，相关记录会同时同步到对应 Pipeline。</li>
-            </ul>
-
-            <h3>6.2 Pipeline（销售机会）</h3>
-            <p>Pipeline 用来管理已经明确的机会、阶段、金额、预计签约及开通时间。选择 Pipeline 作为活动来源后：</p>
-            <ul>
-                <li>活动会与具体机会关联，便于在沟通记录中保留业务上下文。</li>
-                <li>完成反馈时可更新 Stuckpoint；界面提供时也可同步调整 Stage。</li>
-                <li>Owner 或 Support 成员只能选择自己有权限的 Pipeline；管理员可选择全部。</li>
-                <li>如 Pipeline 来源于 Lead，反馈也会同步回该 Lead。</li>
-            </ul>
-
-            <h3>6.3 Existing Customer、Marketing Event 与 Other</h3>
-            <p>这三项主要是活动来源分类：</p>
-            <ul>
-                <li><strong>Existing Customer：</strong>用于已成交/已开通客户的维护、续约和追加需求。目前它是来源分类，不是单独的客户主数据模块。</li>
-                <li><strong>Marketing Event：</strong>用于展会或活动产生的互动，可搜索已有 Event Leads。</li>
-                <li><strong>Other：</strong>用于合作伙伴、临时项目或无法归入其他来源的对象。</li>
-            </ul>
-
-            <h3>6.4 Follow-up History（跟进历史）</h3>
-            <p>Follow-up History 是客户和机会上的长期沟通轨迹，主要用于回顾“之前发生过什么”。它与 Sales Activities 的区别是：</p>
-            <div class="table-wrap"><table>
-                <thead><tr><th>Sales Activities</th><th>Follow-up History</th></tr></thead>
-                <tbody><tr><td>可按Owner、日期、状态和来源统计；可以改期、完成、取消。</td><td>按时间追加到 Lead / Pipeline，用于查看历史上下文，不作为独立待办。</td></tr></tbody>
-            </table></div>
-
-            <h3>6.5 Tasks / To-do（待办任务）</h3>
-            <ul>
-                <li>Remote Engagement 中填写 Next Steps / To-do，会创建一条待处理 Sales Activity 和一个关联 Task。</li>
-                <li>On-site Visit 保存后，也会自动创建一个关联 Task，到期日为拜访结束日期。</li>
-                <li>Remote To-do 应在 Tasks 中完成，并填写 Completion Notes；完成后 Sales Activity 自动同步为 Completed。</li>
-                <li>On-site Visit 必须在 Sales Activities 中填写拜访反馈，系统再同步完成关联 Task。</li>
-                <li>改期会同步 Task 的日期、Owner 或内容；取消活动会同步取消尚未完成的 Task。</li>
-            </ul>
-
-            <h3>6.6 Dashboard（管理看板）</h3>
-            <p>Dashboard 主要展示 Leads、Pipeline、金额和阶段等整体经营指标。Sales Activities 的执行情况目前以本模块自己的日历、Activities by Owner 和 Source Type by Owner 为主要查看入口。</p>
-        </section>
-
-        <section id="workflows">
-            <h2>7. 推荐工作方式</h2>
-
-            <div class="example-card">
-                <h4>示例一：安排一次外勤拜访</h4>
-                <ol>
-                    <li>选择 Sales Leads 或 Pipeline，并从搜索结果中选择客户。</li>
-                    <li>填写拜访开始/结束时间、地址、联系人、目的和预期结果。</li>
-                    <li>客户改期时，点击 Edit / Reschedule 修改，关联 Task 会同步。</li>
-                    <li>拜访结束后及时填写反馈；如果还有动作，创建 Next Steps / To-do。</li>
-                    <li>不要等到24小时后变成 Overdue 才补记录。</li>
-                </ol>
+        <section id="workflow">
+            <h2>10. 推荐的端到端业务流程</h2>
+            <div class="step-list">
+                <div class="step"><span class="step-number">1</span><div>新建或导入 Sales Lead，确认来源、Owner、联系人和需求。</div></div>
+                <div class="step"><span class="step-number">2</span><div>每次电话、邮件或会议结束后记录 Follow-up；需要未来行动时增加有日期的 Next Steps / To-do。</div></div>
+                <div class="step"><span class="step-number">3</span><div>Lead 合格后维护 Pipeline 的金额、阶段、概率、预计时间和卡点。</div></div>
+                <div class="step"><span class="step-number">4</span><div>我们去客户现场使用 Customer Visit；客户来我们的 Data Center 使用 DC Site Visit；邮件、电话和线上会议使用 Remote Engagement。</div></div>
+                <div class="step"><span class="step-number">5</span><div>Task 完成时填写真实结果，Visit 结束后及时填写反馈，保证 Follow-up History 连续。</div></div>
+                <div class="step"><span class="step-number">6</span><div>定期检查 Dashboard、Activities by Owner、Overdue 工作和 Pipeline Stuckpoint。</div></div>
             </div>
-
-            <div class="example-card">
-                <h4>示例二：记录线上会议和下一步</h4>
-                <ol>
-                    <li>选择 Remote Engagement。</li>
-                    <li>在 Follow-up Notes 写清楚已经沟通和确认的内容。</li>
-                    <li>在 Next Steps / To-do 写清楚下一动作和到期日期，例如“8月7日前发送修订报价”。</li>
-                    <li>保存后系统会生成一条 Completed 的沟通记录，以及一条 Scheduled 的待办和关联 Task。</li>
-                    <li>完成任务时填写实际结果，而不是只把状态点成完成。</li>
-                </ol>
-            </div>
-
-            <div class="success-box"><strong>推荐原则：</strong>已发生的沟通写 Follow-up；未来要做的事情写 Next Steps / To-do；需要到客户现场的安排写 On-site Visit。</div>
+            <div class="success-box"><strong>好的记录示例：</strong>“客户安全团队已确认 DC 接入方案；8月7日前发送修订报价，负责人 Alex。”这句话包含结果、下一步、截止时间和责任人。</div>
         </section>
 
-        <section id="permissions-faq">
-            <h2>8. 权限与常见问题</h2>
-            <h3>8.1 权限</h3>
+        <section id="permissions">
+            <h2>11. 权限与可见范围</h2>
             <div class="table-wrap"><table>
-                <thead><tr><th>用户</th><th>可以看到什么</th><th>Owner 能力</th></tr></thead>
+                <thead><tr><th>角色</th><th>Sales Leads</th><th>Pipeline</th><th>Activities / Tasks</th><th>Admin 与日志</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>管理员</strong></td><td>全部销售活动，可按一个或多个 Owner 筛选。</td><td>新建或改期时可以指定 Owner。</td></tr>
-                    <tr><td><strong>非管理员</strong></td><td>只看到自己的活动、日历和汇总。</td><td>Owner 固定为本人，无法通过 URL 查看其他人的数据。</td></tr>
+                    <tr><td><strong>Administrator</strong></td><td>全部可见记录</td><td>全部机会</td><td>全部 Owner，可多选筛选</td><td>可使用</td></tr>
+                    <tr><td><strong>Marketing</strong></td><td>配置业务范围内的全部 Leads</td><td>按 Owner / Support 规则允许访问的机会</td><td>自己的记录</td><td>不可使用</td></tr>
+                    <tr><td><strong>Sales</strong></td><td>自己的 Leads，以及可供跟进的 Marketing Owner Leads</td><td>自己负责或自己属于 Support Team 的机会</td><td>自己的记录</td><td>不可使用</td></tr>
                 </tbody>
             </table></div>
-
-            <div class="faq"><strong>为什么 Remote To-do 没有 Follow-up 按钮？</strong>因为它和 Task 是同一件待办，应在 Tasks 中完成，避免两个地方重复操作造成状态不一致。</div>
-            <div class="faq"><strong>客户时间变了怎么办？</strong>只要活动还没有 Completed 或 Cancelled，就可以使用 Edit / Reschedule 修改日期、时间、Owner 和相关内容。</div>
-            <div class="faq"><strong>跨天拜访会不会被日期筛选漏掉？</strong>不会。只要拜访时间段与筛选日期范围有重叠，就会被包含。</div>
-            <div class="faq"><strong>Cancel 和 Delete 有什么区别？</strong>Cancel 表示业务上取消，活动仍保留并显示取消原因；Delete 表示从正常列表归档，同时归档关联 Task。</div>
-            <div class="faq"><strong>为什么普通用户 Activities by Owner 只有一行？</strong>因为普通用户只能查看自己的活动；管理员才会看到多个 Owner。</div>
+            <div class="info-box">权限由后端服务器强制检查，不只是隐藏按钮。手工修改 URL 也不能获得其他用户受限数据的访问权限。</div>
         </section>
 
-        <footer class="manual-footer">BITCRM 使用说明 · 更新于2026年8月</footer>
+        <section id="faq">
+            <h2>12. 常见问题</h2>
+            <div class="faq"><strong>三种活动类型应该怎么选？</strong>我方人员离开办公室去客户或项目现场，选择 Customer Visit；客户来到我们的 Data Center，选择 DC Site Visit；不需要线下见面的邮件、电话或线上会议，选择 Remote Engagement。</div>
+            <div class="faq"><strong>客户临时更改了预约时间怎么办？</strong>打开未完成活动，使用 Edit / Reschedule 修改；关联 Task 会同步更新。</div>
+            <div class="faq"><strong>为什么 Due Today 和 Overdue 也算在 Follow-up Required 里面？</strong>它们是“需要跟进”这个业务状态下更具体的时间提醒。汇总表只在 Follow-up Required 中统计一次，Activity List 仍显示精确提醒。</div>
+            <div class="faq"><strong>为什么不能在 Tasks 中直接完成 Visit Task？</strong>Visit 需要填写业务反馈，不能只勾选完成。请在 Sales Activities 中填写反馈，关联 Task 会自动完成。</div>
+            <div class="faq"><strong>为什么 Activities by Owner 只看到自己一行？</strong>非管理员只能查看自己的 Sales Activities 和 Tasks；管理员可以查看全部 Owner。</div>
+            <div class="faq"><strong>跨日 Visit 会不会被 Date Range 漏掉？</strong>不会。只要 Visit 时间段与所选日期范围有任何重叠，就会被筛选出来。</div>
+            <div class="faq"><strong>为什么筛选以后汇总数字变了？</strong>列表、汇总表和很多 Dashboard 指标都会跟随当前权限及筛选范围。比较全部数据前请先 Clear Filters。</div>
+            <div class="faq"><strong>客户会议取消了，要不要删除？</strong>通常不要删除。应使用 Cancel 并填写原因，让业务历史可以理解；只有确实需要从日常使用中归档时才 Delete。</div>
+        </section>
+
+        <footer class="manual-footer">BITCRM 使用说明 · 更新于2026年8月4日</footer>
     </main>
 </div>

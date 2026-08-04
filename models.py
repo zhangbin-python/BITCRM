@@ -711,19 +711,19 @@ class Task(db.Model):
         return status_colors.get(self.status, 'secondary')
     
     def check_overdue(self, now=None):
-        """Check if task is overdue, including the On-site Visit feedback grace period."""
+        """Check if a task is overdue, including scheduled-visit feedback grace periods."""
         if self.status in ('Completed', 'Cancelled'):
             return False
 
         now = now or datetime.now()
         if (
             self.sales_activity
-            and self.sales_activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
+            and self.sales_activity.is_scheduled_visit
             and self.sales_activity.estimated_end_at
         ):
             is_overdue = now >= (
                 self.sales_activity.estimated_end_at
-                + timedelta(hours=SalesActivity.ON_SITE_OVERDUE_GRACE_HOURS)
+                + timedelta(hours=SalesActivity.VISIT_OVERDUE_GRACE_HOURS)
             )
         else:
             is_overdue = bool(self.due_date and now.date() > self.due_date)
@@ -744,12 +744,12 @@ class Task(db.Model):
 # ============================================================================
 
 class SalesActivity(db.Model):
-    """Sales activity created from Follow-up, Next Steps / To-do, or On-site Visit."""
+    """Sales activity created from remote engagement or a scheduled visit."""
 
     __tablename__ = 'sales_activities'
 
     id = db.Column(db.Integer, primary_key=True)
-    activity_type = db.Column(db.String(20), nullable=False, index=True)
+    activity_type = db.Column(db.String(40), nullable=False, index=True)
     remote_engagement_subtype = db.Column(db.String(40), nullable=True)
     source_type = db.Column(db.String(40), nullable=False, index=True)
     sales_lead_id = db.Column(db.Integer, db.ForeignKey('sales_leads.id'), nullable=True, index=True)
@@ -784,26 +784,53 @@ class SalesActivity(db.Model):
     contacts = db.relationship('SalesActivityContact', backref='sales_activity', lazy='select', cascade='all, delete-orphan', order_by='SalesActivityContact.sort_order')
     linked_task = db.relationship('Task', foreign_keys='Task.sales_activity_id', backref='sales_activity', uselist=False)
 
+    TYPE_CUSTOMER_VISIT = 'Customer Visit'
+    TYPE_DC_SITE_VISIT = 'DC Site Visit'
     TYPE_REMOTE_ENGAGEMENT = 'Remote Engagement'
-    TYPE_ON_SITE_VISIT = 'On-site Visit'
-    TYPE_OPTIONS = [TYPE_REMOTE_ENGAGEMENT, TYPE_ON_SITE_VISIT]
+    TYPE_OPTIONS = [TYPE_CUSTOMER_VISIT, TYPE_DC_SITE_VISIT, TYPE_REMOTE_ENGAGEMENT]
+    SCHEDULED_VISIT_TYPES = (TYPE_CUSTOMER_VISIT, TYPE_DC_SITE_VISIT)
     LEGACY_TYPE_ALIASES = {
         'Online': TYPE_REMOTE_ENGAGEMENT,
-        'Field Visit': TYPE_ON_SITE_VISIT,
+        'Field Visit': TYPE_CUSTOMER_VISIT,
+        'On-site Visit': TYPE_CUSTOMER_VISIT,
+        'Out of Building Visit': TYPE_CUSTOMER_VISIT,
     }
     REMOTE_ENGAGEMENT_SUBTYPE_OPTIONS = ['Follow-up', 'Next Steps / To-do']
-    SOURCE_OPTIONS = ['Sales Leads', 'Pipeline', 'Existing Customer', 'Marketing Event', 'Other']
+    SOURCE_EVENT = 'Event'
+    SOURCE_OPTIONS = ['Sales Leads', 'Pipeline', 'Existing Customer', SOURCE_EVENT, 'Other']
+    LEGACY_SOURCE_ALIASES = {
+        'Marketing Event': SOURCE_EVENT,
+    }
     STATUS_SCHEDULED = 'Scheduled'
     STATUS_FOLLOW_UP_REQUIRED = 'Follow-up Required'
     STATUS_COMPLETED = 'Completed'
     STATUS_CANCELLED = 'Cancelled'
     STATUS_OPTIONS = [STATUS_SCHEDULED, STATUS_FOLLOW_UP_REQUIRED, STATUS_COMPLETED, STATUS_CANCELLED]
-    ON_SITE_OVERDUE_GRACE_HOURS = 24
+    VISIT_OVERDUE_GRACE_HOURS = 24
 
     @classmethod
     def normalize_type(cls, value):
         """Return the canonical activity type, including for legacy requests."""
         return cls.LEGACY_TYPE_ALIASES.get(value, value)
+
+    @classmethod
+    def normalize_source_type(cls, value):
+        """Return the canonical source type, including for legacy requests."""
+        return cls.LEGACY_SOURCE_ALIASES.get(value, value)
+
+    @classmethod
+    def is_scheduled_visit_type(cls, value):
+        """Return whether an activity type uses a start/end visit schedule."""
+        return cls.normalize_type(value) in cls.SCHEDULED_VISIT_TYPES
+
+    @property
+    def is_scheduled_visit(self):
+        return self.is_scheduled_visit_type(self.activity_type)
+
+    @property
+    def requires_activity_feedback(self):
+        """Scheduled visits must be completed from Sales Activities, not Tasks."""
+        return self.is_scheduled_visit
 
     @property
     def primary_contact(self):
@@ -811,7 +838,7 @@ class SalesActivity(db.Model):
 
     def get_deadline(self):
         """Return the business deadline used for time-based activity indicators."""
-        if self.activity_type == self.TYPE_ON_SITE_VISIT and self.estimated_end_at:
+        if self.is_scheduled_visit and self.estimated_end_at:
             return self.estimated_end_at
         if self.linked_task and self.linked_task.due_date:
             return datetime.combine(self.linked_task.due_date, time.max)
@@ -825,7 +852,7 @@ class SalesActivity(db.Model):
             return self.status
 
         now = now or datetime.now()
-        if self.activity_type == self.TYPE_ON_SITE_VISIT:
+        if self.is_scheduled_visit:
             return (
                 self.STATUS_FOLLOW_UP_REQUIRED
                 if self.estimated_end_at and now >= self.estimated_end_at
@@ -849,9 +876,9 @@ class SalesActivity(db.Model):
             return None
 
         now = now or datetime.now()
-        if self.activity_type == self.TYPE_ON_SITE_VISIT:
+        if self.is_scheduled_visit:
             overdue_at = (
-                self.estimated_end_at + timedelta(hours=self.ON_SITE_OVERDUE_GRACE_HOURS)
+                self.estimated_end_at + timedelta(hours=self.VISIT_OVERDUE_GRACE_HOURS)
                 if self.estimated_end_at
                 else None
             )

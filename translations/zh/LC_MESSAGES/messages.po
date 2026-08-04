@@ -1322,8 +1322,12 @@ msgid "Remote Engagement"
 msgstr "远程沟通"
 
 #: templates/sales_activities/index.html
-msgid "On-site Visit"
-msgstr "外勤拜访"
+msgid "Customer Visit"
+msgstr "客户拜访"
+
+#: templates/sales_activities/index.html
+msgid "DC Site Visit"
+msgstr "数据中心参观"
 
 #: templates/sales_activities/index.html templates/tasks.html
 msgid "Scheduled"
@@ -1425,3 +1429,19 @@ msgstr "0 条记录"
 #: templates/sales_activities/index.html
 msgid "Activity List pagination"
 msgstr "活动列表分页"
+
+#: templates/sales_activities/index.html
+msgid "Event"
+msgstr "活动"
+
+#: templates/sales_activities/index.html
+msgid "Track Customer Visit, DC Site Visit, and Remote Engagement activities"
+msgstr "管理客户拜访、数据中心参观和远程沟通活动"
+
+#: templates/sales_activities/index.html
+msgid "Owners Selected"
+msgstr "位负责人已选择"
+
+#: templates/sales_activities/index.html
+msgid "Select one or more owners; changes apply automatically."
+msgstr "可勾选一个或多个负责人，选择后自动生效。"

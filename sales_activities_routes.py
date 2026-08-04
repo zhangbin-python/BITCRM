@@ -36,29 +36,29 @@ def _can_manage(activity):
 def _activity_date_range_condition(start_date=None, end_date=None):
     """Build an inclusive activity-date condition.
 
-    Remote Engagement records occur on ``activity_date``. On-site Visits may
+    Remote Engagement records occur on ``activity_date``. Scheduled visits may
     span more than one day, so they match when their scheduled interval
     overlaps the requested date range. Legacy visits without schedule times
     fall back to ``activity_date``.
     """
     conditions = []
-    on_site_visit = SalesActivity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
+    scheduled_visit = SalesActivity.activity_type.in_(SalesActivity.SCHEDULED_VISIT_TYPES)
 
     if start_date:
         start_at = datetime.combine(start_date, time.min)
         conditions.append(or_(
             and_(
-                on_site_visit,
+                scheduled_visit,
                 SalesActivity.estimated_end_at.isnot(None),
                 SalesActivity.estimated_end_at >= start_at,
             ),
             and_(
-                on_site_visit,
+                scheduled_visit,
                 SalesActivity.estimated_end_at.is_(None),
                 SalesActivity.activity_date >= start_date,
             ),
             and_(
-                SalesActivity.activity_type != SalesActivity.TYPE_ON_SITE_VISIT,
+                SalesActivity.activity_type.notin_(SalesActivity.SCHEDULED_VISIT_TYPES),
                 SalesActivity.activity_date >= start_date,
             ),
         ))
@@ -67,17 +67,17 @@ def _activity_date_range_condition(start_date=None, end_date=None):
         end_at = datetime.combine(end_date, time.max)
         conditions.append(or_(
             and_(
-                on_site_visit,
+                scheduled_visit,
                 SalesActivity.estimated_start_at.isnot(None),
                 SalesActivity.estimated_start_at <= end_at,
             ),
             and_(
-                on_site_visit,
+                scheduled_visit,
                 SalesActivity.estimated_start_at.is_(None),
                 SalesActivity.activity_date <= end_date,
             ),
             and_(
-                SalesActivity.activity_type != SalesActivity.TYPE_ON_SITE_VISIT,
+                SalesActivity.activity_type.notin_(SalesActivity.SCHEDULED_VISIT_TYPES),
                 SalesActivity.activity_date <= end_date,
             ),
         ))
@@ -253,7 +253,7 @@ def index():
         indicator = activity.get_deadline_indicator(now)
         first_activity_date = activity.activity_date
         last_activity_date = activity.activity_date
-        if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
+        if activity.is_scheduled_visit:
             if activity.estimated_start_at:
                 first_activity_date = activity.estimated_start_at.date()
             if activity.estimated_end_at:
@@ -292,7 +292,7 @@ def index():
 @sales_activities_bp.route('/source-search')
 @login_required
 def source_search():
-    source_type = request.args.get('source_type')
+    source_type = SalesActivity.normalize_source_type(request.args.get('source_type'))
     keyword = request.args.get('q', '').strip()
     like = f'%{keyword}%'
     results = []
@@ -333,7 +333,7 @@ def source_search():
                 continue
             seen.add(company)
             results.append({'id': None, 'company': company, 'contact': pipeline.name, 'position': pipeline.position or '', 'contact_information': pipeline.email or pipeline.mobile_number or '', 'owner': pipeline.owner.username if pipeline.owner else '', 'status': pipeline.stage})
-    elif source_type == 'Marketing Event':
+    elif source_type == SalesActivity.SOURCE_EVENT:
         query = SalesLead.query.filter(SalesLead.is_deleted.is_(False), SalesLead.event.isnot(None))
         if keyword:
             query = query.filter(or_(SalesLead.event.ilike(like), SalesLead.company.ilike(like)))
@@ -347,7 +347,7 @@ def source_search():
 def add():
     try:
         activity_type = SalesActivity.normalize_type(request.form.get('activity_type'))
-        source_type = request.form.get('source_type')
+        source_type = SalesActivity.normalize_source_type(request.form.get('source_type'))
         if activity_type not in SalesActivity.TYPE_OPTIONS or source_type not in SalesActivity.SOURCE_OPTIONS:
             raise ValueError('Please select a valid activity type and source type.')
         sales_lead_id = request.form.get('sales_lead_id', type=int)
@@ -358,14 +358,15 @@ def add():
             raise PermissionError('You do not have permission to use this Sales Lead.')
         if pipeline and not current_user.can_access_pipeline(pipeline):
             raise PermissionError('You do not have permission to use this Pipeline.')
-        # Remote Engagement activities use Activity Date. On-site Visit uses its Estimated Start Date
+        # Remote Engagement uses Activity Date. Scheduled visits use Estimated Start Date
         # as the activity date, so the form does not need a duplicate Visit Date field.
         activity_date = validate_date(request.form.get('activity_date'))
-        if activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
-            # An On-site Visit's activity date is always its Estimated Start Date.
+        is_scheduled_visit = SalesActivity.is_scheduled_visit_type(activity_type)
+        if is_scheduled_visit:
+            # A scheduled visit's activity date is always its Estimated Start Date.
             activity_date = validate_date(request.form.get('start_date'))
         if not activity_date:
-            raise ValueError('Activity Date is required for Remote Engagement, or Estimated Start Date is required for an On-site Visit.')
+            raise ValueError('Activity Date is required for Remote Engagement, or Estimated Start Date is required for a scheduled visit.')
         owner_id = request.form.get('owner_id', type=int) if current_user.is_admin() else current_user.id
         owner_id = owner_id or current_user.id
         contacts = _contacts_from_form()
@@ -392,11 +393,11 @@ def add():
             start_at = _parse_datetime(request.form.get('start_date') or request.form.get('activity_date'), request.form.get('start_time'))
             end_at = _parse_datetime(request.form.get('end_date') or request.form.get('activity_date'), request.form.get('end_time'))
             if not start_at or not end_at:
-                raise ValueError('Estimated Start Date/Time and Estimated End Date/Time are required for an On-site Visit.')
+                raise ValueError('Estimated Start Date/Time and Estimated End Date/Time are required for a scheduled visit.')
             if end_at <= start_at:
                 raise ValueError('Estimated End Time must be later than Estimated Start Time.')
             activity = SalesActivity(
-                activity_type=SalesActivity.TYPE_ON_SITE_VISIT, source_type=source_type,
+                activity_type=activity_type, source_type=source_type,
                 sales_lead_id=lead.id if lead else None, pipeline_id=pipeline.id if pipeline else None,
                 company=company, activity_date=activity_date, estimated_start_at=start_at,
                 estimated_end_at=end_at, address=request.form.get('address', '').strip() or None,
@@ -407,18 +408,18 @@ def add():
             db.session.flush()
             create_activity_contacts(activity, contacts)
             task = Task(
-                content=f'On-site Visit follow-up: {company}' + (f' - {purpose}' if purpose else ''),
+                content=f'{activity_type} follow-up: {company}' + (f' - {purpose}' if purpose else ''),
                 due_date=end_at.date(), owner_id=owner_id, pipeline_id=pipeline.id if pipeline else None,
                 sales_lead_id=lead.id if lead else None, sales_activity_id=activity.id,
                 company=company, status='In Progress',
             )
             db.session.add(task)
-            plan_note = f'On-site Visit scheduled for {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
+            plan_note = f'{activity_type} scheduled for {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
             if purpose:
                 plan_note += f'; Purpose / Project: {purpose}'
             for target in _sync_targets(lead, pipeline):
                 append_followup_history(target, plan_note)
-            description = f'Created On-site Visit for {company} on {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
+            description = f'Created {activity_type} for {company} on {activity_date.isoformat()} {start_at:%H:%M}-{end_at:%H:%M}'
 
         db.session.flush()
         log_activity(current_user, 'Sales Activity - Created', 'sales_activity',
@@ -459,8 +460,8 @@ def followup(activity_id):
         complete_activity(activity, current_user.id, notes)
         lead = activity.sales_lead
         pipeline = activity.pipeline
-        if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
-            history_note = f'On-site Visit feedback: {notes}'
+        if activity.is_scheduled_visit:
+            history_note = f'{activity.activity_type} feedback: {notes}'
             for target in _sync_targets(lead, pipeline):
                 append_followup_history(target, history_note)
             if pipeline:
@@ -531,11 +532,11 @@ def edit(activity_id):
         if not db.session.get(User, owner_id):
             raise ValueError('Please select a valid owner.')
 
-        if activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT:
+        if activity.is_scheduled_visit:
             start_at = _parse_datetime(request.form.get('start_date'), request.form.get('start_time'))
             end_at = _parse_datetime(request.form.get('end_date'), request.form.get('end_time'))
             if not start_at or not end_at:
-                raise ValueError('Estimated Start Date/Time and Estimated End Date/Time are required for an On-site Visit.')
+                raise ValueError('Estimated Start Date/Time and Estimated End Date/Time are required for a scheduled visit.')
             if end_at <= start_at:
                 raise ValueError('Estimated End Time must be later than Estimated Start Time.')
             activity.activity_date = start_at.date()

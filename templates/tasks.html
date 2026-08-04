@@ -346,7 +346,7 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    {% if not task.sales_activity or task.sales_activity.activity_type != 'On-site Visit' %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    {% if not task.sales_activity or not task.sales_activity.requires_activity_feedback %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
                                     {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
@@ -406,7 +406,7 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    {% if not task.sales_activity or task.sales_activity.activity_type != 'On-site Visit' %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    {% if not task.sales_activity or not task.sales_activity.requires_activity_feedback %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
                                     {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">

@@ -211,9 +211,9 @@ def complete_task(task, completion_notes, user_id, update_activity=True):
     if (
         update_activity
         and task.sales_activity
-        and task.sales_activity.activity_type == SalesActivity.TYPE_ON_SITE_VISIT
+        and task.sales_activity.is_scheduled_visit
     ):
-        raise ValueError('On-site Visit feedback must be completed from Sales Activities.')
+        raise ValueError('Scheduled visit feedback must be completed from Sales Activities.')
     completion_notes = (completion_notes or '').strip()
     if not completion_notes:
         raise ValueError('Completion Notes are required.')
