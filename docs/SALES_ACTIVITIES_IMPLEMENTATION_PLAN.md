@@ -66,8 +66,9 @@ The module will provide:
 - Owner filtering for administrators.
 - Summary statistics by source type.
 - An administrator-only per-owner summary with mutually exclusive `Scheduled`,
-  `Follow-up Required`, `Due Today`, `Overdue`, `Completed`, and `Cancelled`
-  categories. Each activity is counted exactly once in the status summary.
+  `Follow-up Required`, `Completed`, and `Cancelled` categories. `Due Today`
+  and `Overdue` remain detailed reminders but are aggregated under
+  `Follow-up Required` in this business-level summary.
 - A month calendar with multi-date selection.
 - A reverse-chronological activity table.
 - An `Add Sales Activity` action.

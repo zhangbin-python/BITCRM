@@ -1354,8 +1354,8 @@ msgid "Follow-up Required / Due Today"
 msgstr "待跟进 / 今日到期"
 
 #: templates/sales_activities/index.html
-msgid "Each activity is counted once; Due Today and Overdue are shown as separate status categories."
-msgstr "每条活动只统计一次；今日到期和已逾期作为独立状态分类显示。"
+msgid "Due Today and Overdue activities are included in Follow-up Required totals; detailed reminders remain visible in the activity list."
+msgstr "今日到期和已逾期活动统一计入待跟进汇总；详细提醒仍会显示在活动列表中。"
 
 #: templates/sales_activities/index.html templates/tasks.html
 msgid "Cancelled / past"

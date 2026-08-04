@@ -136,12 +136,12 @@
 
             {% if current_user.is_admin() %}
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Activities by Owner') }}</h5>
-                <p class="small text-muted mb-2">{{ _('Each activity is counted once; Due Today and Overdue are shown as separate status categories.') }}</p>
-                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Due Today') }}</th><th>{{ _('Overdue') }}</th><th>{{ _('Completed') }}</th><th>{{ _('Cancelled') }}</th><th class="summary-total-column">{{ _('Total') }}</th></tr></thead>
+                <p class="small text-muted mb-2">{{ _('Due Today and Overdue activities are included in Follow-up Required totals; detailed reminders remain visible in the activity list.') }}</p>
+                <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Completed') }}</th><th>{{ _('Cancelled') }}</th><th class="summary-total-column">{{ _('Total') }}</th></tr></thead>
                     <tbody>
-                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.scheduled }}</td><td>{{ item.follow_up_required }}</td><td>{{ item.due_today }}</td><td>{{ item.overdue }}</td><td>{{ item.completed }}</td><td>{{ item.cancelled }}</td><td class="summary-total-column">{{ item.total }}</td></tr>{% endfor %}
+                    {% for item in owner_stats %}<tr><td>{{ item.owner }}</td><td>{{ item.scheduled }}</td><td>{{ item.follow_up_required }}</td><td>{{ item.completed }}</td><td>{{ item.cancelled }}</td><td class="summary-total-column">{{ item.total }}</td></tr>{% endfor %}
                     </tbody>
-                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.scheduled }}</td><td>{{ stats.follow_up_required }}</td><td>{{ stats.due_today }}</td><td>{{ stats.overdue }}</td><td>{{ stats.completed }}</td><td>{{ stats.cancelled }}</td><td class="summary-total-column">{{ stats.total }}</td></tr></tfoot>
+                    <tfoot><tr class="table-light fw-semibold"><td>{{ _('Total') }}</td><td>{{ stats.scheduled }}</td><td>{{ stats.follow_up_required }}</td><td>{{ stats.completed }}</td><td>{{ stats.cancelled }}</td><td class="summary-total-column">{{ stats.total }}</td></tr></tfoot>
                 </table></div>
                 {% if not owner_stats %}<div class="small text-muted mt-2">{{ _('No activities found') }}</div>{% endif %}
             </div></div>

@@ -85,15 +85,6 @@ def _activity_date_range_condition(start_date=None, end_date=None):
     return and_(*conditions) if conditions else None
 
 
-def _summary_status(display_status, deadline_indicator):
-    """Return one mutually exclusive status bucket for summary reporting."""
-    if display_status in (SalesActivity.STATUS_COMPLETED, SalesActivity.STATUS_CANCELLED):
-        return display_status
-    if deadline_indicator in ('Due Today', 'Overdue'):
-        return deadline_indicator
-    return display_status
-
-
 def _parse_datetime(date_value, time_value):
     if not date_value or not time_value:
         return None
@@ -193,25 +184,19 @@ def index():
     now = datetime.now()
     display_statuses = {activity.id: activity.get_display_status(now) for activity in matching_activities}
     deadline_indicators = {activity.id: activity.get_deadline_indicator(now) for activity in matching_activities}
-    summary_statuses = {
-        activity.id: _summary_status(display_statuses[activity.id], deadline_indicators[activity.id])
-        for activity in matching_activities
-    }
     stats = {
         'total': len(matching_activities),
-        'scheduled': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_SCHEDULED),
-        'follow_up_required': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED),
-        'due_today': sum(1 for status in summary_statuses.values() if status == 'Due Today'),
-        'overdue': sum(1 for status in summary_statuses.values() if status == 'Overdue'),
-        'completed': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_COMPLETED),
-        'cancelled': sum(1 for status in summary_statuses.values() if status == SalesActivity.STATUS_CANCELLED),
+        'scheduled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_SCHEDULED),
+        'follow_up_required': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_FOLLOW_UP_REQUIRED),
+        'completed': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_COMPLETED),
+        'cancelled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_CANCELLED),
     }
 
     owner_stats = []
     if current_user.is_admin():
         grouped = defaultdict(lambda: {
             'total': 0, 'scheduled': 0, 'follow_up_required': 0,
-            'due_today': 0, 'overdue': 0, 'completed': 0, 'cancelled': 0,
+            'completed': 0, 'cancelled': 0,
         })
         for activity in matching_activities:
             item = grouped[activity.owner.username if activity.owner else 'Unknown']
@@ -219,11 +204,9 @@ def index():
             status_key = {
                 SalesActivity.STATUS_SCHEDULED: 'scheduled',
                 SalesActivity.STATUS_FOLLOW_UP_REQUIRED: 'follow_up_required',
-                'Due Today': 'due_today',
-                'Overdue': 'overdue',
                 SalesActivity.STATUS_COMPLETED: 'completed',
                 SalesActivity.STATUS_CANCELLED: 'cancelled',
-            }[summary_statuses[activity.id]]
+            }[display_statuses[activity.id]]
             item[status_key] += 1
         owner_stats = sorted(({'owner': owner, **counts} for owner, counts in grouped.items()), key=lambda item: item['owner'])
 

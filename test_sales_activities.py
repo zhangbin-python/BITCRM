@@ -260,7 +260,7 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn(b'Paged Activity 01', second_page.data)
         self.assertNotIn(b'Paged Activity 25', second_page.data)
 
-    def test_owner_summary_uses_complete_mutually_exclusive_status_categories(self):
+    def test_owner_summary_groups_due_and_overdue_reminders_into_follow_up_required(self):
         now = datetime.now()
         activities = [
             SalesActivity(
@@ -319,14 +319,16 @@ class SalesActivitiesTests(unittest.TestCase):
 
         self.assertNotIn('Remote Engagement</th>', summary_html)
         self.assertNotIn('On-site Visit</th>', summary_html)
-        for status in ('Scheduled', 'Follow-up Required', 'Due Today', 'Overdue', 'Completed', 'Cancelled'):
+        for status in ('Scheduled', 'Follow-up Required', 'Completed', 'Cancelled'):
             self.assertIn(f'>{status}</th>', summary_html)
+        self.assertNotIn('>Due Today</th>', summary_html)
+        self.assertNotIn('>Overdue</th>', summary_html)
         self.assertIn(
-            '<tr><td>Admin</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="summary-total-column">6</td></tr>',
+            '<tr><td>Admin</td><td>1</td><td>3</td><td>1</td><td>1</td><td class="summary-total-column">6</td></tr>',
             summary_html,
         )
         self.assertIn(
-            '<td>Total</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="summary-total-column">6</td>',
+            '<td>Total</td><td>1</td><td>3</td><td>1</td><td>1</td><td class="summary-total-column">6</td>',
             summary_html,
         )
         self.assertTrue(summary_html.index('>Cancelled</th>') < summary_html.index('>Total</th>'))
