@@ -4,104 +4,623 @@
 
 {% block extra_css %}
 <style>
-    @media (max-width: 767.98px) {
-        .login-shell {
-            min-height: auto !important;
-            padding: 1.5rem 0;
+    body {
+        background: #eef2f8;
+    }
+
+    body > .container-fluid {
+        padding: 0 !important;
+    }
+
+    body > .container-fluid > .row {
+        margin: 0 !important;
+    }
+
+    .main-content {
+        width: 100%;
+        padding: 0 !important;
+    }
+
+    .login-page {
+        --login-navy: #0b1220;
+        --login-navy-soft: #172033;
+        --login-red: #b91c1c;
+        --login-red-bright: #dc2626;
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(460px, .92fr);
+        background: #f6f8fc;
+        color: #162033;
+        overflow: hidden;
+    }
+
+    .login-visual {
+        position: relative;
+        isolation: isolate;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100vh;
+        padding: clamp(2.25rem, 5vw, 5.5rem);
+        color: #fff;
+        background:
+            radial-gradient(circle at 17% 18%, rgba(220, 38, 38, .26), transparent 27%),
+            radial-gradient(circle at 88% 82%, rgba(59, 130, 246, .16), transparent 29%),
+            linear-gradient(145deg, #090f1c 0%, #111a2d 52%, #17233b 100%);
+        overflow: hidden;
+    }
+
+    .login-visual::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        opacity: .24;
+        background-image:
+            linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: linear-gradient(to bottom right, #000, transparent 72%);
+    }
+
+    .login-visual::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        width: 28rem;
+        height: 28rem;
+        right: -10rem;
+        bottom: -11rem;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 50%;
+        box-shadow:
+            0 0 0 60px rgba(255,255,255,.025),
+            0 0 0 125px rgba(255,255,255,.02);
+    }
+
+    .login-brand {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .login-brand-logo {
+        width: min(265px, 62%);
+        height: auto;
+        filter: drop-shadow(0 12px 22px rgba(0, 0, 0, .28));
+    }
+
+    .login-product-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .42rem .7rem;
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 999px;
+        background: rgba(255,255,255,.08);
+        color: rgba(255,255,255,.88);
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        backdrop-filter: blur(10px);
+    }
+
+    .login-product-pill::before {
+        content: "";
+        width: .48rem;
+        height: .48rem;
+        border-radius: 50%;
+        background: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239,68,68,.16);
+    }
+
+    .login-hero {
+        max-width: 700px;
+        margin: auto 0;
+        padding: 4rem 0;
+    }
+
+    .login-eyebrow {
+        margin-bottom: 1.2rem;
+        color: #fca5a5;
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+    }
+
+    .login-hero h1 {
+        max-width: 650px;
+        margin: 0;
+        font-size: clamp(2.45rem, 5vw, 4.9rem);
+        font-weight: 750;
+        line-height: 1.04;
+        letter-spacing: -.045em;
+    }
+
+    .login-hero-copy {
+        max-width: 590px;
+        margin: 1.6rem 0 0;
+        color: rgba(255,255,255,.66);
+        font-size: clamp(1rem, 1.35vw, 1.18rem);
+        line-height: 1.75;
+    }
+
+    .login-capabilities {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .8rem;
+        margin-top: 2.2rem;
+    }
+
+    .login-capability {
+        min-width: 0;
+        padding: 1rem;
+        border: 1px solid rgba(255,255,255,.11);
+        border-radius: 16px;
+        background: rgba(255,255,255,.055);
+        backdrop-filter: blur(12px);
+    }
+
+    .login-capability i {
+        display: block;
+        margin-bottom: .65rem;
+        color: #f87171;
+        font-size: 1.05rem;
+    }
+
+    .login-capability strong {
+        display: block;
+        color: rgba(255,255,255,.92);
+        font-size: .86rem;
+        font-weight: 650;
+        line-height: 1.35;
+    }
+
+    .login-visual-footer {
+        color: rgba(255,255,255,.44);
+        font-size: .76rem;
+        letter-spacing: .04em;
+    }
+
+    .login-access {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 3rem clamp(2rem, 5vw, 5rem);
+        background:
+            radial-gradient(circle at 100% 0%, rgba(185,28,28,.07), transparent 31%),
+            radial-gradient(circle at 0% 100%, rgba(37,99,235,.07), transparent 30%),
+            #f8fafc;
+    }
+
+    .login-access-inner {
+        width: min(100%, 460px);
+    }
+
+    .login-language-switcher {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 2rem;
+    }
+
+    .login-language-control {
+        display: inline-flex;
+        gap: .25rem;
+        padding: .25rem;
+        border: 1px solid #dce3ed;
+        border-radius: 999px;
+        background: rgba(255,255,255,.82);
+        box-shadow: 0 8px 24px rgba(15,23,42,.05);
+    }
+
+    .login-language-control a {
+        min-width: 76px;
+        padding: .48rem .8rem;
+        border-radius: 999px;
+        color: #657084;
+        font-size: .78rem;
+        font-weight: 650;
+        text-align: center;
+        text-decoration: none;
+        transition: color .2s ease, background .2s ease, box-shadow .2s ease;
+    }
+
+    .login-language-control a:hover {
+        color: #111827;
+    }
+
+    .login-language-control a.active {
+        color: #fff;
+        background: #111827;
+        box-shadow: 0 5px 12px rgba(15,23,42,.18);
+    }
+
+    .login-mobile-brand {
+        display: none;
+        margin-bottom: 2rem;
+    }
+
+    .login-mobile-brand img {
+        width: 190px;
+        height: auto;
+    }
+
+    .login-heading {
+        margin-bottom: 2rem;
+    }
+
+    .login-heading-kicker {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        margin-bottom: .75rem;
+        color: var(--login-red);
+        font-size: .76rem;
+        font-weight: 750;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+
+    .login-heading-kicker i {
+        font-size: .95rem;
+    }
+
+    .login-heading h2 {
+        margin: 0;
+        color: #101828;
+        font-size: clamp(2rem, 3vw, 2.55rem);
+        font-weight: 750;
+        letter-spacing: -.035em;
+    }
+
+    .login-heading p {
+        margin: .7rem 0 0;
+        color: #667085;
+        font-size: .96rem;
+        line-height: 1.65;
+    }
+
+    .login-form-label {
+        margin-bottom: .5rem;
+        color: #344054;
+        font-size: .84rem;
+        font-weight: 650;
+    }
+
+    .login-field {
+        position: relative;
+    }
+
+    .login-field-icon {
+        position: absolute;
+        z-index: 4;
+        top: 50%;
+        left: 1rem;
+        color: #8b95a7;
+        font-size: 1.05rem;
+        transform: translateY(-50%);
+        pointer-events: none;
+        transition: color .2s ease;
+    }
+
+    .login-control {
+        min-height: 56px;
+        padding: .85rem 1rem .85rem 3rem;
+        border: 1px solid #d7deea;
+        border-radius: 13px;
+        background: rgba(255,255,255,.92);
+        color: #101828;
+        box-shadow: 0 1px 2px rgba(16,24,40,.03);
+        transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    .login-control::placeholder {
+        color: #a0a9b8;
+    }
+
+    .login-control:focus {
+        border-color: rgba(185,28,28,.62);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(185,28,28,.09), 0 10px 30px rgba(15,23,42,.06);
+    }
+
+    .login-field:focus-within .login-field-icon {
+        color: var(--login-red);
+    }
+
+    .login-password-control {
+        padding-right: 3.5rem;
+    }
+
+    .login-password-toggle {
+        position: absolute;
+        z-index: 5;
+        top: 50%;
+        right: .65rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: #7b8495;
+        transform: translateY(-50%);
+        transition: color .2s ease, background .2s ease;
+    }
+
+    .login-password-toggle:hover,
+    .login-password-toggle:focus-visible {
+        color: #111827;
+        background: #edf1f7;
+        outline: none;
+    }
+
+    .login-form-help {
+        display: flex;
+        align-items: center;
+        gap: .38rem;
+        margin-top: .48rem;
+        color: #8a94a6;
+        font-size: .75rem;
+    }
+
+    .login-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .6rem;
+        width: 100%;
+        min-height: 56px;
+        margin-top: .45rem;
+        border: 0;
+        border-radius: 13px;
+        color: #fff;
+        background: linear-gradient(135deg, #a90f18 0%, #d32929 100%);
+        box-shadow: 0 14px 30px rgba(185,28,28,.22);
+        font-size: .96rem;
+        font-weight: 700;
+        letter-spacing: .01em;
+        transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+
+    .login-submit:hover {
+        color: #fff;
+        filter: brightness(1.04);
+        transform: translateY(-1px);
+        box-shadow: 0 18px 34px rgba(185,28,28,.28);
+    }
+
+    .login-submit:focus-visible {
+        outline: 3px solid rgba(185,28,28,.2);
+        outline-offset: 3px;
+    }
+
+    .login-submit:disabled {
+        transform: none;
+        opacity: .75;
+    }
+
+    .login-support {
+        display: flex;
+        align-items: flex-start;
+        gap: .7rem;
+        margin-top: 1.6rem;
+        padding: .9rem 1rem;
+        border: 1px solid #e3e8f0;
+        border-radius: 12px;
+        background: rgba(255,255,255,.62);
+        color: #697386;
+        font-size: .78rem;
+        line-height: 1.55;
+    }
+
+    .login-support i {
+        flex: 0 0 auto;
+        margin-top: .05rem;
+        color: #64748b;
+        font-size: .95rem;
+    }
+
+    .login-secure-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+        margin-top: 1.4rem;
+        color: #98a2b3;
+        font-size: .73rem;
+    }
+
+    .login-secure-note i {
+        color: #16a34a;
+    }
+
+    @media (max-width: 1099.98px) {
+        .login-page {
+            grid-template-columns: minmax(0, 1fr) minmax(430px, .9fr);
         }
 
-        .login-card-body {
-            padding: 1.5rem !important;
+        .login-capabilities {
+            grid-template-columns: 1fr;
+        }
+
+        .login-capability {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: .8rem 1rem;
+        }
+
+        .login-capability i {
+            margin: 0;
+        }
+    }
+
+    @media (max-width: 899.98px) {
+        .login-page {
+            display: block;
+        }
+
+        .login-visual {
+            display: none;
+        }
+
+        .login-access {
+            min-height: 100vh;
+            padding: 2rem 1.25rem;
+        }
+
+        .login-mobile-brand {
+            display: block;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .login-access {
+            align-items: flex-start;
+            padding: 1.25rem 1rem 2rem;
         }
 
         .login-language-switcher {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+            margin-bottom: 1.8rem;
         }
 
-        .login-language-switcher .btn {
-            width: 100%;
+        .login-heading {
+            margin-bottom: 1.65rem;
+        }
+
+        .login-heading h2 {
+            font-size: 2rem;
+        }
+
+        .login-control,
+        .login-submit {
+            min-height: 54px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .login-language-control a,
+        .login-control,
+        .login-password-toggle,
+        .login-submit {
+            transition: none;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid px-0">
-    <div class="row g-0 justify-content-center align-items-center min-vh-100 login-shell">
-        <div class="col-12 col-sm-10 col-md-5 col-lg-4">
-            <div class="card shadow-lg">
-                <div class="card-body p-5 login-card-body">
-                <div class="text-center mb-4">
-                    <div class="d-flex flex-column align-items-center">
-                        <img src="{{ url_for('static', filename='logo.png') }}"
-                             alt="Logo"
-                             class="mb-3"
-                             style="height: 60px; width: auto; max-width: 150px; object-fit: contain;">
-                        <div>
-                            <h2 class="fw-bold text-primary mb-0">BITCRM</h2>
-                            <p class="text-muted mb-0" style="font-size: 0.875rem;">{{ _('Customer Relationship Management') }}</p>
-                        </div>
-                    </div>
+{% set is_zh = g.lang == 'zh' %}
+<div class="login-page">
+    <section class="login-visual" aria-label="BITCRM introduction">
+        <div class="login-brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Beeinfotech PH" class="login-brand-logo">
+            <span class="login-product-pill">BITCRM</span>
+        </div>
+
+        <div class="login-hero">
+            <div class="login-eyebrow">{{ 'ONE CONNECTED SALES WORKSPACE' if not is_zh else '一体化销售工作平台' }}</div>
+            <h1>{{ 'Turn every customer interaction into forward momentum.' if not is_zh else '让每一次客户互动，都推动业务向前。' }}</h1>
+            <p class="login-hero-copy">
+                {{ 'Keep leads, opportunities, activities and next steps connected—so the team always knows what happened and what comes next.' if not is_zh else '统一连接销售线索、商机、销售活动与下一步任务，让团队随时掌握客户进展和后续行动。' }}
+            </p>
+
+            <div class="login-capabilities" aria-label="BITCRM capabilities">
+                <div class="login-capability">
+                    <i class="bi bi-people"></i>
+                    <strong>{{ 'Customer context in one place' if not is_zh else '客户信息集中管理' }}</strong>
                 </div>
-
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">{{ _('Username') }}</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" class="form-control" id="username"
-                                   name="username" required autofocus autocomplete="username"
-                                   value="{{ entered_username or '' }}"
-                                   placeholder="{{ _('Enter your username') }}">
-                        </div>
-                        <div class="form-text">{{ _('Username is not case-sensitive.') }}</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="password" class="form-label">{{ _('Password') }}</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" class="form-control" id="password"
-                                   name="password" required autocomplete="current-password"
-                                   placeholder="{{ _('Enter your password') }}">
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-box-arrow-in-right"></i>
-                            {{ _('Login') }}
-                        </button>
-                    </div>
-                </form>
-
-                <div class="mt-4 text-center">
-                    <p class="text-muted">
-                        <small>{{ _('Please contact your enterprise administrator to apply for an account or reset your password.') }}</small>
-                    </p>
+                <div class="login-capability">
+                    <i class="bi bi-calendar2-check"></i>
+                    <strong>{{ 'Activities with clear ownership' if not is_zh else '销售活动责任清晰' }}</strong>
                 </div>
-
-                <div class="mt-4 pt-3 border-top">
-                    <div class="btn-group w-100 login-language-switcher" role="group" aria-label="Language switcher">
-                        <a href="{{ url_for('main.set_language', lang='en', next=request.path) }}"
-                           class="btn btn-sm {{ 'btn-primary' if g.lang == 'en' else 'btn-outline-secondary' }}">
-                            English
-                        </a>
-                        <a href="{{ url_for('main.set_language', lang='zh', next=request.path) }}"
-                           class="btn btn-sm {{ 'btn-primary' if g.lang == 'zh' else 'btn-outline-secondary' }}">
-                            中文
-                        </a>
-                    </div>
-                    </div>
+                <div class="login-capability">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <strong>{{ 'A pipeline the team can act on' if not is_zh else '商机进展清晰可执行' }}</strong>
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="login-visual-footer">BITCRM · BEEINFOTECH PH</div>
+    </section>
+
+    <section class="login-access">
+        <div class="login-access-inner">
+            <div class="login-language-switcher">
+                <div class="login-language-control" role="group" aria-label="Language switcher">
+                    <a href="{{ url_for('main.set_language', lang='en', next=request.path) }}"
+                       class="{{ 'active' if g.lang == 'en' else '' }}"
+                       {% if g.lang == 'en' %}aria-current="true"{% endif %}>English</a>
+                    <a href="{{ url_for('main.set_language', lang='zh', next=request.path) }}"
+                       class="{{ 'active' if g.lang == 'zh' else '' }}"
+                       {% if g.lang == 'zh' %}aria-current="true"{% endif %}>中文</a>
+                </div>
+            </div>
+
+            <div class="login-mobile-brand">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Beeinfotech PH">
+            </div>
+
+            <div class="login-heading">
+                <div class="login-heading-kicker"><i class="bi bi-shield-check"></i> BITCRM</div>
+                <h2>{{ 'Welcome back' if not is_zh else '欢迎回来' }}</h2>
+                <p>{{ 'Sign in to continue to your sales workspace.' if not is_zh else '登录后继续进入您的销售工作台。' }}</p>
+            </div>
+
+            <form method="POST" id="loginForm">
+                <div class="mb-4">
+                    <label for="username" class="login-form-label">{{ _('Username') }}</label>
+                    <div class="login-field">
+                        <i class="bi bi-person login-field-icon" aria-hidden="true"></i>
+                        <input type="text" class="form-control login-control" id="username"
+                               name="username" required autofocus autocomplete="username"
+                               value="{{ entered_username or '' }}"
+                               placeholder="{{ _('Enter your username') }}">
+                    </div>
+                    <div class="login-form-help"><i class="bi bi-info-circle"></i>{{ _('Username is not case-sensitive.') }}</div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="login-form-label">{{ _('Password') }}</label>
+                    <div class="login-field">
+                        <i class="bi bi-lock login-field-icon" aria-hidden="true"></i>
+                        <input type="password" class="form-control login-control login-password-control" id="password"
+                               name="password" required autocomplete="current-password"
+                               placeholder="{{ _('Enter your password') }}">
+                        <button class="login-password-toggle" type="button" id="togglePassword"
+                                aria-controls="password" aria-pressed="false"
+                                aria-label="{{ 'Show password' if not is_zh else '显示密码' }}"
+                                title="{{ 'Show password' if not is_zh else '显示密码' }}">
+                            <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn login-submit" id="loginSubmit">
+                    <span>{{ _('Login') }}</span>
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </button>
+            </form>
+
+            <div class="login-support">
+                <i class="bi bi-headset"></i>
+                <span>{{ _('Please contact your enterprise administrator to apply for an account or reset your password.') }}</span>
+            </div>
+
+            <div class="login-secure-note">
+                <i class="bi bi-lock-fill"></i>
+                <span>{{ 'Secure enterprise access' if not is_zh else '企业级安全访问' }}</span>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}
 
@@ -110,13 +629,29 @@
     document.addEventListener('DOMContentLoaded', function() {
         const passwordInput = document.getElementById('password');
         const toggleButton = document.getElementById('togglePassword');
+        const loginForm = document.getElementById('loginForm');
+        const loginSubmit = document.getElementById('loginSubmit');
+        const showPasswordLabel = {{ ('显示密码' if g.lang == 'zh' else 'Show password')|tojson }};
+        const hidePasswordLabel = {{ ('隐藏密码' if g.lang == 'zh' else 'Hide password')|tojson }};
+        const signingInLabel = {{ ('正在登录…' if g.lang == 'zh' else 'Signing in…')|tojson }};
 
         toggleButton.addEventListener('click', function() {
             const isPassword = passwordInput.type === 'password';
+            const nextLabel = isPassword ? hidePasswordLabel : showPasswordLabel;
             passwordInput.type = isPassword ? 'text' : 'password';
+            toggleButton.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+            toggleButton.setAttribute('aria-label', nextLabel);
+            toggleButton.setAttribute('title', nextLabel);
             toggleButton.innerHTML = isPassword
-                ? '<i class="bi bi-eye-slash"></i>'
-                : '<i class="bi bi-eye"></i>';
+                ? '<i class="bi bi-eye-slash" aria-hidden="true"></i>'
+                : '<i class="bi bi-eye" aria-hidden="true"></i>';
+            passwordInput.focus();
+        });
+
+        loginForm.addEventListener('submit', function() {
+            if (!loginForm.checkValidity()) return;
+            loginSubmit.disabled = true;
+            loginSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span>' + signingInLabel + '</span>';
         });
     });
 </script>
