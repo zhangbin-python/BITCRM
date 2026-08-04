@@ -273,7 +273,19 @@ def index():
             calendar[key]['cancelled'] += display_status == SalesActivity.STATUS_CANCELLED
             activity_calendar_date += timedelta(days=1)
 
-    owners = User.query.filter_by(is_active=True).order_by(User.username).all() if current_user.is_admin() else []
+    # Keep the Owner selector concise: list only users who actually own at
+    # least one non-deleted Sales Activity. Historical owners remain available
+    # even if their user account is no longer active.
+    owners = (
+        User.query
+        .join(SalesActivity, SalesActivity.owner_id == User.id)
+        .filter(SalesActivity.is_deleted.is_(False))
+        .distinct()
+        .order_by(User.username)
+        .all()
+        if current_user.is_admin()
+        else []
+    )
     add_form_data = session.pop('sales_activity_form_data', {})
     reopen_add_modal = session.pop('sales_activity_reopen_form', False)
     return render_template(

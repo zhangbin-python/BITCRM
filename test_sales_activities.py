@@ -400,7 +400,9 @@ class SalesActivitiesTests(unittest.TestCase):
         owner_a.set_password('bitcrm')
         owner_b = User(username='Owner Beta', role='sales')
         owner_b.set_password('bitcrm')
-        db.session.add_all([owner_a, owner_b])
+        owner_without_activity = User(username='Owner Without Activity', role='sales')
+        owner_without_activity.set_password('bitcrm')
+        db.session.add_all([owner_a, owner_b, owner_without_activity])
         db.session.flush()
 
         db.session.add_all([
@@ -444,6 +446,7 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn(
             f'value="{owner_b.id}" checked', html
         )
+        self.assertNotIn('Owner Without Activity', html)
         self.assertIn('owner-filter-checkbox', html)
         self.assertIn('applyActivityFilterImmediately();', html)
         self.assertNotIn('window.setTimeout(applyActivityFilterImmediately', html)
