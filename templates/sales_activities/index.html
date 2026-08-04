@@ -120,11 +120,16 @@
                         </div>
                         {% if current_user.is_admin() %}
                         <div class="col-12 col-md-6 col-xl-2">
-                            <label class="form-label">{{ _('Owner') }}</label>
-                            <select name="owner_id" class="form-select"><option value="">{{ _('All Owners') }}</option>{% for owner in owners %}<option value="{{ owner.id }}" {% if selected_owner_id == owner.id %}selected{% endif %}>{{ owner.username }}</option>{% endfor %}</select>
+                            <label class="form-label" for="activityOwnerFilter">{{ _('Owner') }}</label>
+                            <select id="activityOwnerFilter" name="owner_id" class="form-select" multiple size="3" aria-label="{{ _('Owner') }}">
+                                <option value="" disabled>{{ _('All Owners') }}</option>
+                                {% for owner in owners %}<option value="{{ owner.id }}" {% if owner.id in selected_owner_ids %}selected{% endif %}>{{ owner.username }}</option>{% endfor %}
+                            </select>
+                            <small class="text-muted">{{ _('Hold Ctrl/Cmd to select multiple') }}</small>
                         </div>
                         {% endif %}
-                        <div class="col-12 col-xl-2 d-flex align-items-end">
+                        <div class="col-12 col-xl-2 d-grid gap-2 align-self-end">
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> {{ _('Filter') }}</button>
                             <a href="{{ url_for('sales_activities.index') }}" class="btn btn-outline-secondary w-100"><i class="bi bi-arrow-clockwise"></i> {{ _('Clear Filters') }}</a>
                         </div>
                     </form>
@@ -134,7 +139,6 @@
                 </div>
             </div>
 
-            {% if current_user.is_admin() %}
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Activities by Owner') }}</h5>
                 <p class="small text-muted mb-2">{{ _('Due Today and Overdue activities are included in Follow-up Required totals; detailed reminders remain visible in the activity list.') }}</p>
                 <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr><th>{{ _('Owner') }}</th><th>{{ _('Scheduled') }}</th><th>{{ _('Follow-up Required') }}</th><th>{{ _('Completed') }}</th><th>{{ _('Cancelled') }}</th><th class="summary-total-column">{{ _('Total') }}</th></tr></thead>
@@ -145,7 +149,6 @@
                 </table></div>
                 {% if not owner_stats %}<div class="small text-muted mt-2">{{ _('No activities found') }}</div>{% endif %}
             </div></div>
-            {% endif %}
 
             <div class="card mb-3 owner-summary-card"><div class="card-body"><h5 class="mb-2">{{ _('Source Type by Owner') }}</h5>
                 <div class="table-responsive"><table class="table table-sm owner-summary-table"><thead><tr>
@@ -398,7 +401,7 @@ document.getElementById('previousCalendarMonth').addEventListener('click', () =>
 document.getElementById('nextCalendarMonth').addEventListener('click', () => setCalendarMonth(1));
 const activityFiltersForm = document.getElementById('activityFiltersForm');
 if (activityFiltersForm) {
-  const activityFilterNames = ['type', 'start_date', 'end_date', 'owner_id'];
+  const activityFilterNames = ['type', 'start_date', 'end_date'];
   const applyActivityFilterImmediately = () => {
     const params = new URLSearchParams(window.location.search);
     activityFilterNames.forEach(name => {
@@ -406,11 +409,15 @@ if (activityFiltersForm) {
       if (field && field.value) params.set(name, field.value);
       else params.delete(name);
     });
+    params.delete('owner_id');
+    activityFiltersForm.querySelectorAll('select[name="owner_id"] option:checked').forEach(option => {
+      if (option.value) params.append('owner_id', option.value);
+    });
     params.delete('page');
     window.location.search = params.toString();
   };
 
-  activityFiltersForm.querySelectorAll('input[name="type"], select[name="owner_id"]').forEach(field => {
+  activityFiltersForm.querySelectorAll('input[name="type"]').forEach(field => {
     field.addEventListener('change', applyActivityFilterImmediately);
   });
 

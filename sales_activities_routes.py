@@ -136,7 +136,16 @@ def index():
     end_date = validate_date(request.args.get('end_date'))
     if start_date and end_date and start_date > end_date:
         start_date, end_date = end_date, start_date
-    owner_id = request.args.get('owner_id', type=int)
+    owner_ids = []
+    for value in request.args.getlist('owner_id'):
+        try:
+            owner_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if owner_id > 0 and owner_id not in owner_ids:
+            owner_ids.append(owner_id)
+    if not current_user.is_admin():
+        owner_ids = []
     calendar_month_value = request.args.get('calendar_month', '').strip()
     try:
         calendar_month = datetime.strptime(calendar_month_value, '%Y-%m').date().replace(day=1)
@@ -151,8 +160,8 @@ def index():
     date_range_condition = _activity_date_range_condition(start_date, end_date)
     if date_range_condition is not None:
         query = query.filter(date_range_condition)
-    if current_user.is_admin() and owner_id:
-        query = query.filter(SalesActivity.owner_id == owner_id)
+    if current_user.is_admin() and owner_ids:
+        query = query.filter(SalesActivity.owner_id.in_(owner_ids))
 
     # Calendar data intentionally ignores the calendar date selections themselves.
     # Otherwise selecting one date would make every other marked date disappear and
@@ -192,23 +201,25 @@ def index():
         'cancelled': sum(1 for status in display_statuses.values() if status == SalesActivity.STATUS_CANCELLED),
     }
 
-    owner_stats = []
-    if current_user.is_admin():
-        grouped = defaultdict(lambda: {
-            'total': 0, 'scheduled': 0, 'follow_up_required': 0,
-            'completed': 0, 'cancelled': 0,
-        })
-        for activity in matching_activities:
-            item = grouped[activity.owner.username if activity.owner else 'Unknown']
-            item['total'] += 1
-            status_key = {
-                SalesActivity.STATUS_SCHEDULED: 'scheduled',
-                SalesActivity.STATUS_FOLLOW_UP_REQUIRED: 'follow_up_required',
-                SalesActivity.STATUS_COMPLETED: 'completed',
-                SalesActivity.STATUS_CANCELLED: 'cancelled',
-            }[display_statuses[activity.id]]
-            item[status_key] += 1
-        owner_stats = sorted(({'owner': owner, **counts} for owner, counts in grouped.items()), key=lambda item: item['owner'])
+    # The visible activity query is already scoped to the current user's own
+    # activities for non-admin users, so this summary is safe for everyone:
+    # regular users get one row for themselves; administrators get all owners
+    # within the current type/date/owner filters.
+    grouped = defaultdict(lambda: {
+        'total': 0, 'scheduled': 0, 'follow_up_required': 0,
+        'completed': 0, 'cancelled': 0,
+    })
+    for activity in matching_activities:
+        item = grouped[activity.owner.username if activity.owner else 'Unknown']
+        item['total'] += 1
+        status_key = {
+            SalesActivity.STATUS_SCHEDULED: 'scheduled',
+            SalesActivity.STATUS_FOLLOW_UP_REQUIRED: 'follow_up_required',
+            SalesActivity.STATUS_COMPLETED: 'completed',
+            SalesActivity.STATUS_CANCELLED: 'cancelled',
+        }[display_statuses[activity.id]]
+        item[status_key] += 1
+    owner_stats = sorted(({'owner': owner, **counts} for owner, counts in grouped.items()), key=lambda item: item['owner'])
 
     # Keep the compact horizontal source summary, but show the owner names and
     # each owner's count inside every source-type cell.
@@ -271,7 +282,7 @@ def index():
         stats=stats, owner_stats=owner_stats, source_owner_rows=source_owner_rows, source_totals=source_totals,
         owners=owners, calendar_data=dict(calendar),
         selected_type=activity_type, start_date=start_date, end_date=end_date,
-        selected_dates=[item.isoformat() for item in selected_dates], selected_owner_id=owner_id,
+        selected_dates=[item.isoformat() for item in selected_dates], selected_owner_ids=owner_ids,
         source_options=SalesActivity.SOURCE_OPTIONS, calendar_month=calendar_month,
         today_iso=date.today().isoformat(), add_form_data=add_form_data,
         reopen_add_modal=reopen_add_modal,

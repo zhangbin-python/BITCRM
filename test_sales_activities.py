@@ -340,6 +340,113 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertIn('<th class="summary-total-column">Total</th>', source_summary_html)
         self.assertIn('<td class="summary-total-column">6</td>', source_summary_html)
 
+    def test_admin_owner_filter_supports_multiple_owners(self):
+        owner_a = User(username='Owner Alpha', role='sales')
+        owner_a.set_password('bitcrm')
+        owner_b = User(username='Owner Beta', role='sales')
+        owner_b.set_password('bitcrm')
+        db.session.add_all([owner_a, owner_b])
+        db.session.flush()
+
+        db.session.add_all([
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Alpha Selected Activity', activity_date=date.today(),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=owner_a.id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Beta Selected Activity', activity_date=date.today(),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=owner_b.id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Admin Excluded Activity', activity_date=date.today(),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=self.admin_id,
+            ),
+        ])
+        db.session.commit()
+
+        response = self.client.get(
+            f'/sales-activities/?owner_id={owner_a.id}&owner_id={owner_b.id}'
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn('Alpha Selected Activity', html)
+        self.assertIn('Beta Selected Activity', html)
+        self.assertNotIn('Admin Excluded Activity', html)
+        self.assertIn(
+            f'<option value="{owner_a.id}" selected>Owner Alpha</option>', html
+        )
+        self.assertIn(
+            f'<option value="{owner_b.id}" selected>Owner Beta</option>', html
+        )
+
+        summary_start = html.index('Activities by Owner')
+        summary_end = html.index('</table>', summary_start)
+        summary_html = html[summary_start:summary_end]
+        self.assertIn(
+            '<tr><td>Owner Alpha</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-total-column">1</td></tr>',
+            summary_html,
+        )
+        self.assertIn(
+            '<tr><td>Owner Beta</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-total-column">1</td></tr>',
+            summary_html,
+        )
+        self.assertNotIn('<td>Admin</td>', summary_html)
+        self.assertIn(
+            '<td>Total</td><td>0</td><td>0</td><td>2</td><td>0</td><td class="summary-total-column">2</td>',
+            summary_html,
+        )
+
+    def test_non_admin_sees_only_their_own_owner_summary(self):
+        sales_user = User(username='Sales User', role='sales')
+        sales_user.set_password('bitcrm')
+        db.session.add(sales_user)
+        db.session.flush()
+        sales_user_id = sales_user.id
+
+        db.session.add_all([
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Sales User Activity', activity_date=date.today(),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=sales_user_id,
+            ),
+            SalesActivity(
+                activity_type=SalesActivity.TYPE_REMOTE_ENGAGEMENT,
+                remote_engagement_subtype='Follow-up', source_type='Other',
+                company='Admin Private Activity', activity_date=date.today(),
+                status=SalesActivity.STATUS_COMPLETED, owner_id=self.admin_id,
+            ),
+        ])
+        db.session.commit()
+
+        self.client.get('/logout')
+        response = self.client.post(
+            '/login', data={'username': 'Sales User', 'password': 'bitcrm'},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get('/sales-activities/')
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        summary_start = html.index('Activities by Owner')
+        summary_end = html.index('</table>', summary_start)
+        summary_html = html[summary_start:summary_end]
+
+        self.assertIn(
+            '<tr><td>Sales User</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="summary-total-column">1</td></tr>',
+            summary_html,
+        )
+        self.assertNotIn('<td>Admin</td>', summary_html)
+        self.assertIn('Sales User Activity', html)
+        self.assertNotIn('Admin Private Activity', html)
+
     def test_type_and_date_filters_include_overlapping_cross_date_visits(self):
         records = [
             SalesActivity(
