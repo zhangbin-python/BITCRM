@@ -509,9 +509,9 @@
                     <h5 class="mb-0">
                         <i class="bi bi-kanban"></i>
                         {{ _('Sales Pipeline Kanban Board') }}
-                        <small class="text-muted ms-2" style="font-size: 0.7rem;">
+                        {% if can_write_business_data %}<small class="text-muted ms-2" style="font-size: 0.7rem;">
                             <i class="bi bi-mouse"></i> {{ _('Double-click card to add follow-up') }}
-                        </small>
+                        </small>{% endif %}
                     </h5>
                     
                     <!-- Kanban Owner Filter Dropdown (multi-select) -->
@@ -569,6 +569,7 @@
     </div>
 </div>
 
+{% if can_write_business_data %}
 <!-- ============================================================================
      FOLLOW-UP MODAL (Hidden, triggered by double-click on kanban cards)
      ============================================================================ -->
@@ -596,11 +597,12 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- ============================================================================
      SALES BY OWNER TABLE (Admin Only)
      ============================================================================ -->
-{% if current_user.is_admin() %}
+{% if current_user.can_view_all_business_data() %}
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -999,7 +1001,9 @@
      ============================================================================ -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const READ_ONLY_MODE = {{ 'true' if current_user.is_readonly() else 'false' }};
     const modal = document.getElementById('followupModal');
+    if (!modal) return;
     const form = document.getElementById('followupModalForm');
     const content = document.getElementById('followupModalContent');
     const title = document.getElementById('followupModalTitle');
@@ -1069,6 +1073,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add double-click handler to kanban cards
     document.addEventListener('dblclick', function(e) {
+        if (READ_ONLY_MODE) return;
         const card = e.target.closest('.kanban-deal-card');
         if (card) {
             const pipelineId = card.dataset.id;

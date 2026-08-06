@@ -25,13 +25,16 @@ sales_activities_bp = Blueprint('sales_activities', __name__)
 
 def _visible_activity_query():
     query = SalesActivity.query.filter(SalesActivity.is_deleted.is_(False))
-    if not current_user.is_admin():
+    if not current_user.can_view_all_business_data():
         query = query.filter(SalesActivity.owner_id == current_user.id)
     return query
 
 
 def _can_manage(activity):
-    return current_user.is_admin() or activity.owner_id == current_user.id
+    return (
+        not current_user.is_readonly()
+        and (current_user.is_admin() or activity.owner_id == current_user.id)
+    )
 
 
 def _activity_date_range_condition(start_date=None, end_date=None):
@@ -145,7 +148,7 @@ def index():
             continue
         if owner_id > 0 and owner_id not in owner_ids:
             owner_ids.append(owner_id)
-    if not current_user.is_admin():
+    if not current_user.can_view_all_business_data():
         owner_ids = []
     calendar_month_value = request.args.get('calendar_month', '').strip()
     try:
@@ -161,7 +164,7 @@ def index():
     date_range_condition = _activity_date_range_condition(start_date, end_date)
     if date_range_condition is not None:
         query = query.filter(date_range_condition)
-    if current_user.is_admin() and owner_ids:
+    if current_user.can_view_all_business_data() and owner_ids:
         query = query.filter(SalesActivity.owner_id.in_(owner_ids))
 
     # Calendar data intentionally ignores the calendar date selections themselves.
@@ -284,7 +287,7 @@ def index():
         .distinct()
         .order_by(User.username)
         .all()
-        if current_user.is_admin()
+        if current_user.can_view_all_business_data()
         else []
     )
     assignable_owners = (
@@ -329,7 +332,7 @@ def source_search():
             })
     elif source_type == 'Pipeline':
         query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
-        if not current_user.is_admin():
+        if not current_user.can_view_all_business_data():
             supported_ids = db.session.query(pipeline_support.c.pipeline_id).filter(pipeline_support.c.user_id == current_user.id)
             query = query.filter(or_(Pipeline.owner_id == current_user.id, Pipeline.id.in_(supported_ids)))
         if keyword:
@@ -478,8 +481,6 @@ def followup(activity_id):
     try:
         if activity.get_display_status() != SalesActivity.STATUS_FOLLOW_UP_REQUIRED:
             raise ValueError('Only activities requiring follow-up can be completed here.')
-        if activity.activity_type == SalesActivity.TYPE_REMOTE_ENGAGEMENT and activity.remote_engagement_subtype == 'Next Steps / To-do':
-            raise ValueError('This activity must be completed from its linked Task.')
         notes = request.form.get('completion_notes', '').strip()
         todo_text = request.form.get('todo_text', '').strip()
         todo_due_date = validate_date(request.form.get('todo_due_date'))
@@ -488,32 +489,31 @@ def followup(activity_id):
         complete_activity(activity, current_user.id, notes)
         lead = activity.sales_lead
         pipeline = activity.pipeline
-        if activity.is_scheduled_visit:
-            history_note = f'{activity.activity_type} feedback: {notes}'
+        history_note = f'{activity.activity_type} feedback: {notes}'
+        for target in _sync_targets(lead, pipeline):
+            append_followup_history(target, history_note)
+        if pipeline:
+            if 'stuckpoint_text' in request.form:
+                pipeline.stuckpoint = request.form.get('stuckpoint_text', '').strip() or None
+            new_stage = request.form.get('stage', '').strip()
+            if new_stage:
+                if new_stage not in Pipeline.STAGE_OPTIONS:
+                    raise ValueError('Please select a valid Pipeline stage.')
+                pipeline.stage = new_stage
+                calculate_pipeline_metrics(pipeline)
+        if todo_text:
+            create_remote_engagement_activities(
+                source_type=activity.source_type,
+                owner_id=activity.owner_id,
+                sales_lead_id=activity.sales_lead_id,
+                pipeline_id=activity.pipeline_id,
+                company=activity.company,
+                todo_text=todo_text,
+                todo_due_date=todo_due_date,
+                activity_date=todo_due_date,
+            )
             for target in _sync_targets(lead, pipeline):
-                append_followup_history(target, history_note)
-            if pipeline:
-                if 'stuckpoint_text' in request.form:
-                    pipeline.stuckpoint = request.form.get('stuckpoint_text', '').strip() or None
-                new_stage = request.form.get('stage', '').strip()
-                if new_stage:
-                    if new_stage not in Pipeline.STAGE_OPTIONS:
-                        raise ValueError('Please select a valid Pipeline stage.')
-                    pipeline.stage = new_stage
-                    calculate_pipeline_metrics(pipeline)
-            if todo_text:
-                create_remote_engagement_activities(
-                    source_type=activity.source_type,
-                    owner_id=activity.owner_id,
-                    sales_lead_id=activity.sales_lead_id,
-                    pipeline_id=activity.pipeline_id,
-                    company=activity.company,
-                    todo_text=todo_text,
-                    todo_due_date=todo_due_date,
-                    activity_date=todo_due_date,
-                )
-                for target in _sync_targets(lead, pipeline):
-                    append_followup_history(target, todo_text=todo_text, todo_due_date=todo_due_date)
+                append_followup_history(target, todo_text=todo_text, todo_due_date=todo_due_date)
         log_activity(current_user, 'Sales Activity - Completed', 'sales_activity', activity.id,
                      activity.company, f'Completed {activity.activity_type} for {activity.company}: {notes}', request.remote_addr,
                      new_values={'status': activity.status, 'completion_notes': notes},

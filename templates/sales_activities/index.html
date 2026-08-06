@@ -177,7 +177,7 @@
                             <input type="hidden" id="activityFilterStartDate" name="start_date" value="{{ start_date.isoformat() if start_date else '' }}">
                             <input type="hidden" id="activityFilterEndDate" name="end_date" value="{{ end_date.isoformat() if end_date else '' }}">
                         </div>
-                        {% if current_user.is_admin() %}
+                        {% if current_user.can_view_all_business_data() %}
                         <div class="col-12 col-md-6 col-lg-4">
                             <label class="form-label" for="activityOwnerFilterButton">{{ _('Owner') }}</label>
                             <div class="dropdown owner-filter-dropdown">
@@ -247,7 +247,7 @@
 
         <div class="col-12 col-xl-4 sales-activity-side-column">
             <div class="d-flex justify-content-end mb-3">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSalesActivityModal"><i class="bi bi-plus-lg"></i> {{ _('Add Sales Activity') }}</button>
+                {% if can_write_business_data %}<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSalesActivityModal"><i class="bi bi-plus-lg"></i> {{ _('Add Sales Activity') }}</button>{% endif %}
             </div>
             <div class="card sales-activity-calendar-card"><div class="card-body">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -308,11 +308,11 @@
                 </td>
                 <td>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td><div class="d-flex gap-1">
-                    {% if activity.can_edit %}<button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editActivity{{ activity.id }}" title="{{ _('Edit / Reschedule') }}"><i class="bi bi-pencil"></i></button>{% endif %}
-                    {% if activity.display_status == 'Follow-up Required' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}<button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#followupActivity{{ activity.id }}" title="{{ _('Follow-up') }}"><i class="bi bi-chat-dots"></i></button>{% endif %}
+                    {% if can_write_business_data and activity.can_edit %}<button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editActivity{{ activity.id }}" title="{{ _('Edit / Reschedule') }}"><i class="bi bi-pencil"></i></button>{% endif %}
+                    {% if can_write_business_data and activity.display_status == 'Follow-up Required' %}<button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#followupActivity{{ activity.id }}" title="{{ _('Follow-up') }}"><i class="bi bi-chat-dots"></i></button>{% endif %}
                     {% if activity.linked_task and activity.status != 'Cancelled' %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('tasks.index') }}" title="{{ _('Open Task') }}"><i class="bi bi-check2-square"></i></a>{% endif %}
-                    {% if activity.can_edit %}<button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cancelActivity{{ activity.id }}" title="{{ _('Cancel Activity') }}"><i class="bi bi-x-circle"></i></button>{% endif %}
-                    <form method="post" action="{{ url_for('sales_activities.delete', activity_id=activity.id) }}" onsubmit="return confirm('{{ _('Archive this activity?') }}')"><button class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}"><i class="bi bi-trash"></i></button></form>
+                    {% if can_write_business_data and activity.can_edit %}<button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cancelActivity{{ activity.id }}" title="{{ _('Cancel Activity') }}"><i class="bi bi-x-circle"></i></button>{% endif %}
+                    {% if can_write_business_data %}<form method="post" action="{{ url_for('sales_activities.delete', activity_id=activity.id) }}" onsubmit="return confirm('{{ _('Archive this activity?') }}')"><button class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}"><i class="bi bi-trash"></i></button></form>{% endif %}
                 </div></td>
             </tr>
             {% else %}<tr><td colspan="15" class="text-center text-muted py-5">{{ _('No sales activities found') }}</td></tr>{% endfor %}
@@ -340,6 +340,7 @@
     </div></div>
 </div>
 
+{% if can_write_business_data %}
 <!-- Add activity modal -->
 {% set form_data = add_form_data or {} %}
 {% set form_activity_type = (form_data.get('activity_type') or ['Customer Visit'])|first %}
@@ -419,7 +420,7 @@
 <div class="modal fade" id="cancelActivity{{ activity.id }}" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="post" action="{{ url_for('sales_activities.cancel', activity_id=activity.id) }}"><div class="modal-header"><h5 class="modal-title">{{ _('Cancel Activity') }} - {{ activity.company }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">{{ _('Cancellation Reason') }} *</label><textarea name="cancellation_reason" class="form-control" rows="4" required placeholder="{{ _('Record why the customer meeting or remote engagement was cancelled') }}"></textarea><div class="form-text">{{ _('The activity and linked Task will be marked Cancelled, not deleted.') }}</div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Keep Activity') }}</button><button class="btn btn-outline-danger">{{ _('Confirm Cancellation') }}</button></div></form></div></div></div>
 {% endfor %}
 
-{% for activity in activities if activity.display_status == 'Follow-up Required' and not (activity.activity_type == 'Remote Engagement' and activity.remote_engagement_subtype == 'Next Steps / To-do') %}
+{% for activity in activities if activity.display_status == 'Follow-up Required' %}
 <div class="modal fade" id="followupActivity{{ activity.id }}" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content">
         <form method="post" action="{{ url_for('sales_activities.followup', activity_id=activity.id) }}">
@@ -427,7 +428,7 @@
             <div class="modal-body">
                 <p class="text-muted">{{ activity.activity_type }} · {{ activity.activity_date.strftime('%Y-%m-%d') }} · {{ _(activity.source_type) }}</p>
                 <label class="form-label">{{ _('Follow-up Notes') }} / {{ _('Completion Notes') }} *</label>
-                <textarea name="completion_notes" class="form-control" rows="5" required placeholder="{{ _('Enter visit result, customer feedback, and completed work') }}"></textarea>
+                <textarea name="completion_notes" class="form-control" rows="5" required placeholder="{{ _('Enter outcome, customer feedback, and completed work') }}"></textarea>
                 {% if activity.source_type in ['Sales Leads', 'Pipeline'] %}
                 <div class="alert alert-info small mt-3 mb-3">{{ _('The feedback will be written to Follow-up History. Optional Next Steps / To-do creates a separate Remote Engagement activity and Task.') }}</div>
                 {% if activity.source_type == 'Pipeline' %}
@@ -447,6 +448,7 @@
     </div></div>
 </div>
 {% endfor %}
+{% endif %}
 
 <script src="{{ url_for('static', filename='lib/flatpickr/flatpickr.min.js') }}"></script>
 <script>
@@ -617,6 +619,7 @@ if (activityFiltersForm) {
   }
 }
 
+{% if can_write_business_data %}
 const sourceType = document.getElementById('sourceType'); const activityType = document.getElementById('activityType'); const companySearch = document.getElementById('companySearch'); const companyValue = document.getElementById('companyValue'); const results = document.getElementById('companyResults'); const companyHelp = document.getElementById('companyHelp'); const activityOwner = document.getElementById('activityOwner'); const activityOwnerHelp = document.getElementById('activityOwnerHelp');
 const currentActivityOwnerId = {{ current_user.id|tojson }};
 const currentActivityOwnerName = {{ current_user.username|tojson }};
@@ -750,6 +753,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const modalElement = document.getElementById('addSalesActivityModal');
   if (modalElement && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modalElement).show();
 });
+{% endif %}
 {% endif %}
 </script>
 {% endblock %}

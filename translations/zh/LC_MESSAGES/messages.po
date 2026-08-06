@@ -1541,3 +1541,28 @@ msgstr "预计结束时间"
 #: templates/shared/_followup_activity_fields.html templates/tasks.html
 msgid "The linked Task due date will use the visit end date."
 msgstr "关联任务的到期日将使用 Visit 的结束日期。"
+
+#: templates/admin/users.html
+msgid "Read-only Reviewer"
+msgstr "只读审阅者"
+
+#: templates/base.html
+msgid "Read-only mode: you can view, filter, and export data, but cannot modify business data."
+msgstr "只读模式：您可以查看、筛选和导出数据，但不能修改业务数据。"
+
+#: templates/leads/form.html
+msgid "This sales lead is displayed in read-only mode."
+msgstr "此销售线索以只读模式显示。"
+
+#: templates/pipeline/form.html
+msgid "This pipeline opportunity is displayed in read-only mode."
+msgstr "此销售管道以只读模式显示。"
+
+msgid "View Sales Lead"
+msgstr "查看销售线索"
+
+msgid "View Pipeline"
+msgstr "查看销售管道"
+
+msgid "Read-only users cannot modify business data."
+msgstr "只读用户不能修改业务数据。"

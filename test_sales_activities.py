@@ -226,6 +226,44 @@ class SalesActivitiesTests(unittest.TestCase):
         self.assertEqual(activity.followup_notes, 'Arrange solution workshop.')
         self.assertEqual(activity.completion_notes, 'Workshop completed; technical team approved the design.')
 
+    def test_remote_next_step_can_be_completed_from_activity_list_and_syncs_task(self):
+        lead = self._lead(company='Remote Activity Completion Co')
+        response = self.client.post(
+            '/sales-activities/add',
+            data={
+                'activity_type': 'Remote Engagement',
+                'source_type': 'Sales Leads',
+                'sales_lead_id': str(lead.id),
+                'company': lead.company,
+                'activity_date': date.today().isoformat(),
+                'todo_text': 'Hold the remote solution review.',
+                'todo_due_date': date.today().isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        activity = SalesActivity.query.one()
+        task = Task.query.one()
+
+        activity_page = self.client.get('/sales-activities/')
+        self.assertEqual(activity_page.status_code, 200)
+        activity_html = activity_page.get_data(as_text=True)
+        self.assertIn(f'id="followupActivity{activity.id}"', activity_html)
+        self.assertIn(f'data-bs-target="#followupActivity{activity.id}"', activity_html)
+
+        response = self.client.post(
+            f'/sales-activities/{activity.id}/followup',
+            data={'completion_notes': 'Remote solution review completed with customer.'},
+        )
+        self.assertEqual(response.status_code, 302)
+        db.session.refresh(activity)
+        db.session.refresh(task)
+        db.session.refresh(lead)
+        self.assertEqual(activity.status, SalesActivity.STATUS_COMPLETED)
+        self.assertEqual(activity.completion_notes, 'Remote solution review completed with customer.')
+        self.assertEqual(task.status, 'Completed')
+        self.assertEqual(task.completion_notes, 'Remote solution review completed with customer.')
+        self.assertIn('Remote Engagement feedback: Remote solution review completed with customer.', lead.follow_up)
+
     def test_legacy_task_without_sales_activity_link_still_completes(self):
         lead = self._lead(company='Legacy Task Co')
         task = Task(

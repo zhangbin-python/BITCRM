@@ -11,7 +11,15 @@
         </div>
     </div>
 
+    {% if readonly_mode %}
+    <div class="alert alert-info" role="status">
+        <i class="bi bi-eye me-1"></i>
+        {{ _('This sales lead is displayed in read-only mode.') }}
+    </div>
+    {% endif %}
+
     <form method="POST" id="leadForm">
+        <fieldset {% if readonly_mode %}disabled{% endif %}>
         <div class="row">
             <!-- Basic Information -->
             <div class="col-lg-6">
@@ -131,15 +139,19 @@
             </div>
         </div>
 
+        </fieldset>
+
         <!-- Form Actions -->
         <div class="row">
             <div class="col">
                 <div class="form-actions-bar">
                     <a href="{{ url_for('leads.index') }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
+                    {% if not readonly_mode %}
                     <div class="form-actions-buttons">
                         <button type="submit" name="continue" value="1" class="btn btn-outline-primary">{{ _('Save & Continue Adding') }}</button>
                         <button type="submit" class="btn btn-primary">{{ _('Save Lead') }}</button>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

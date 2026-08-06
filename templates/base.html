@@ -763,6 +763,13 @@
                 </nav>
                 {% endif %}
                 
+                {% if current_user.is_authenticated and current_user.is_readonly() %}
+                <div class="alert alert-info py-2 mb-3 small" role="status">
+                    <i class="bi bi-eye me-1"></i>
+                    {{ _('Read-only mode: you can view, filter, and export data, but cannot modify business data.') }}
+                </div>
+                {% endif %}
+
                 <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}

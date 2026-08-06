@@ -3,7 +3,7 @@ BITCRM Route Definitions
 All Flask routes for the application.
 """
 import pandas as pd
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response, session
+from flask import Blueprint, abort, render_template, redirect, url_for, flash, request, send_file, jsonify, make_response, session
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_babel import gettext as _, get_locale
 from werkzeug.security import generate_password_hash
@@ -248,7 +248,7 @@ def _build_export_dataframe(items, visible_columns, value_getter):
 def _get_pipeline_access_query():
     """Build pipeline query scoped to the current user's access."""
     query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
-    if not current_user.is_admin():
+    if not current_user.can_view_all_business_data():
         supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
         ).subquery()
@@ -526,7 +526,7 @@ def dashboard():
     today = date.today()
     summary_metrics = (
         get_company_dashboard_summary(ref_date=today)
-        if current_user.is_admin()
+        if current_user.can_view_all_business_data()
         else get_owner_dashboard_summary(current_user.id, ref_date=today)
     )
     owner_metrics = get_owner_dashboard_metrics(ref_date=today)
@@ -610,7 +610,7 @@ def dashboard():
     base_query = Pipeline.query.filter(Pipeline.is_deleted.is_(False)).options(joinedload(Pipeline.owner))
 
     # 根据权限过滤
-    if not current_user.is_admin():
+    if not current_user.can_view_all_business_data():
         # Get the Pipeline IDs that current_user supports
         supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
@@ -1023,6 +1023,9 @@ def index():
 @login_required
 def add():
     """Add new Sales Lead."""
+
+    if current_user.is_readonly():
+        abort(403, description='Read-only users cannot add Sales Leads.')
     
     if not current_user.can_access_leads():
         flash('You do not have permission to access Sales Leads.', 'danger')
@@ -1064,7 +1067,10 @@ def add():
             flash(f'Error adding Sales Lead: {str(e)}', 'danger')
     
     users = User.query.filter_by(is_active=True).order_by(User.username).all()
-    return render_template('leads/form.html', lead=None, users=users, title='Add Sales Lead')
+    return render_template(
+        'leads/form.html', lead=None, users=users,
+        readonly_mode=False, title='Add Sales Lead'
+    )
 
 
 @leads_bp.route('/<int:lead_id>/edit', methods=['GET', 'POST'])
@@ -1132,7 +1138,12 @@ def edit(lead_id):
             flash(f'Error updating Sales Lead: {str(e)}', 'danger')
     
     users = User.query.filter_by(is_active=True).order_by(User.username).all()
-    return render_template('leads/form.html', lead=lead, users=users, title='Edit Sales Lead')
+    readonly_mode = current_user.is_readonly()
+    return render_template(
+        'leads/form.html', lead=lead, users=users,
+        readonly_mode=readonly_mode,
+        title=_('View Sales Lead') if readonly_mode else _('Edit Sales Lead')
+    )
 
 
 @leads_bp.route('/<int:lead_id>/delete', methods=['POST'])
@@ -1343,6 +1354,9 @@ def add_lead_followup(lead_id):
 @login_required
 def import_template():
     """Download Excel import template."""
+    if current_user.is_readonly():
+        abort(403, description='Import templates are not available in read-only mode.')
+
     if not current_user.can_access_leads():
         flash('You do not have permission to access Sales Leads.', 'danger')
         return redirect(url_for('main.dashboard'))
@@ -1738,7 +1752,7 @@ def kanban_data():
     query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
     
     # Filter by access permissions
-    if not current_user.is_admin():
+    if not current_user.can_view_all_business_data():
         # Get the Pipeline IDs that current_user supports
         supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)
@@ -1818,6 +1832,9 @@ def update_stage():
 @login_required
 def add():
     """Add new Pipeline entry."""
+
+    if current_user.is_readonly():
+        abort(403, description='Read-only users cannot add Pipeline entries.')
     
     if request.method == 'POST':
         try:
@@ -1885,6 +1902,7 @@ def add():
                           pipeline=None, 
                           users=users,
                           support_users=support_users,
+                          readonly_mode=False,
                           title='Add Pipeline')
 
 
@@ -1979,11 +1997,13 @@ def edit(pipeline_id):
     users = User.query.filter_by(is_active=True).order_by(User.username).all()
     support_users = User.query.filter_by(is_active=True).order_by(User.username).all()
     
+    readonly_mode = current_user.is_readonly()
     return render_template('pipeline/form.html',
                           pipeline=pipeline,
                           users=users,
                           support_users=support_users,
-                          title='Edit Pipeline')
+                          readonly_mode=readonly_mode,
+                          title=_('View Pipeline') if readonly_mode else _('Edit Pipeline'))
 
 
 @pipeline_bp.route('/<int:pipeline_id>/delete', methods=['POST'])
@@ -2135,6 +2155,9 @@ def add_followup(pipeline_id):
 @login_required
 def import_template():
     """Download Excel import template."""
+    if current_user.is_readonly():
+        abort(403, description='Import templates are not available in read-only mode.')
+
     
     columns = ['Name', 'Company', 'Industry', 'Position', 'Email', 'Mobile Number',
               'Owner', 'Support', 'Product', 'TCV USD', 'Contract Term (Yrs)',
@@ -2465,24 +2488,20 @@ def index():
     # Get all tasks accessible to user
     query = Task.query.filter(Task.is_deleted.is_(False))
     
-    if not current_user.is_admin():
+    if not current_user.can_view_all_business_data():
         query = query.filter(Task.owner_id == current_user.id)
-    
-    # Check for overdue tasks
-    for task in query.all():
-        task.check_overdue()
-    db.session.commit()
-    
-    # Order by due date, then by status
+
+    # Calculate overdue display state without mutating business data on GET.
     query = query.order_by(Task.due_date.asc().nullsfirst(), Task.status)
-    
     tasks = query.all()
-    
-    # Group by status
-    overdue_tasks = [t for t in tasks if t.status == 'Overdue']
-    in_progress_tasks = [t for t in tasks if t.status == 'In Progress']
-    completed_tasks = [t for t in tasks if t.status == 'Completed']
-    cancelled_tasks = [t for t in tasks if t.status == 'Cancelled']
+    for task in tasks:
+        task.display_status = task.get_effective_status()
+
+    # Group by effective status.
+    overdue_tasks = [t for t in tasks if t.display_status == 'Overdue']
+    in_progress_tasks = [t for t in tasks if t.display_status == 'In Progress']
+    completed_tasks = [t for t in tasks if t.display_status == 'Completed']
+    cancelled_tasks = [t for t in tasks if t.display_status == 'Cancelled']
     
     owner_filter_users = _get_owner_users_from_query(
         Task,
@@ -2672,6 +2691,7 @@ def delete(task_id):
 # ============================================================================
 
 admin_bp = Blueprint('admin', __name__)
+VALID_USER_ROLES = {'admin', 'sales', 'marketing', 'readonly'}
 
 
 @admin_bp.route('/users')
@@ -2700,8 +2720,12 @@ def add_user():
     try:
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
-        role = request.form.get('role', 'sales')
+        role = request.form.get('role', 'sales').strip().lower()
         password = request.form.get('password', '').strip()
+
+        if role not in VALID_USER_ROLES:
+            flash('Invalid user role.', 'danger')
+            return redirect(url_for('admin.users'))
         
         if not username:
             flash('Username is required', 'danger')
@@ -2748,7 +2772,11 @@ def edit_user(user_id):
     try:
         user.username = request.form.get('username', '').strip()
         user.email = request.form.get('email', '').strip() or None
-        user.role = request.form.get('role', 'sales')
+        role = request.form.get('role', 'sales').strip().lower()
+        if role not in VALID_USER_ROLES:
+            flash('Invalid user role.', 'danger')
+            return redirect(url_for('admin.users'))
+        user.role = role
         
         db.session.commit()
         flash(f'User {user.username} updated successfully!', 'success')
@@ -3156,7 +3184,7 @@ def get_pipeline_kanban_data():
     query = Pipeline.query.filter(Pipeline.is_deleted.is_(False))
     
     # Filter by access permissions
-    if not current_user.is_admin():
+    if not current_user.can_view_all_business_data():
         # Get the Pipeline IDs that current_user supports
         supported_pipeline_ids = db.session.query(Pipeline.id).filter(
             Pipeline.support_team.contains(current_user)

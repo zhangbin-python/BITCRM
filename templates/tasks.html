@@ -244,14 +244,14 @@
             </ul>
         </div>
 
-        <button type="button"
+        {% if can_write_business_data %}<button type="button"
                 class="btn btn-primary d-flex align-items-center gap-2 px-4 py-2"
                 style="min-height: 44px; min-width: 44px;"
                 data-bs-toggle="modal"
                 data-bs-target="#addTaskModal">
             <i class="fas fa-plus fa-lg"></i>
             <span class="fw-semibold">{{ _('Add Task') }}</span>
-        </button>
+        </button>{% endif %}
         </div>
     </div>
 
@@ -334,7 +334,7 @@
                         {% for task in overdue_tasks %}
                         <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="Overdue">
                             <td class="text-center align-middle">
-                                <span class="badge bg-danger">{{ _(task.status) }}</span>
+                                <span class="badge bg-danger">{{ _(task.display_status) }}</span>
                                 <small class="status-date overdue d-block">{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}</small>
                             </td>
                             <td class="text-start align-middle">{{ task.owner.username if task.owner else '-' }}</td>
@@ -349,13 +349,13 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
-                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
+                                    {% if can_write_business_data %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% elif can_write_business_data %}<button type="button" class="btn btn-sm btn-info shadow-sm"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>{% endif %}
-                                    {% if not task.sales_activity %}
+                                    {% if can_write_business_data and not task.sales_activity %}
                                     <button type="button" class="btn btn-sm btn-danger shadow-sm"
                                             onclick="if(confirm('{{ _('Are you sure?') }}')) { document.getElementById('deleteForm{{ task.id }}').submit(); }">
                                         <i class="bi bi-trash-fill"></i>
@@ -397,7 +397,7 @@
                         {% for task in in_progress_tasks %}
                         <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="In Progress">
                             <td class="text-center align-middle">
-                                <span class="badge bg-success">{{ _(task.status) }}</span>
+                                <span class="badge bg-success">{{ _(task.display_status) }}</span>
                                 <small class="status-date in-progress d-block">{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}</small>
                             </td>
                             <td class="text-start align-middle">{{ task.owner.username if task.owner else '-' }}</td>
@@ -412,13 +412,13 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    <button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>
-                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
+                                    {% if can_write_business_data %}<button type="button" class="btn btn-sm btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeTaskModal{{ task.id }}" title="{{ _('Complete') }}"><i class="bi bi-check-lg"></i></button>{% endif %}
+                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% elif can_write_business_data %}<button type="button" class="btn btn-sm btn-info shadow-sm"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>{% endif %}
-                                    {% if not task.sales_activity %}
+                                    {% if can_write_business_data and not task.sales_activity %}
                                     <button type="button" class="btn btn-sm btn-danger shadow-sm"
                                             onclick="if(confirm('{{ _('Are you sure?') }}')) { document.getElementById('deleteForm{{ task.id }}').submit(); }">
                                         <i class="bi bi-trash-fill"></i>
@@ -466,7 +466,7 @@
                         {% for task in completed_tasks %}
                         <tr class="task-row" data-owner-id="{{ task.owner_id or 0 }}" data-task-status="Completed">
                             <td class="text-center align-middle">
-                                <span class="badge bg-secondary">{{ _(task.status) }}</span>
+                                <span class="badge bg-secondary">{{ _(task.display_status) }}</span>
                                 <small class="status-date completed d-block">{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}</small>
                             </td>
                             <td class="text-start align-middle">{{ task.owner.username if task.owner else '-' }}</td>
@@ -485,13 +485,13 @@
                             </td>
                             <td class="text-end align-middle">
                                 <div class="d-flex gap-2 justify-content-end">
-                                    <form action="{{ url_for('tasks.reopen', task_id=task.id) }}" method="POST"><button class="btn btn-sm btn-warning shadow-sm" title="{{ _('Reopen') }}"><i class="bi bi-arrow-counterclockwise"></i></button></form>
-                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% else %}<button type="button" class="btn btn-sm btn-info shadow-sm"
+                                    {% if can_write_business_data %}<form action="{{ url_for('tasks.reopen', task_id=task.id) }}" method="POST"><button class="btn btn-sm btn-warning shadow-sm" title="{{ _('Reopen') }}"><i class="bi bi-arrow-counterclockwise"></i></button></form>{% endif %}
+                                    {% if task.sales_activity %}<a href="{{ url_for('sales_activities.index') }}" class="btn btn-sm btn-outline-primary shadow-sm" title="{{ _('Open Sales Activity') }}"><i class="bi bi-calendar-event"></i></a>{% elif can_write_business_data %}<button type="button" class="btn btn-sm btn-info shadow-sm"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editTaskModal{{ task.id }}">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>{% endif %}
-                                    {% if not task.sales_activity %}
+                                    {% if can_write_business_data and not task.sales_activity %}
                                     <button type="button" class="btn btn-sm btn-danger shadow-sm"
                                             onclick="if(confirm('{{ _('Are you sure?') }}')) { document.getElementById('deleteForm{{ task.id }}').submit(); }">
                                         <i class="bi bi-trash-fill"></i>
@@ -534,6 +534,7 @@
     </div>
 </div>
 
+{% if can_write_business_data %}
 <!-- Add Task Modal -->
 <div class="modal fade" id="addTaskModal" tabindex="-1">
     <div class="modal-dialog">
@@ -641,6 +642,8 @@
     </div>
 </div>
 {% endfor %}
+
+{% endif %}
 
 <!-- Initialize tooltips and unified owner filter -->
 <script>

@@ -4,7 +4,8 @@ Flask application factory and initialization.
 """
 import os
 from datetime import date, datetime
-from flask import Flask, request, session, g
+from flask import Flask, abort, jsonify, request, session, g
+from flask_login import current_user
 from flask_babel import Babel
 from babel.messages import pofile, mofile
 from extensions import db, login_manager, babel, migrate
@@ -93,6 +94,36 @@ def create_app(config_class=None):
     @app.before_request
     def set_current_language():
         g.lang = get_locale()
+
+    @app.before_request
+    def block_readonly_business_writes():
+        """Deny business mutations for read-only reviewers at the server boundary.
+
+        UI controls are hidden separately, but this guard is the security boundary
+        that prevents a read-only user from calling a write URL directly.
+        Personal preferences and password changes are intentionally allowed.
+        """
+        if not current_user.is_authenticated or not current_user.is_readonly():
+            return None
+
+        if request.method not in {'POST', 'PUT', 'PATCH', 'DELETE'}:
+            return None
+
+        allowed_endpoints = {
+            # Session/authentication actions are not business-data mutations.
+            'main.login',
+            'main.logout',
+            'api.change_password',
+            'api.set_column_preferences',
+            'api.set_dashboard_filters',
+        }
+        if request.endpoint in allowed_endpoints:
+            return None
+
+        message = 'Read-only users cannot modify business data.'
+        if request.is_json or request.path.startswith('/api/'):
+            return jsonify({'success': False, 'error': message}), 403
+        abort(403, description=message)
     
     # Register HTTP cache headers (must be after app is created)
     @app.after_request
@@ -469,6 +500,9 @@ def create_app(config_class=None):
         return {
             'format_currency_thousands': format_currency_thousands,
             'format_currency_short': format_currency_short,
+            'can_write_business_data': (
+                current_user.is_authenticated and not current_user.is_readonly()
+            ),
         }
     
     return app

@@ -168,6 +168,7 @@
         </div>
         <div class="page-header-actions">
             <div class="list-toolbar-group">
+                {% if can_write_business_data %}
                 <a href="{{ url_for('pipeline.import_template') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-download"></i>
                     {{ _('Download Template') }}
@@ -176,15 +177,16 @@
                     <i class="bi bi-upload"></i>
                     {{ _('Import') }}
                 </button>
+                {% endif %}
                 <a href="{{ url_for('pipeline.export', show_lost='true' if show_lost else 'false', company=company_filter or None, stage=stage_filters, level=level_filter, owner=owner_filter_ids, est_sign_quarter=est_sign_quarters, est_activate_quarter=est_activate_quarters, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-file-earmark-excel"></i>
                     {{ _('Export') }}
                 </a>
             </div>
-            <a href="{{ url_for('pipeline.add') }}" class="btn btn-primary btn-sm">
+            {% if can_write_business_data %}<a href="{{ url_for('pipeline.add') }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg"></i>
                 {{ _('Add Pipeline') }}
-            </a>
+            </a>{% endif %}
         </div>
     </div>
 
@@ -555,6 +557,7 @@
                             {% endfor %}
                             <td style="min-width: 200px;">
                                 <div class="d-flex gap-2 align-items-center">
+                                    {% if can_write_business_data %}
                                     <button type="button"
                                             class="btn btn-sm btn-success"
                                             title="{{ _('Follow-up') }}"
@@ -564,12 +567,14 @@
                                             data-company="{{ pipeline.company }}">
                                         <i class="bi bi-chat-dots"></i>
                                     </button>
+                                    {% endif %}
                                     <a href="{{ url_for('pipeline.edit', pipeline_id=pipeline.id) }}"
                                        class="btn btn-sm btn-primary"
-                                       title="{{ _('Edit') }}"
+                                       title="{{ _('Edit') if can_write_business_data else _('View') }}"
                                        data-bs-toggle="tooltip">
-                                        <i class="bi bi-pencil-square"></i>
+                                        <i class="bi {{ 'bi-pencil-square' if can_write_business_data else 'bi-eye' }}"></i>
                                     </a>
+                                    {% if can_write_business_data %}
                                     <button type="button" 
                                             class="btn btn-sm btn-danger" 
                                             title="{{ _('Delete') }}"
@@ -580,6 +585,7 @@
                                     <!-- Hidden delete form -->
                                     <form id="deleteForm{{ pipeline.id }}" action="{{ url_for('pipeline.delete', pipeline_id=pipeline.id) }}" method="POST" style="display: none;">
                                     </form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -590,6 +596,7 @@
         </div>
     </div>
 
+    {% if can_write_business_data %}
     <!-- Follow-up Modal - Single Instance (MOVED OUTSIDE LOOP) -->
     <div class="modal fade" id="followupModal" tabindex="-1" data-bs-backdrop="false">
         <div class="modal-dialog modal-lg">
@@ -615,6 +622,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Pagination -->
     {% if pipelines.pages > 1 %}
@@ -635,6 +643,7 @@
     </nav>
     {% endif %}
 
+{% if can_write_business_data %}
 <!-- Import Modal -->
 <div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog">
@@ -659,6 +668,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- Force cleanup all backdrops on page load -->
 <script>
@@ -684,6 +694,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('followupModal');
+    if (!modal) return;
     const form = document.getElementById('followupModalForm');
     const content = document.getElementById('followupModalContent');
     const title = document.getElementById('followupModalTitle');

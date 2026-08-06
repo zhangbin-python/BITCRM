@@ -61,8 +61,8 @@
                             </td>
                             <td>{{ user.email or '-' }}</td>
                             <td>
-                                <span class="badge {% if user.role == 'admin' %}bg-danger{% elif user.role == 'marketing' %}bg-info{% else %}bg-success{% endif %}">
-                                    {{ _(user.role|capitalize) }}
+                                <span class="badge {% if user.role == 'admin' %}bg-danger{% elif user.role == 'marketing' %}bg-info{% elif user.role == 'readonly' %}bg-secondary{% else %}bg-success{% endif %}">
+                                    {{ _('Read-only Reviewer') if user.role == 'readonly' else _(user.role|capitalize) }}
                                 </span>
                             </td>
                             <td>
@@ -129,6 +129,7 @@
                         <select name="role" class="form-select" required>
                             <option value="sales">{{ _('Sales') }}</option>
                             <option value="marketing">{{ _('Marketing') }}</option>
+                            <option value="readonly">{{ _('Read-only Reviewer') }}</option>
                             <option value="admin">{{ _('Admin') }}</option>
                         </select>
                     </div>
@@ -172,6 +173,7 @@
                             <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>{{ _('Admin') }}</option>
                             <option value="sales" {% if user.role == 'sales' %}selected{% endif %}>{{ _('Sales') }}</option>
                             <option value="marketing" {% if user.role == 'marketing' %}selected{% endif %}>{{ _('Marketing') }}</option>
+                            <option value="readonly" {% if user.role == 'readonly' %}selected{% endif %}>{{ _('Read-only Reviewer') }}</option>
                         </select>
                     </div>
                 </div>

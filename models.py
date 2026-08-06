@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='sales')  # admin, sales, marketing
+    role = db.Column(db.String(20), nullable=False, default='sales')  # admin, sales, marketing, readonly
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -66,19 +66,27 @@ class User(UserMixin, db.Model):
     def is_marketing(self):
         """Check if user has marketing role."""
         return self.role.lower() == 'marketing'
+
+    def is_readonly(self):
+        """Check if user has the global read-only reviewer role."""
+        return self.role.lower() == 'readonly'
+
+    def can_view_all_business_data(self):
+        """Check if user can view active business data for all owners."""
+        return self.role.lower() in ['admin', 'readonly']
     
     def can_access_leads(self):
         """Check if user can access sales leads."""
-        # admin, marketing, and sales can all access leads
-        return self.role.lower() in ['admin', 'marketing', 'sales']
+        # admin, marketing, sales, and read-only reviewers can access leads
+        return self.role.lower() in ['admin', 'marketing', 'sales', 'readonly']
     
     def can_view_all_leads(self):
         """Check if user can view all leads (not just own)."""
-        return self.role.lower() in ['admin', 'marketing']
+        return self.role.lower() in ['admin', 'marketing', 'readonly']
     
     def can_access_pipeline(self, pipeline):
         """Check if user can access a specific pipeline."""
-        if self.is_admin():
+        if self.can_view_all_business_data():
             return True
         # Check if user is owner or in support team
         if pipeline.owner_id == self.id:
@@ -700,20 +708,20 @@ class Task(db.Model):
     sales_lead = db.relationship('SalesLead', foreign_keys=[sales_lead_id], backref='tasks')
     completed_by = db.relationship('User', foreign_keys=[completed_by_id])
     
-    def get_status_color(self):
-        """Return Bootstrap color class based on status."""
+    def get_status_color(self, status=None):
+        """Return Bootstrap color class based on a stored or effective status."""
         status_colors = {
             'In Progress': 'success',
             'Overdue': 'danger',
             'Completed': 'secondary',
             'Cancelled': 'secondary',
         }
-        return status_colors.get(self.status, 'secondary')
-    
-    def check_overdue(self, now=None):
-        """Check if a task is overdue, including scheduled-visit feedback grace periods."""
+        return status_colors.get(status or self.status, 'secondary')
+
+    def get_effective_status(self, now=None):
+        """Calculate display status without mutating the task."""
         if self.status in ('Completed', 'Cancelled'):
-            return False
+            return self.status
 
         now = now or datetime.now()
         if (
@@ -728,12 +736,14 @@ class Task(db.Model):
         else:
             is_overdue = bool(self.due_date and now.date() > self.due_date)
 
-        if is_overdue:
-            self.status = 'Overdue'
-            return True
-        if self.status == 'Overdue':
-            self.status = 'In Progress'
-        return False
+        return 'Overdue' if is_overdue else 'In Progress'
+
+    def check_overdue(self, now=None):
+        """Persist the effective overdue status for a business operation."""
+        effective_status = self.get_effective_status(now)
+        changed = self.status != effective_status
+        self.status = effective_status
+        return changed
     
     def __repr__(self):
         return f'<Task {self.content[:30]}...>'

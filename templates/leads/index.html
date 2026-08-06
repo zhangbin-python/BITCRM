@@ -200,6 +200,7 @@
     </div>
     <div class="page-header-actions">
         <div class="list-toolbar-group">
+            {% if can_write_business_data %}
             <a href="{{ url_for('leads.import_template') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-download"></i>
                 {{ _('Download Template') }}
@@ -208,15 +209,16 @@
                 <i class="bi bi-upload"></i>
                 {{ _('Import') }}
             </button>
+            {% endif %}
             <a href="{{ url_for('leads.export', show_unqualified='true' if show_unqualified else 'false', company=company_filter or None, status=status_filters, source=source_filters, owner=owner_filter_ids, sort=sort_by, order=sort_order) }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel"></i>
                 {{ _('Export') }}
             </a>
         </div>
-        <a href="{{ url_for('leads.add') }}" class="btn btn-primary btn-sm">
+        {% if can_write_business_data %}<a href="{{ url_for('leads.add') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg"></i>
             {{ _('Add Sales Lead') }}
-        </a>
+        </a>{% endif %}
     </div>
 </div>
 
@@ -452,13 +454,16 @@
                 
                 <td style="min-width: 200px;">
                     <div class="d-flex gap-2 align-items-center">
+                        {% if can_write_business_data %}
                         <button type="button" class="btn btn-sm btn-success" title="{{ _('Follow-up') }}" data-bs-toggle="modal" data-bs-target="#leadFollowupModal" data-followup-url="{{ url_for('leads.add_lead_followup', lead_id=lead.id) }}" data-company="{{ (lead.company or lead.name)|e }}" data-history="{{ (lead.follow_up or '')|e }}"><i class="bi bi-chat-dots"></i></button>
+                        {% endif %}
                         <a href="{{ url_for('leads.edit', lead_id=lead.id) }}" 
                            class="btn btn-sm btn-primary" 
-                           title="{{ _('Edit') }}"
+                           title="{{ _('Edit') if can_write_business_data else _('View') }}"
                            data-bs-toggle="tooltip">
-                            <i class="bi bi-pencil-square"></i>
+                            <i class="bi {{ 'bi-pencil-square' if can_write_business_data else 'bi-eye' }}"></i>
                         </a>
+                        {% if can_write_business_data %}
                         <button type="button" 
                                 class="btn btn-sm btn-danger" 
                                 title="{{ _('Delete') }}"
@@ -469,6 +474,7 @@
                         <!-- Hidden delete form -->
                         <form id="deleteForm{{ lead.id }}" action="{{ url_for('leads.delete', lead_id=lead.id) }}" method="POST" style="display: none;">
                         </form>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
@@ -477,10 +483,10 @@
                 <td colspan="{{ visible_column_keys|length + 1 }}" class="text-center py-5">
                     <i class="bi bi-inbox fs-1 text-muted"></i>
                     <p class="text-muted mt-2">{{ _('No Sales Leads found') }}</p>
-                    <a href="{{ url_for('leads.add') }}" class="btn btn-primary">
+                    {% if can_write_business_data %}<a href="{{ url_for('leads.add') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg"></i>
                         {{ _('Add First Sales Lead') }}
-                    </a>
+                    </a>{% endif %}
                 </td>
             </tr>
             {% endfor %}
@@ -517,6 +523,7 @@
 </nav>
 {% endif %}
 
+{% if can_write_business_data %}
 <!-- Sales Lead Follow-up Modal -->
 <div class="modal fade" id="leadFollowupModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -610,10 +617,12 @@
     </div>
 </div>
 {% endfor %}
+{% endif %}
 
 <script src="{{ url_for('static', filename='js/followup_activity_form.js') }}"></script>
 <script>
 // Inline Edit JavaScript
+const READ_ONLY_MODE = {{ 'true' if current_user.is_readonly() else 'false' }};
 const STATUS_OPTIONS = ["Qualified", "Waiting for Response", "Unqualified", "Waiting to be Contacted"];
 const SOURCE_OPTIONS = ["Website", "Referral", "Email Campaign", "Social Media", "Event", "Trade Show", "Advertisement", "Partner", "Direct Inquiry", "BFSI", "Channel", "Others"];
 const USERS_DATA = [
@@ -623,6 +632,7 @@ const USERS_DATA = [
 ];
 
 function startEdit(cell, leadId, fieldName) {
+    if (READ_ONLY_MODE) return;
     const value = cell.dataset.value || cell.textContent.trim();
     document.getElementById('editLeadId').value = leadId;
     document.getElementById('editFieldName').value = fieldName;
@@ -684,7 +694,8 @@ function saveInlineEdit() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('saveEditBtn').onclick = saveInlineEdit;
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    if (saveEditBtn) saveEditBtn.onclick = saveInlineEdit;
     const followupModal = document.getElementById('leadFollowupModal');
     if (followupModal) {
         followupModal.addEventListener('show.bs.modal', function(event) {
