@@ -22,7 +22,7 @@
             <h1>BITCRM User Guide</h1>
             <p>A practical guide for sales, marketing, operations, and administrators.</p>
             <p>Use it to understand what each module records, how modules work together, and where to complete each business action.</p>
-            <div class="version">Complete bilingual guide · Updated August 4, 2026</div>
+            <div class="version">Complete bilingual guide · Updated August 6, 2026</div>
         </section>
 
         <section id="getting-started">
@@ -158,8 +158,8 @@
                 <div class="step"><span class="step-number">1</span><div>Click <strong>Add Sales Activity</strong> and select one of the three activity types.</div></div>
                 <div class="step"><span class="step-number">2</span><div>Select Source Type. For Sales Leads or Pipeline, choose a permitted record from the search results instead of typing only a company name.</div></div>
                 <div class="step"><span class="step-number">3</span><div>Enter the schedule or Activity Date, contacts, purpose/project, expected result, and remarks.</div></div>
-                <div class="step"><span class="step-number">4</span><div>You can also create activities from Add Follow-up in Sales Leads or Pipeline. Follow-up Notes means completed activity; Next Steps / To-do means planned activity. Select each type independently, and they may differ.</div></div>
-                <div class="step"><span class="step-number">5</span><div>A completed Follow-up creates no Task. A new Next Step creates a Scheduled Sales Activity and linked Task. Remote Engagement uses dates; Visits use start/end times, and the Task due date uses the Visit end date.</div></div>
+                <div class="step"><span class="step-number">4</span><div>Customer Visit and DC Site Visit are created only in Sales Activities. Sales Leads and Pipeline Follow-up can select an existing linked visit and complete it without creating a duplicate. New quick entries from those modules are Remote Engagement only.</div></div>
+                <div class="step"><span class="step-number">5</span><div>A completed Remote Engagement Follow-up creates no Task. A new Remote Engagement Next Step creates a Scheduled Sales Activity and linked Task. Visits use their complete schedule and visitor details in Sales Activities.</div></div>
             </div>
 
             <h3>5.3 Status and reminder logic</h3>
@@ -190,7 +190,7 @@
             <h3>5.5 Edit, complete, cancel, and archive</h3>
             <ul>
                 <li>Open activities can be edited or rescheduled when the customer changes the time. The linked Task date, Owner, company, and content are synchronized.</li>
-                <li>Customer Visit and DC Site Visit can be completed in Tasks with mandatory Completion Notes, synchronizing the linked Sales Activity status, feedback, completion time, and completing user. A Visit may also be completed in Sales Activities to synchronize the Task.</li>
+                <li>Customer Visit and DC Site Visit can be completed in Tasks, Sales Activities, Sales Leads, or Pipeline with mandatory Completion Notes. Every entry updates the original Sales Activity and linked Task; Lead/Pipeline Follow-up never creates a duplicate visit.</li>
                 <li>Complete a Remote To-do in Tasks with mandatory Completion Notes; its Sales Activity updates automatically. “Open Sales Activity” is a detail-view shortcut, not a required path for completing a Visit.</li>
                 <li>Cancel keeps the record and reason. Delete archives the activity and its linked Task from normal views.</li>
                 <li>For Sales Leads and Pipeline sources, plans and feedback are appended to Follow-up History, including the linked Lead/Pipeline where applicable.</li>
@@ -217,8 +217,8 @@
                 <thead><tr><th>Task origin</th><th>Where to complete or change it</th></tr></thead>
                 <tbody>
                     <tr><td>Manual Task</td><td>Manage directly in Tasks.</td></tr>
-                    <tr><td>Remote Engagement — Next Steps / To-do</td><td>Complete in Tasks with Completion Notes; the Sales Activity is synchronized.</td></tr>
-                    <tr><td>Customer Visit or DC Site Visit</td><td>Complete directly in Tasks with required Completion Notes and synchronize the Sales Activity, or enter feedback in Sales Activities and synchronize the Task.</td></tr>
+                    <tr><td>Remote Engagement — Next Steps / To-do</td><td>Complete in Tasks or Sales Activities with Completion Notes; both records are synchronized.</td></tr>
+                    <tr><td>Customer Visit or DC Site Visit</td><td>Create in Sales Activities. Complete it from Tasks, Sales Activities, Sales Leads, or Pipeline; all paths update the same activity and Task.</td></tr>
                 </tbody>
             </table></div>
             <div class="warning-box">A Task linked to a Sales Activity cannot be independently edited or deleted in a way that breaks the activity record. Completion is available from Tasks or Sales Activities; use Sales Activities for rescheduling, activity-detail changes, or cancellation.</div>
@@ -269,7 +269,7 @@
             <h2>10. Recommended end-to-end workflow</h2>
             <div class="step-list">
                 <div class="step"><span class="step-number">1</span><div>Create or import the Sales Lead, confirm source, Owner, contact, and requirement.</div></div>
-                <div class="step"><span class="step-number">2</span><div>Record each completed call, email, or meeting as Follow-up. Add a dated Next Steps / To-do when action is required.</div></div>
+                <div class="step"><span class="step-number">2</span><div>Record each completed call, email, or meeting as Remote Engagement Follow-up. Add a dated Remote Engagement Next Steps / To-do when action is required.</div></div>
                 <div class="step"><span class="step-number">3</span><div>When the Lead is qualified, maintain the Pipeline opportunity, value, stage, probability, timing, and blocker.</div></div>
                 <div class="step"><span class="step-number">4</span><div>Use Customer Visit when we go to the customer; use DC Site Visit when the customer comes to our Data Center; use Remote Engagement for email, phone, or online meetings.</div></div>
                 <div class="step"><span class="step-number">5</span><div>Complete Tasks with real outcomes and enter visit feedback promptly so Follow-up History stays current.</div></div>
@@ -296,13 +296,13 @@
             <div class="faq"><strong>Which visit type should I choose?</strong>Choose Customer Visit when our staff go outside the office to the customer or project site. Choose DC Site Visit when the customer visits our Data Center. Choose Remote Engagement when no physical visit is required.</div>
             <div class="faq"><strong>The customer changed the appointment time. What should I do?</strong>Open the unfinished activity and use Edit / Reschedule. The related Task is synchronized.</div>
             <div class="faq"><strong>Why are Due Today and Overdue also included in Follow-up Required?</strong>They are detailed deadline reminders inside the broader business state “Follow-up Required.” Summary tables count them once under Follow-up Required, while the list shows the precise reminder.</div>
-            <div class="faq"><strong>Why can I not complete a visit Task in Tasks?</strong>A visit needs business feedback, not only a completed checkbox. Enter the feedback in Sales Activities and the linked Task will complete automatically.</div>
+            <div class="faq"><strong>Where do I create or complete a visit?</strong>Create Customer Visit and DC Site Visit in Sales Activities so all schedule and visitor fields are complete. You can complete an existing visit from Tasks, Sales Activities, Sales Leads, or Pipeline; the original activity and Task stay synchronized.</div>
             <div class="faq"><strong>Why can I see only my own Activities by Owner row?</strong>Non-administrators are restricted to their own Sales Activities and Tasks. Administrators can review all Owners.</div>
             <div class="faq"><strong>Can a cross-date visit be missed by Date Range?</strong>No. A visit is included whenever its scheduled interval overlaps the selected date range.</div>
             <div class="faq"><strong>Why did a number change after filtering?</strong>Lists, summary tables, and many dashboard values follow the active data scope and filters. Clear filters before comparing totals.</div>
             <div class="faq"><strong>Should I delete a cancelled customer meeting?</strong>Normally no. Cancel it and enter the reason so the business history remains understandable. Delete only when the record should be archived from normal use.</div>
         </section>
 
-        <footer class="manual-footer">BITCRM User Guide · Updated August 4, 2026</footer>
+        <footer class="manual-footer">BITCRM User Guide · Updated August 6, 2026</footer>
     </main>
 </div>

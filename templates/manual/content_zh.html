@@ -22,7 +22,7 @@
             <h1>BITCRM 使用说明</h1>
             <p>面向销售、市场、运营和管理员的完整操作指南。</p>
             <p>帮助大家理解每个模块记录什么、模块之间怎样关联，以及一项业务动作应该在哪里完成。</p>
-            <div class="version">完整中英文说明 · 更新于2026年8月4日</div>
+            <div class="version">完整中英文说明 · 更新于2026年8月6日</div>
         </section>
 
         <section id="getting-started">
@@ -158,8 +158,8 @@
                 <div class="step"><span class="step-number">1</span><div>点击 <strong>Add Sales Activity</strong>，选择三种活动类型之一。</div></div>
                 <div class="step"><span class="step-number">2</span><div>选择 Source Type。来源为 Sales Leads 或 Pipeline 时，必须从有权限的搜索结果中选择记录，不能只手工输入公司名。</div></div>
                 <div class="step"><span class="step-number">3</span><div>填写活动日期或开始/结束时间、联系人、Purpose / Project、Expected Result 和 Remarks。</div></div>
-                <div class="step"><span class="step-number">4</span><div>也可从 Sales Leads 或 Pipeline 的 Add Follow-up 新建活动：Follow-up Notes 表示已经完成的活动，Next Steps / To-do 表示计划活动；两者分别选择类型，可以不同。</div></div>
-                <div class="step"><span class="step-number">5</span><div>已完成 Follow-up 不创建 Task；新的 Next Steps / To-do 会创建 Scheduled Sales Activity 和关联 Task。Remote 类型填写日期，Visit 类型填写开始/结束时间，Task 到期日使用 Visit 结束日期。</div></div>
+                <div class="step"><span class="step-number">4</span><div>Customer Visit 和 DC Site Visit 只能在 Sales Activities 创建。Sales Leads 和 Pipeline 的 Follow-up 可以选择已经关联的拜访并完成，不会重复创建；这两个模块中新建的快速活动只允许 Remote Engagement。</div></div>
+                <div class="step"><span class="step-number">5</span><div>已完成的 Remote Engagement Follow-up 不创建 Task；新的 Remote Engagement Next Steps / To-do 会创建 Scheduled Sales Activity 和关联 Task。Visit 的完整时间、地址和来访信息统一在 Sales Activities 维护。</div></div>
             </div>
 
             <h3>5.3 状态和提醒逻辑</h3>
@@ -190,7 +190,7 @@
             <h3>5.5 修改、完成、取消和归档</h3>
             <ul>
                 <li>客户更改时间时，可对未完成活动使用 Edit / Reschedule；关联 Task 的日期、Owner、公司和内容会同步更新。</li>
-                <li>Customer Visit 和 DC Site Visit 可在 Tasks 中填写必填的 Completion Notes 后完成，关联 Sales Activity 的状态、反馈、完成时间和完成人会自动同步；也可在 Sales Activities 中填写 Visit 反馈并同步完成 Task。</li>
+                <li>Customer Visit 和 DC Site Visit 必须在 Sales Activities 创建，但可以在 Tasks、Sales Activities、Sales Leads 或 Pipeline 中填写必填 Completion Notes 完成。所有入口都会更新原来的 Sales Activity 和关联 Task，Lead/Pipeline 不会重复创建拜访。</li>
                 <li>Remote To-do 在 Tasks 中填写必填 Completion Notes 后完成，Sales Activity 自动同步。“打开 Sales Activity”用于查看完整活动信息，不是完成 Visit 的必经入口。</li>
                 <li>Cancel 会保留活动和取消原因；Delete 会将活动及关联 Task 从正常列表归档。</li>
                 <li>来源为 Sales Leads 或 Pipeline 时，计划和反馈会写入 Follow-up History，并按关联关系同步到对应 Lead / Pipeline。</li>
@@ -217,8 +217,8 @@
                 <thead><tr><th>Task 来源</th><th>应该在哪里完成或修改</th></tr></thead>
                 <tbody>
                     <tr><td>手工 Task</td><td>直接在 Tasks 中管理。</td></tr>
-                    <tr><td>Remote Engagement — Next Steps / To-do</td><td>在 Tasks 中填写 Completion Notes 完成，Sales Activity 自动同步。</td></tr>
-                    <tr><td>Customer Visit 或 DC Site Visit</td><td>可直接在 Tasks 中填写必填 Completion Notes 完成，Sales Activity 自动同步；也可在 Sales Activities 中填写反馈并同步完成 Task。</td></tr>
+                    <tr><td>Remote Engagement — Next Steps / To-do</td><td>可在 Tasks 或 Sales Activities 中填写 Completion Notes 完成，两边自动同步。</td></tr>
+                    <tr><td>Customer Visit 或 DC Site Visit</td><td>必须在 Sales Activities 创建；可从 Tasks、Sales Activities、Sales Leads 或 Pipeline 完成，所有入口更新同一条 Activity 和 Task。</td></tr>
                 </tbody>
             </table></div>
             <div class="warning-box">与 Sales Activity 关联的 Task 不能被单独修改或删除到破坏关联关系。完成可以从 Tasks 或 Sales Activities 操作；改期、修改活动资料或取消时，请回到 Sales Activities。</div>
@@ -269,7 +269,7 @@
             <h2>10. 推荐的端到端业务流程</h2>
             <div class="step-list">
                 <div class="step"><span class="step-number">1</span><div>新建或导入 Sales Lead，确认来源、Owner、联系人和需求。</div></div>
-                <div class="step"><span class="step-number">2</span><div>每次电话、邮件或会议结束后记录 Follow-up；需要未来行动时增加有日期的 Next Steps / To-do。</div></div>
+                <div class="step"><span class="step-number">2</span><div>每次电话、邮件或线上会议结束后记录 Remote Engagement Follow-up；需要未来行动时增加有日期的 Remote Engagement Next Steps / To-do。</div></div>
                 <div class="step"><span class="step-number">3</span><div>Lead 合格后维护 Pipeline 的金额、阶段、概率、预计时间和卡点。</div></div>
                 <div class="step"><span class="step-number">4</span><div>我们去客户现场使用 Customer Visit；客户来我们的 Data Center 使用 DC Site Visit；邮件、电话和线上会议使用 Remote Engagement。</div></div>
                 <div class="step"><span class="step-number">5</span><div>Task 完成时填写真实结果，Visit 结束后及时填写反馈，保证 Follow-up History 连续。</div></div>
@@ -296,13 +296,13 @@
             <div class="faq"><strong>三种活动类型应该怎么选？</strong>我方人员离开办公室去客户或项目现场，选择 Customer Visit；客户来到我们的 Data Center，选择 DC Site Visit；不需要线下见面的邮件、电话或线上会议，选择 Remote Engagement。</div>
             <div class="faq"><strong>客户临时更改了预约时间怎么办？</strong>打开未完成活动，使用 Edit / Reschedule 修改；关联 Task 会同步更新。</div>
             <div class="faq"><strong>为什么 Due Today 和 Overdue 也算在 Follow-up Required 里面？</strong>它们是“需要跟进”这个业务状态下更具体的时间提醒。汇总表只在 Follow-up Required 中统计一次，Activity List 仍显示精确提醒。</div>
-            <div class="faq"><strong>为什么不能在 Tasks 中直接完成 Visit Task？</strong>Visit 需要填写业务反馈，不能只勾选完成。请在 Sales Activities 中填写反馈，关联 Task 会自动完成。</div>
+            <div class="faq"><strong>Visit 应该在哪里创建和完成？</strong>Customer Visit 和 DC Site Visit 必须在 Sales Activities 创建，保证时间、地址和来访信息完整。已经创建的 Visit 可以从 Tasks、Sales Activities、Sales Leads 或 Pipeline 完成，原 Activity 和 Task 会保持同步。</div>
             <div class="faq"><strong>为什么 Activities by Owner 只看到自己一行？</strong>非管理员只能查看自己的 Sales Activities 和 Tasks；管理员可以查看全部 Owner。</div>
             <div class="faq"><strong>跨日 Visit 会不会被 Date Range 漏掉？</strong>不会。只要 Visit 时间段与所选日期范围有任何重叠，就会被筛选出来。</div>
             <div class="faq"><strong>为什么筛选以后汇总数字变了？</strong>列表、汇总表和很多 Dashboard 指标都会跟随当前权限及筛选范围。比较全部数据前请先 Clear Filters。</div>
             <div class="faq"><strong>客户会议取消了，要不要删除？</strong>通常不要删除。应使用 Cancel 并填写原因，让业务历史可以理解；只有确实需要从日常使用中归档时才 Delete。</div>
         </section>
 
-        <footer class="manual-footer">BITCRM 使用说明 · 更新于2026年8月4日</footer>
+        <footer class="manual-footer">BITCRM 使用说明 · 更新于2026年8月6日</footer>
     </main>
 </div>

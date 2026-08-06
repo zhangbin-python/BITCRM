@@ -2,7 +2,7 @@ import os
 import re
 import tempfile
 import unittest
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from app import create_app
 from extensions import db
@@ -79,7 +79,7 @@ class PipelineFollowupTests(unittest.TestCase):
         self.assertEqual(pipeline.stuckpoint, 'Waiting for budget confirmation')
         self.assertEqual(pipeline.get_followup_display(), 'Today')
 
-    def test_pipeline_followup_creates_independently_typed_activities_and_task(self):
+    def test_pipeline_followup_creates_remote_activity_and_task(self):
         pipeline = Pipeline(
             name='Pipeline Contact', company='Typed Pipeline Co',
             owner_id=self.admin_id, stage='1) Prospecting',
@@ -92,7 +92,9 @@ class PipelineFollowupTests(unittest.TestCase):
         form_html = form_response.get_data(as_text=True)
         self.assertIn('name="followup_activity_type"', form_html)
         self.assertIn('name="todo_activity_type"', form_html)
-        self.assertIn('value="DC Site Visit"', form_html)
+        self.assertIn('data-followup-activity-form', form_html)
+        self.assertIn('Complete Existing Visit', form_html)
+        self.assertNotIn('value="DC Site Visit"', form_html)
 
         response = self.client.post(
             f'/pipeline/{pipeline.id}/add-followup',
@@ -100,13 +102,9 @@ class PipelineFollowupTests(unittest.TestCase):
                 'followup_text': 'Reviewed the proposal in an online meeting.',
                 'followup_activity_type': 'Remote Engagement',
                 'followup_activity_date': '2026-08-04',
-                'todo_text': 'Host the customer for a Data Center tour.',
-                'todo_activity_type': 'DC Site Visit',
-                'todo_start_date': '2026-08-10',
-                'todo_start_time': '10:00',
-                'todo_end_date': '2026-08-10',
-                'todo_end_time': '12:30',
-                'todo_address': 'BIT Data Center',
+                'todo_text': 'Arrange the next online solution review.',
+                'todo_activity_type': 'Remote Engagement',
+                'todo_due_date': '2026-08-10',
                 'stuckpoint_text': '',
                 'stage': pipeline.stage,
             },
@@ -117,15 +115,14 @@ class PipelineFollowupTests(unittest.TestCase):
         completed, scheduled = SalesActivity.query.order_by(SalesActivity.id).all()
         self.assertEqual(completed.activity_type, 'Remote Engagement')
         self.assertEqual(completed.status, 'Completed')
-        self.assertEqual(scheduled.activity_type, 'DC Site Visit')
+        self.assertEqual(scheduled.activity_type, 'Remote Engagement')
         self.assertEqual(scheduled.status, 'Scheduled')
-        self.assertEqual(scheduled.estimated_start_at, datetime(2026, 8, 10, 10, 0))
-        self.assertEqual(scheduled.estimated_end_at, datetime(2026, 8, 10, 12, 30))
+        self.assertEqual(scheduled.activity_date, date(2026, 8, 10))
         task = Task.query.one()
         self.assertEqual(task.sales_activity_id, scheduled.id)
         self.assertEqual(task.due_date, date(2026, 8, 10))
         self.assertIn('Follow-up [Remote Engagement]', pipeline.follow_up)
-        self.assertIn('To-do [DC Site Visit]', pipeline.follow_up)
+        self.assertIn('To-do [Remote Engagement]', pipeline.follow_up)
 
     def test_no_followup_displays_inclusive_days_since_pipeline_creation(self):
         expectations = [

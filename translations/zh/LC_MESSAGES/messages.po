@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-07 18:48+0800\n"
+"POT-Creation-Date: 2026-08-06 11:57+0800\n"
 "PO-Revision-Date: 2026-02-07 18:49+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh\n"
@@ -18,554 +18,972 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: templates/base.html:142 templates/login.html:12
-msgid "Customer Relationship Management"
-msgstr "客户关系管理"
+#: routes.py:199
+msgid "Name"
+msgstr "姓名"
 
-#: templates/base.html:150 templates/dashboard.html:3
-#: templates/dashboard.html:56
+#: routes.py:200 routes.py:224 templates/leads/form.html:37
+#: templates/leads/index.html:259 templates/pipeline/form.html:132
+#: templates/pipeline/index.html:258 templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:379 templates/tasks.html:328
+#: templates/tasks.html:391 templates/tasks.html:459 templates/tasks.html:520
+#: templates/tasks.html:553 templates/tasks.html:597
+msgid "Company"
+msgstr "公司"
+
+#: routes.py:201 routes.py:226 templates/leads/form.html:41
+#: templates/pipeline/form.html:140
+msgid "Industry"
+msgstr "行业"
+
+#: routes.py:202 routes.py:227 templates/sales_activities/index.html:384
+#: templates/sales_activities/index.html:411
+msgid "Position"
+msgstr ""
+
+#: routes.py:203 routes.py:228 templates/admin/users.html:44
+#: templates/admin/users.html:124 templates/admin/users.html:167
+#: templates/leads/form.html:49 templates/pipeline/form.html:148
+msgid "Email"
+msgstr "邮箱"
+
+#: routes.py:204 routes.py:229
+msgid "Mobile"
+msgstr ""
+
+#: routes.py:205 templates/admin/users.html:46 templates/leads/form.html:70
+#: templates/leads/index.html:270 templates/sales_activities/index.html:274
+#: templates/tasks.html:326 templates/tasks.html:389 templates/tasks.html:457
+#: templates/tasks.html:520
+msgid "Status"
+msgstr "状态"
+
+#: routes.py:206 templates/leads/form.html:78 templates/leads/index.html:292
+msgid "Source"
+msgstr "来源"
+
+#: routes.py:207
+msgid "Event"
+msgstr "活动"
+
+#: routes.py:208 routes.py:245 templates/leads/form.html:91
+#: templates/leads/index.html:339 templates/pipeline/index.html:391
+msgid "Date Added"
+msgstr "添加日期"
+
+#: routes.py:209 routes.py:237 templates/dashboard.html:655
+#: templates/leads/form.html:95 templates/leads/index.html:315
+#: templates/pipeline/form.html:249 templates/pipeline/index.html:367
+#: templates/sales_activities/index.html:182
+#: templates/sales_activities/index.html:214
+#: templates/sales_activities/index.html:227
+#: templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:381
+#: templates/sales_activities/index.html:410
+#: templates/sales_activities/index.html:629 templates/tasks.html:327
+#: templates/tasks.html:390 templates/tasks.html:458 templates/tasks.html:520
+#: templates/tasks.html:557 templates/tasks.html:601
+msgid "Owner"
+msgstr "负责人"
+
+#: routes.py:210 templates/leads/form.html:116
+msgid "Requirements"
+msgstr "需求"
+
+#: routes.py:211 templates/leads/form.html:130
+msgid "Notes"
+msgstr "备注"
+
+#: routes.py:212 templates/leads/index.html:340
+msgid "Created"
+msgstr ""
+
+#: routes.py:225 templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:384
+msgid "Contact"
+msgstr ""
+
+#: routes.py:230
+msgid "Product"
+msgstr "产品"
+
+#: routes.py:231 templates/dashboard.html:660 templates/pipeline/index.html:394
+msgid "TCV"
+msgstr "合同价值"
+
+#: routes.py:232
+msgid "MRC"
+msgstr "月循环收入"
+
+#: routes.py:233
+msgid "OTC"
+msgstr ""
+
+#: routes.py:234 templates/pipeline/form.html:202
+msgid "Gross Profit"
+msgstr "毛利"
+
+#: routes.py:235
+msgid "Term"
+msgstr ""
+
+#: routes.py:236
+msgid "GP %"
+msgstr ""
+
+#: routes.py:238 templates/pipeline/index.html:335
+#: templates/sales_activities/index.html:437
+msgid "Stage"
+msgstr "阶段"
+
+#: routes.py:239
+msgid "Win Rate"
+msgstr "赢单率"
+
+#: routes.py:240
+msgid "Est. Sign"
+msgstr "预计签约"
+
+#: routes.py:241
+msgid "Est. Activate"
+msgstr ""
+
+#: routes.py:242 templates/pipeline/form.html:232
+msgid "Deposit Date"
+msgstr ""
+
+#: routes.py:243
+msgid "Award Date"
+msgstr ""
+
+#: routes.py:244 templates/pipeline/form.html:228
+msgid "Proposal Sent"
+msgstr ""
+
+#: routes.py:246 templates/leads/index.html:458
+#: templates/pipeline/index.html:563 templates/sales_activities/index.html:312
+#: templates/sales_activities/index.html:427
+msgid "Follow-up"
+msgstr ""
+
+#: routes.py:247
+msgid "Comments"
+msgstr ""
+
+#: routes.py:248 templates/pipeline/_followup_form.html:11
+#: templates/pipeline/form.html:320 templates/sales_activities/index.html:436
+msgid "Current Stuckpoint"
+msgstr "当前卡点"
+
+#: routes.py:926
+msgid "Incorrect username or password. Please try again."
+msgstr "用户名或密码错误，请重试。"
+
+# Dashboard Metrics
+#: routes.py:1018 templates/dashboard.html:378
+msgid "Total Leads"
+msgstr "线索总数"
+
+#: routes.py:1023
+msgid "All statuses"
+msgstr ""
+
+#: routes.py:1045
+#, python-format
+msgid "%(percent)s%% of total"
+msgstr ""
+
+#: routes.py:1230
+msgid "View Sales Lead"
+msgstr "查看销售线索"
+
+#: routes.py:1230
+msgid "Edit Sales Lead"
+msgstr ""
+
+#: routes.py:2101
+msgid "View Pipeline"
+msgstr "查看销售管道"
+
+#: routes.py:2101
+msgid "Edit Pipeline"
+msgstr ""
+
+#: templates/base.html:628 templates/dashboard.html:3
+#: templates/dashboard.html:361
 msgid "Dashboard"
 msgstr "仪表板"
 
-#: templates/base.html:159 templates/leads/index.html:3
+#: templates/base.html:636 templates/sales_activities/index.html:2
+#: templates/sales_activities/index.html:143
+msgid "Sales Activities"
+msgstr ""
+
+#: templates/base.html:645 templates/leads/index.html:5
 msgid "Sales Leads"
 msgstr "销售线索"
 
-#: templates/base.html:168 templates/dashboard.html:294
+#: templates/base.html:654 templates/dashboard.html:659
 msgid "Pipeline"
 msgstr "销售管道"
 
-#: templates/base.html:176
+#: templates/base.html:662
 msgid "Tasks"
 msgstr "任务"
 
-#: templates/admin/users.html:108 templates/admin/users.html:148
-#: templates/base.html:185
+#: templates/admin/users.html:133 templates/admin/users.html:173
+#: templates/base.html:671
 msgid "Admin"
 msgstr "管理"
 
-#: templates/base.html:242 templates/partials/logout_modal.html:5
+#: templates/base.html:678
+msgid "Login Logs"
+msgstr ""
+
+#: templates/base.html:705
+msgid "User Manual"
+msgstr ""
+
+#: templates/base.html:707
+msgid "Manual"
+msgstr ""
+
+#: templates/base.html:749 templates/base.html:814
+msgid "Change Password"
+msgstr ""
+
+#: templates/base.html:756 templates/partials/logout_modal.html:5
 #: templates/partials/logout_modal.html:13
 msgid "Logout"
 msgstr "退出"
 
-#: templates/dashboard.html:62 templates/leads/index.html:23
-#: templates/pipeline/index.html:15
-msgid "Export"
-msgstr "导出"
+#: templates/base.html:769
+msgid ""
+"Read-only mode: you can view, filter, and export data, but cannot modify "
+"business data."
+msgstr "只读模式：您可以查看、筛选和导出数据，但不能修改业务数据。"
 
-#: templates/dashboard.html:75
-msgid "Total Sales Leads (This Week)"
-msgstr "本周销售线索总数"
+#: templates/base.html:820
+msgid "Current Password"
+msgstr ""
 
-#: templates/dashboard.html:87 templates/dashboard.html:110
-#: templates/dashboard.html:136 templates/dashboard.html:159
-msgid "View Details"
-msgstr "查看详情"
+#: templates/base.html:824
+msgid "New Password"
+msgstr ""
 
-#: templates/dashboard.html:98
-msgid "Qualified Leads (This Week)"
-msgstr "本周合格线索"
+#: templates/base.html:828
+msgid "Confirm New Password"
+msgstr ""
 
-#: templates/dashboard.html:124
-msgid "Pipeline Count (This Week)"
-msgstr "本周管道数量"
-
-#: templates/dashboard.html:147 templates/pipeline/index.html:43
-msgid "Total TCV"
-msgstr "总合同价值"
-
-#: templates/dashboard.html:156
-msgid "Total Contract Value"
-msgstr "总合同价值"
-
-#: templates/dashboard.html:168
-msgid "Current Qtr Revenue"
-msgstr "本季度收入"
-
-#: templates/dashboard.html:171
-msgid "MRC × 3 months"
-msgstr "月循环收入 × 3 个月"
-
-#: templates/dashboard.html:180
-msgid "Next Qtr Revenue"
-msgstr "下季度收入"
-
-#: templates/dashboard.html:183
-msgid "Projected"
-msgstr "预计"
-
-#: templates/dashboard.html:197
-msgid "Per-Owner Breakdown"
-msgstr "按负责人分解"
-
-#: templates/dashboard.html:206 templates/leads/form.html:87
-#: templates/leads/index.html:62 templates/leads/index.html:116
-#: templates/pipeline/form.html:62 templates/pipeline/index.html:95
-#: templates/pipeline/index.html:116
-msgid "Owner"
-msgstr "负责人"
-
-#: templates/dashboard.html:207
-msgid "Customers"
-msgstr "客户数"
-
-#: templates/dashboard.html:208 templates/pipeline/index.html:119
-msgid "TCV"
-msgstr "合同价值"
-
-#: templates/dashboard.html:209
-msgid "Current Qtr Rev"
-msgstr "本季度收入"
-
-#: templates/dashboard.html:210
-msgid "Next Qtr Rev"
-msgstr "下季度收入"
-
-#: templates/dashboard.html:231
-msgid "Details"
-msgstr "详情"
-
-#: templates/dashboard.html:242
-msgid "No pipeline data available"
-msgstr "暂无管道数据"
-
-#: templates/dashboard.html:257
-msgid "Weekly Trend"
-msgstr "每周趋势"
-
-#: templates/dashboard.html:273
-msgid "Pipeline Stage Distribution"
-msgstr "管道阶段分布"
-
-#: templates/dashboard.html:294
-msgid "Leads"
-msgstr "线索"
-
-#: templates/dashboard.html:294
-msgid "Qualified"
-msgstr "已合格"
-
-#: templates/dashboard.html:296
-msgid "This Week"
-msgstr "本周"
-
-#: templates/dashboard.html:300
-msgid "Last Week"
-msgstr "上周"
-
-#: templates/admin/users.html:53 templates/dashboard.html:326
-msgid "Active"
-msgstr "活跃"
-
-#: templates/dashboard.html:326
-msgid "Won"
-msgstr "已赢单"
-
-#: templates/dashboard.html:326
-msgid "Lost"
-msgstr "已输单"
-
-#: templates/login.html:3 templates/login.html:39
-msgid "Login"
-msgstr "登录"
-
-#: templates/admin/users.html:26 templates/admin/users.html:96
-#: templates/admin/users.html:138 templates/login.html:17
-msgid "Username"
-msgstr "用户名"
-
-#: templates/login.html:22
-msgid "Enter your username"
-msgstr "请输入用户名"
-
-#: templates/admin/users.html:112 templates/login.html:27
-msgid "Password"
-msgstr "密码"
-
-#: templates/login.html:32
-msgid "Enter your password"
-msgstr "请输入密码"
-
-#: templates/login.html:46
-msgid "Please contact your enterprise administrator to apply for an account or reset your password."
-msgstr "请向企业管理员申请账号或恢复初始密码。"
-
-#: templates/tasks.html:9
-msgid "Tasks Management"
-msgstr "任务管理"
-
-#: templates/tasks.html:10
-msgid "Track and manage your to-do items"
-msgstr "跟踪和管理待办事项"
-
-#: templates/tasks.html:14 templates/tasks.html:247
-msgid "Add Task"
-msgstr "添加任务"
-
-#: templates/tasks.html:29
-msgid "Overdue"
-msgstr "已过期"
-
-#: templates/tasks.html:44
-msgid "In Progress"
-msgstr "进行中"
-
-#: templates/tasks.html:59
-msgid "Completed"
-msgstr "已完成"
-
-#: templates/tasks.html:72
-msgid "Overdue Tasks"
-msgstr "过期任务"
-
-#: templates/admin/users.html:29 templates/leads/form.html:62
-#: templates/leads/index.html:38 templates/leads/index.html:114
-#: templates/tasks.html:79 templates/tasks.html:127 templates/tasks.html:180
-msgid "Status"
-msgstr "状态"
-
-#: templates/tasks.html:80 templates/tasks.html:128 templates/tasks.html:181
-msgid "Content"
-msgstr "内容"
-
-#: templates/leads/form.html:29 templates/leads/index.html:112
-#: templates/pipeline/form.html:25 templates/pipeline/index.html:114
-#: templates/tasks.html:81 templates/tasks.html:129 templates/tasks.html:182
-#: templates/tasks.html:237
-msgid "Company"
-msgstr "公司"
-
-#: templates/tasks.html:82 templates/tasks.html:130 templates/tasks.html:183
-#: templates/tasks.html:241
-msgid "Due Date"
-msgstr "截止日期"
-
-#: templates/admin/users.html:31 templates/leads/index.html:118
-#: templates/pipeline/index.html:123 templates/tasks.html:83
-#: templates/tasks.html:131 templates/tasks.html:184
-msgid "Actions"
-msgstr "操作"
-
-#: templates/tasks.html:97 templates/tasks.html:145
-msgid "Mark Complete"
-msgstr "标记完成"
-
-#: templates/leads/index.html:149 templates/leads/index.html:173
-#: templates/pipeline/index.html:160 templates/tasks.html:102
-#: templates/tasks.html:150 templates/tasks.html:203
-msgid "Delete"
-msgstr "删除"
-
-#: templates/pipeline/index.html:159 templates/tasks.html:102
-#: templates/tasks.html:150 templates/tasks.html:203
-msgid "Are you sure?"
-msgstr "确定吗？"
-
-#: templates/tasks.html:119
-msgid "In Progress Tasks"
-msgstr "进行中任务"
-
-#: templates/tasks.html:163
-msgid "No tasks in progress"
-msgstr "暂无进行中任务"
-
-#: templates/tasks.html:172
-msgid "Completed Tasks"
-msgstr "已完成任务"
-
-#: templates/tasks.html:198
-msgid "Reopen"
-msgstr "重新打开"
-
-#: templates/tasks.html:215
-msgid "No completed tasks"
-msgstr "暂无已完成任务"
-
-#: templates/tasks.html:227
-msgid "Add New Task"
-msgstr "添加新任务"
-
-#: templates/tasks.html:233
-msgid "Task Content"
-msgstr "任务内容"
-
-#: templates/admin/users.html:118 templates/admin/users.html:155
-#: templates/leads/form.html:137 templates/leads/index.html:169
-#: templates/leads/index.html:263 templates/partials/logout_modal.html:12
-#: templates/pipeline/follow_up_modal.html:42 templates/pipeline/form.html:208
-#: templates/pipeline/index.html:214 templates/tasks.html:246
+#: templates/admin/users.html:143 templates/admin/users.html:181
+#: templates/base.html:834 templates/dashboard.html:593
+#: templates/leads/form.html:148 templates/leads/index.html:540
+#: templates/leads/index.html:564 templates/leads/index.html:587
+#: templates/leads/index.html:608 templates/partials/column_settings.html:47
+#: templates/partials/logout_modal.html:12
+#: templates/pipeline/follow_up_modal.html:14 templates/pipeline/form.html:339
+#: templates/pipeline/index.html:618 templates/pipeline/index.html:664
+#: templates/sales_activities/index.html:390
+#: templates/sales_activities/index.html:416
+#: templates/sales_activities/index.html:446 templates/tasks.html:573
+#: templates/tasks.html:617 templates/tasks.html:639
 msgid "Cancel"
 msgstr "取消"
 
-#: templates/admin/users.html:3 templates/admin/users.html:9
-msgid "User Management"
-msgstr "用户管理"
+#: templates/base.html:836 templates/leads/index.html:588
+msgid "Save"
+msgstr ""
 
-#: templates/admin/users.html:10
-msgid "Manage system users and their roles"
-msgstr "管理系统用户及其角色"
+#: templates/dashboard.html:389 templates/dashboard.html:410
+#: templates/dashboard.html:431
+msgid "last week"
+msgstr "上周"
 
-#: templates/admin/users.html:14 templates/admin/users.html:119
-msgid "Add User"
-msgstr "添加用户"
+#: templates/dashboard.html:399
+msgid "Qualified Leads"
+msgstr "合格线索"
 
-#: templates/admin/users.html:27 templates/admin/users.html:100
-#: templates/admin/users.html:142 templates/leads/form.html:41
-#: templates/pipeline/form.html:41
-msgid "Email"
-msgstr "邮箱"
+#: templates/dashboard.html:420
+msgid "Pipeline #"
+msgstr "管道数量"
 
-#: templates/admin/users.html:28 templates/admin/users.html:104
-#: templates/admin/users.html:146
+#: templates/dashboard.html:441 templates/pipeline/index.html:214
+msgid "Total TCV"
+msgstr "总合同价值"
+
+#: templates/dashboard.html:462
+msgid "Current QTR Revenue"
+msgstr "本季度收入"
+
+#: templates/dashboard.html:483
+msgid "Next QTR Revenue"
+msgstr "下季度收入"
+
+# Kanban Board
+#: templates/dashboard.html:511
+msgid "Sales Pipeline Kanban Board"
+msgstr "销售管道看板"
+
+#: templates/dashboard.html:513
+msgid "Double-click card to add follow-up"
+msgstr ""
+
+#: templates/dashboard.html:522 templates/dashboard.html:530
+#: templates/dashboard.html:621 templates/dashboard.html:629
+#: templates/dashboard.html:779 templates/dashboard.html:965
+#: templates/leads/index.html:316 templates/leads/index.html:319
+#: templates/leads/index.html:324 templates/pipeline/index.html:368
+#: templates/pipeline/index.html:371 templates/pipeline/index.html:376
+#: templates/sales_activities/index.html:185
+#: templates/sales_activities/index.html:190
+msgid "All Owners"
+msgstr "所有负责人"
+
+#: templates/dashboard.html:580 templates/dashboard.html:1020
+#: templates/dashboard.html:1084 templates/leads/index.html:533
+#: templates/pipeline/follow_up_modal.html:5 templates/pipeline/index.html:605
+#: templates/pipeline/index.html:710
+msgid "Add Follow-up"
+msgstr "添加跟进"
+
+#: templates/dashboard.html:588 templates/dashboard.html:1022
+#: templates/dashboard.html:1087 templates/leads/index.html:537
+#: templates/leads/index.html:705 templates/pipeline/index.html:613
+#: templates/pipeline/index.html:712 templates/pipeline/index.html:782
+msgid "Loading..."
+msgstr ""
+
+#: templates/dashboard.html:594 templates/dashboard.html:1059
+#: templates/dashboard.html:1065 templates/leads/index.html:541
+#: templates/pipeline/follow_up_modal.html:15 templates/pipeline/index.html:619
+#: templates/pipeline/index.html:770 templates/pipeline/index.html:777
+msgid "Save Follow-up"
+msgstr "保存跟进"
+
+#: templates/dashboard.html:613
+msgid "Sales by Owner"
+msgstr ""
+
+#: templates/admin/users.html:45 templates/admin/users.html:128
+#: templates/admin/users.html:171 templates/dashboard.html:656
 msgid "Role"
 msgstr "角色"
 
-#: templates/admin/users.html:30
-msgid "Created At"
-msgstr "创建时间"
+#: templates/dashboard.html:657
+msgid "Leads"
+msgstr "线索"
 
-#: templates/admin/users.html:55
-msgid "Inactive"
-msgstr "未激活"
+#: templates/dashboard.html:658
+msgid "Qualified"
+msgstr "已合格"
 
-#: templates/admin/users.html:65
-msgid "Toggle Status"
-msgstr "切换状态"
+#: templates/dashboard.html:661
+msgid "Current QTR"
+msgstr "本季度"
 
-#: templates/admin/users.html:70
-msgid "Reset Password"
-msgstr "重置密码"
+#: templates/dashboard.html:662
+msgid "Next QTR"
+msgstr "下季度"
 
-#: templates/admin/users.html:70
-msgid "Reset password to default?"
-msgstr "确定要重置为默认密码吗？"
-
-#: templates/admin/users.html:90
-msgid "Add New User"
-msgstr "添加新用户"
-
-#: templates/admin/users.html:106 templates/admin/users.html:149
+#: templates/admin/users.html:130 templates/admin/users.html:174
+#: templates/dashboard.html:681
 msgid "Sales"
 msgstr "销售"
 
-#: templates/admin/users.html:107 templates/admin/users.html:150
-msgid "Marketing"
-msgstr "市场"
+#: templates/dashboard.html:683
+msgid "Manager"
+msgstr ""
 
-#: templates/admin/users.html:114
-msgid "Default password will be: bitcrm"
-msgstr "默认密码为: bitcrm"
+#: templates/dashboard.html:685
+msgid "Presales"
+msgstr ""
 
-#: templates/admin/users.html:132
+#: templates/dashboard.html:784 templates/dashboard.html:970
+msgid "owners selected"
+msgstr ""
+
+#: templates/dashboard.html:866
+msgid "No opportunities"
+msgstr ""
+
+#: templates/dashboard.html:1031 templates/dashboard.html:1098
+#: templates/leads/index.html:716 templates/pipeline/index.html:721
+msgid "Error loading data"
+msgstr ""
+
+#: templates/dashboard.html:1042 templates/pipeline/index.html:732
+msgid "Saving..."
+msgstr ""
+
+#: templates/dashboard.html:1057 templates/dashboard.html:1063
+msgid "Error saving"
+msgstr ""
+
+#: templates/login.html:3 templates/login.html:608
+msgid "Login"
+msgstr "登录"
+
+#: templates/admin/login_logs.html:35 templates/admin/users.html:43
+#: templates/admin/users.html:120 templates/admin/users.html:163
+#: templates/login.html:580
+msgid "Username"
+msgstr "用户名"
+
+#: templates/login.html:586
+msgid "Enter your username"
+msgstr "请输入用户名"
+
+#: templates/login.html:588
+msgid "Username is not case-sensitive."
+msgstr "用户名不区分大小写。"
+
+#: templates/admin/users.html:137 templates/login.html:592
+msgid "Password"
+msgstr "密码"
+
+#: templates/login.html:597
+msgid "Enter your password"
+msgstr "请输入密码"
+
+#: templates/login.html:615
+msgid ""
+"Please contact your enterprise administrator to apply for an account or "
+"reset your password."
+msgstr "请向企业管理员申请账号或恢复初始密码。"
+
+#: templates/tasks.html:210
+msgid "Tasks Management"
+msgstr "任务管理"
+
+#: templates/tasks.html:211
+msgid "Track and manage your to-do items"
+msgstr "跟踪和管理待办事项"
+
+#: templates/tasks.html:222
+msgid "Filter by Owner"
+msgstr "按负责人筛选"
+
+#: templates/tasks.html:229
+msgid "Select All"
+msgstr "全选"
+
+#: templates/tasks.html:253 templates/tasks.html:574
+msgid "Add Task"
+msgstr "添加任务"
+
+#: templates/sales_activities/index.html:266 templates/tasks.html:265
+msgid "Overdue"
+msgstr "已过期"
+
+#: templates/tasks.html:269
+msgid "Tasks needing immediate action"
+msgstr ""
+
+#: templates/tasks.html:279
+msgid "In Progress"
+msgstr "进行中"
+
+#: templates/tasks.html:283
+msgid "Open tasks currently being worked"
+msgstr ""
+
+#: templates/sales_activities/index.html:214 templates/tasks.html:293
+msgid "Completed"
+msgstr "已完成"
+
+#: templates/tasks.html:297
+msgid "Finished tasks in the current view"
+msgstr ""
+
+#: templates/sales_activities/index.html:214 templates/tasks.html:305
+#: templates/tasks.html:521
+msgid "Cancelled"
+msgstr "已取消"
+
+#: templates/tasks.html:307
+msgid "Cancelled linked activities retained for history"
+msgstr "保留已取消的关联活动以供历史追溯"
+
+#: templates/tasks.html:319
+msgid "Overdue Tasks"
+msgstr "过期任务"
+
+#: templates/tasks.html:329 templates/tasks.html:392 templates/tasks.html:460
+#: templates/tasks.html:520
+msgid "Content"
+msgstr "内容"
+
+#: templates/admin/users.html:48 templates/leads/index.html:395
+#: templates/pipeline/index.html:447 templates/sales_activities/index.html:274
+#: templates/tasks.html:330 templates/tasks.html:393 templates/tasks.html:462
+msgid "Actions"
+msgstr "操作"
+
+#: templates/tasks.html:352 templates/tasks.html:415 templates/tasks.html:639
+msgid "Complete"
+msgstr ""
+
+#: templates/tasks.html:353 templates/tasks.html:416 templates/tasks.html:489
+msgid "Open Sales Activity"
+msgstr "打开销售活动"
+
+#: templates/leads/index.html:471 templates/pipeline/index.html:582
+#: templates/tasks.html:360 templates/tasks.html:423 templates/tasks.html:496
+msgid "Are you sure?"
+msgstr "确定吗？"
+
+#: templates/tasks.html:381
+msgid "In Progress Tasks"
+msgstr "进行中任务"
+
+#: templates/tasks.html:438
+msgid "No tasks in progress"
+msgstr "暂无进行中任务"
+
+#: templates/tasks.html:449
+msgid "Completed Tasks"
+msgstr "已完成任务"
+
+#: templates/tasks.html:461
+msgid "Completion Details"
+msgstr ""
+
+#: templates/tasks.html:483
+msgid "Feedback"
+msgstr ""
+
+#: templates/tasks.html:488
+msgid "Reopen"
+msgstr "重新打开"
+
+#: templates/tasks.html:510
+msgid "No completed tasks"
+msgstr "暂无已完成任务"
+
+#: templates/tasks.html:518
+msgid "Cancelled Tasks"
+msgstr "已取消任务"
+
+#: templates/tasks.html:520 templates/tasks.html:568 templates/tasks.html:612
+msgid "Due Date"
+msgstr "截止日期"
+
+#: templates/tasks.html:543
+msgid "Add New Task"
+msgstr "添加新任务"
+
+#: templates/tasks.html:549 templates/tasks.html:593
+msgid "Task Content"
+msgstr "任务内容"
+
+#: templates/leads/form.html:97 templates/pipeline/form.html:251
+#: templates/tasks.html:559 templates/tasks.html:603
+msgid "Select Owner"
+msgstr "选择负责人"
+
+#: templates/tasks.html:587
+msgid "Edit Task"
+msgstr ""
+
+#: templates/admin/users.html:182 templates/sales_activities/index.html:416
+#: templates/tasks.html:618
+msgid "Save Changes"
+msgstr "保存更改"
+
+#: templates/tasks.html:632
+msgid "Complete Task"
+msgstr ""
+
+#: templates/tasks.html:635
+msgid "Feedback will also complete the linked Sales Activity."
+msgstr "填写此反馈也会同步完成关联的销售活动。"
+
+#: templates/sales_activities/index.html:430 templates/tasks.html:636
+msgid "Completion Notes"
+msgstr ""
+
+#: templates/tasks.html:637
+msgid "Enter outcome, customer feedback, or completion details"
+msgstr ""
+
+#: templates/admin/login_logs.html:3 templates/admin/login_logs.html:18
+msgid "Login Logs / Operation Archive"
+msgstr ""
+
+#: templates/admin/login_logs.html:19
+msgid ""
+"Permanent archive of login, logout, and system operations. Records are "
+"not cleared from this page."
+msgstr ""
+
+#: templates/admin/login_logs.html:27
+msgid "Keyword"
+msgstr ""
+
+#: templates/admin/login_logs.html:28
+msgid "User, action, subject, or description"
+msgstr ""
+
+#: templates/admin/login_logs.html:31
+msgid "Action Type"
+msgstr "操作类型"
+
+#: templates/admin/login_logs.html:32
+msgid "e.g. Created"
+msgstr ""
+
+#: templates/admin/login_logs.html:36
+msgid "Search username"
+msgstr ""
+
+#: templates/admin/login_logs.html:39 templates/sales_activities/index.html:401
+msgid "Start Date"
+msgstr "开始日期"
+
+#: templates/admin/login_logs.html:43 templates/sales_activities/index.html:403
+msgid "End Date"
+msgstr "结束日期"
+
+#: templates/admin/login_logs.html:51 templates/pipeline/index.html:411
+#: templates/sales_activities/index.html:154
+msgid "Clear Filters"
+msgstr "清除筛选"
+
+#: templates/admin/login_logs.html:61
+msgid "Time"
+msgstr "时间"
+
+#: templates/admin/login_logs.html:61
+msgid "User"
+msgstr "用户"
+
+#: templates/admin/login_logs.html:61
+msgid "Action"
+msgstr "操作"
+
+#: templates/admin/login_logs.html:62
+msgid "Subject"
+msgstr "主题"
+
+#: templates/admin/login_logs.html:62
+msgid "Description"
+msgstr "描述"
+
+#: templates/admin/login_logs.html:62
+msgid "Change Details"
+msgstr ""
+
+#: templates/admin/login_logs.html:62
+msgid "IP Address"
+msgstr "IP地址"
+
+#: templates/admin/login_logs.html:78
+msgid "View Details"
+msgstr "查看详情"
+
+#: templates/admin/login_logs.html:79
+msgid "Before"
+msgstr ""
+
+#: templates/admin/login_logs.html:80
+msgid "After"
+msgstr ""
+
+#: templates/admin/login_logs.html:81
+msgid "Additional Data"
+msgstr ""
+
+#: templates/admin/login_logs.html:88
+msgid "No operation logs found"
+msgstr ""
+
+#: templates/admin/users.html:3 templates/admin/users.html:26
+msgid "User Management"
+msgstr "用户管理"
+
+#: templates/admin/users.html:27
+msgid "Manage system users and their roles"
+msgstr "管理系统用户及其角色"
+
+#: templates/admin/users.html:31 templates/admin/users.html:144
+msgid "Add User"
+msgstr "添加用户"
+
+#: templates/admin/users.html:47 templates/sales_activities/index.html:274
+msgid "Created At"
+msgstr "创建时间"
+
+#: templates/admin/users.html:65 templates/admin/users.html:132
+#: templates/admin/users.html:176
+msgid "Read-only Reviewer"
+msgstr "只读审阅者"
+
+#: templates/admin/users.html:70
+msgid "Active"
+msgstr "活跃"
+
+#: templates/admin/users.html:72
+msgid "Inactive"
+msgstr "未激活"
+
+#: templates/admin/users.html:77 templates/admin/users.html:78
+#: templates/admin/users.html:157
 msgid "Edit User"
 msgstr "编辑用户"
 
-#: templates/admin/users.html:156
-msgid "Save Changes"
-msgstr "保存更改"
+#: templates/admin/users.html:84
+msgid "Deactivate User"
+msgstr ""
+
+#: templates/admin/users.html:84
+msgid "Activate User"
+msgstr ""
+
+#: templates/admin/users.html:92 templates/admin/users.html:93
+msgid "Reset Password"
+msgstr "重置密码"
+
+#: templates/admin/users.html:93
+msgid "Reset password to default?"
+msgstr "确定要重置为默认密码吗？"
+
+#: templates/admin/users.html:114
+msgid "Add New User"
+msgstr "添加新用户"
+
+#: templates/admin/users.html:131 templates/admin/users.html:175
+msgid "Marketing"
+msgstr "市场"
+
+#: templates/admin/users.html:139
+msgid "Default password will be: bitcrm"
+msgstr "默认密码为: bitcrm"
+
+#: templates/leads/_followup_form.html:3
+#: templates/pipeline/_followup_form.html:3 templates/pipeline/form.html:314
+msgid "Follow-up History"
+msgstr "跟进历史"
 
 #: templates/leads/form.html:10
 msgid "Enter lead information to track potential customers"
 msgstr "输入线索信息以跟踪潜在客户"
 
-#: templates/leads/form.html:20 templates/pipeline/form.html:20
+#: templates/leads/form.html:17
+msgid "This sales lead is displayed in read-only mode."
+msgstr "此销售线索以只读模式显示。"
+
+#: templates/leads/form.html:28 templates/pipeline/form.html:127
 msgid "Basic Information"
 msgstr "基本信息"
 
-#: templates/leads/form.html:25 templates/pipeline/form.html:29
+#: templates/leads/form.html:33 templates/pipeline/form.html:136
+#: templates/sales_activities/index.html:411
 msgid "Contact Name"
 msgstr "联系人姓名"
 
-#: templates/leads/form.html:33 templates/leads/index.html:113
-#: templates/pipeline/form.html:33
-msgid "Industry"
-msgstr "行业"
-
-#: templates/leads/form.html:37 templates/pipeline/form.html:37
+#: templates/leads/form.html:45 templates/pipeline/form.html:144
 msgid "Position/Title"
 msgstr "职位/头衔"
 
-#: templates/leads/form.html:45 templates/pipeline/form.html:45
+#: templates/leads/form.html:53 templates/pipeline/form.html:152
 msgid "Mobile Number"
 msgstr "手机号码"
 
-#: templates/leads/form.html:57
+#: templates/leads/form.html:65
 msgid "Lead Details"
 msgstr "线索详情"
 
-#: templates/leads/form.html:70 templates/leads/index.html:50
-#: templates/leads/index.html:115
-msgid "Source"
-msgstr "来源"
-
-#: templates/leads/form.html:72
+#: templates/leads/form.html:80
 msgid "Select Source"
 msgstr "选择来源"
 
-#: templates/leads/form.html:79
+#: templates/leads/form.html:87
 msgid "Event/Campaign"
 msgstr "活动/营销活动"
 
-#: templates/leads/form.html:80
+#: templates/leads/form.html:88
 msgid "e.g., Trade Show 2024"
 msgstr "例如: 2024 展会"
 
-#: templates/leads/form.html:83 templates/leads/index.html:117
-msgid "Date Added"
-msgstr "添加日期"
-
-#: templates/leads/form.html:89 templates/pipeline/form.html:64
-msgid "Select Owner"
-msgstr "选择负责人"
-
-#: templates/leads/form.html:108
-msgid "Requirements"
-msgstr "需求"
-
-#: templates/leads/form.html:112
+#: templates/leads/form.html:120
 msgid "Requirements/Details"
 msgstr "需求/详情"
 
-#: templates/leads/form.html:113
-msgid "Describe the prospect's requirements..."
+#: templates/leads/form.html:121
+msgid ""
+"Keep the clear product/service requirement within 200 characters. Put "
+"communication history in Notes."
 msgstr ""
 
-#: templates/leads/form.html:121
-msgid "Notes"
-msgstr "备注"
+#: templates/leads/form.html:122
+msgid "Clear product/service requirement, max 200 characters"
+msgstr ""
 
-#: templates/leads/form.html:125
+#: templates/leads/form.html:134
 msgid "Additional Notes"
 msgstr "附加说明"
 
-#: templates/leads/form.html:126
+#: templates/leads/form.html:135
 msgid "Any additional notes..."
 msgstr ""
 
-#: templates/leads/form.html:139 templates/pipeline/form.html:210
+#: templates/leads/form.html:151 templates/pipeline/form.html:342
 msgid "Save & Continue Adding"
 msgstr "保存并继续添加"
 
-#: templates/leads/form.html:140
+#: templates/leads/form.html:152
 msgid "Save Lead"
 msgstr "保存线索"
 
-#: templates/leads/index.html:9
+#: templates/leads/index.html:198
 msgid "Sales Leads Management"
 msgstr "销售线索管理"
 
-#: templates/leads/index.html:15
+#: templates/leads/index.html:206 templates/pipeline/index.html:174
 msgid "Download Template"
 msgstr "下载模板"
 
-#: templates/leads/index.html:19 templates/leads/index.html:267
-#: templates/pipeline/index.html:22 templates/pipeline/index.html:215
+#: templates/leads/index.html:210 templates/leads/index.html:565
+#: templates/pipeline/index.html:178 templates/pipeline/index.html:665
 msgid "Import"
 msgstr "导入"
 
-#: templates/leads/index.html:28
+#: templates/leads/index.html:215 templates/pipeline/index.html:183
+msgid "Export"
+msgstr "导出"
+
+#: templates/leads/index.html:220
 msgid "Add Sales Lead"
 msgstr "添加销售线索"
 
-#: templates/leads/index.html:40
+#: templates/leads/index.html:251
+msgid ""
+"Summary cards follow the current Company, Owner, and Source filters, but "
+"ignore Status."
+msgstr ""
+
+#: templates/leads/index.html:265 templates/pipeline/index.html:264
+msgid "Search company"
+msgstr ""
+
+#: templates/leads/index.html:271 templates/leads/index.html:274
+#: templates/leads/index.html:279
 msgid "All Statuses"
 msgstr "所有状态"
 
-#: templates/leads/index.html:52
+#: templates/leads/index.html:293 templates/leads/index.html:296
+#: templates/leads/index.html:301
 msgid "All Sources"
 msgstr "所有来源"
 
-#: templates/leads/index.html:64
-msgid "All Owners"
-msgstr "所有负责人"
+#: templates/leads/index.html:337 templates/pipeline/index.html:389
+msgid "Sort"
+msgstr ""
 
-#: templates/leads/index.html:76
-msgid "Filter"
-msgstr "筛选"
+#: templates/leads/index.html:345 templates/pipeline/index.html:399
+msgid "Order"
+msgstr ""
 
-#: templates/leads/index.html:80
+#: templates/leads/index.html:347 templates/pipeline/index.html:402
+msgid "↓ New"
+msgstr ""
+
+#: templates/leads/index.html:348 templates/pipeline/index.html:405
+msgid "↑ Old"
+msgstr ""
+
+#: templates/leads/index.html:356 templates/pipeline/index.html:412
+#: templates/sales_activities/index.html:589
+#: templates/sales_activities/index.html:704
 msgid "Clear"
 msgstr "清除"
 
-#: templates/leads/index.html:91
-msgid "Show Unqualified Leads"
-msgstr "显示不合格线索"
+#: templates/leads/index.html:364 templates/pipeline/index.html:416
+msgid "Show All"
+msgstr "显示全部"
 
-#: templates/leads/index.html:102
+#: templates/leads/index.html:377
 #, python-format
 msgid "Filtered %(count)s Sales Leads"
 msgstr ""
 
-#: templates/leads/index.html:111
-msgid "Name"
-msgstr "姓名"
+#: templates/leads/index.html:383 templates/pipeline/index.html:433
+msgid "Fields"
+msgstr ""
 
-#: templates/leads/index.html:143 templates/pipeline/index.html:153
+#: templates/leads/index.html:462 templates/leads/index.html:577
+#: templates/pipeline/index.html:573
 msgid "Edit"
 msgstr "编辑"
 
-#: templates/leads/index.html:159
-msgid "Confirm Delete"
-msgstr "确认删除"
+#: templates/leads/index.html:462 templates/pipeline/index.html:573
+msgid "View"
+msgstr ""
 
-#: templates/leads/index.html:163
-msgid "Are you sure you want to delete this Sales Lead?"
-msgstr "确定要删除此销售线索吗？"
+#: templates/leads/index.html:469 templates/leads/index.html:610
+#: templates/pipeline/index.html:580 templates/sales_activities/index.html:315
+msgid "Delete"
+msgstr "删除"
 
-#: templates/leads/index.html:165
-msgid "This action cannot be undone."
-msgstr "此操作无法撤销。"
-
-#: templates/leads/index.html:186
+#: templates/leads/index.html:485
 msgid "No Sales Leads found"
 msgstr "未找到销售线索"
 
-#: templates/leads/index.html:189
+#: templates/leads/index.html:488
 msgid "Add First Sales Lead"
 msgstr "添加第一个销售线索"
 
-#: templates/leads/index.html:204
+#: templates/leads/index.html:503 templates/sales_activities/index.html:325
 msgid "Previous"
 msgstr "上一页"
 
-#: templates/leads/index.html:222
+#: templates/leads/index.html:519 templates/sales_activities/index.html:335
 msgid "Next"
 msgstr "下一页"
 
-#: templates/leads/index.html:236
+#: templates/leads/index.html:553
 msgid "Import Sales Leads"
 msgstr "导入销售线索"
 
-#: templates/leads/index.html:243
+#: templates/leads/index.html:559
 msgid "Select Excel File"
 msgstr "选择 Excel 文件"
 
-#: templates/leads/index.html:247
-msgid "Supported formats: .xlsx, .xls"
-msgstr "支持格式: .xlsx, .xls"
+#: templates/leads/index.html:600
+msgid "Confirm Delete"
+msgstr "确认删除"
 
-#: templates/leads/index.html:252
-msgid "Important:"
-msgstr "重要提示："
+#: templates/leads/index.html:604
+msgid "Are you sure you want to delete this Sales Lead?"
+msgstr "确定要删除此销售线索吗？"
 
-#: templates/leads/index.html:254
-msgid "Download the template first and fill in your data"
-msgstr "请先下载模板并填写数据"
-
-#: templates/leads/index.html:255
-msgid "Date format: \"Jan 1, 2024\" or \"2024-01-01\""
+#: templates/leads/index.html:753 templates/pipeline/index.html:845
+msgid "selected"
 msgstr ""
 
-#: templates/leads/index.html:256
-msgid ""
-"Status must be one of: Qualified, Waiting for Response, Unqualified, "
-"Waiting to be Contacted"
+#: templates/partials/column_settings.html:8
+msgid "Column Settings"
 msgstr ""
 
-#: templates/leads/index.html:257
-msgid "Source must be one of the predefined options"
-msgstr "来源必须为预定义选项之一"
+#: templates/partials/column_settings.html:14
+msgid "Select and reorder columns to customize your view."
+msgstr ""
+
+#: templates/partials/column_settings.html:21
+msgid "Shown Columns"
+msgstr ""
+
+#: templates/partials/column_settings.html:23
+msgid "Drag to reorder"
+msgstr ""
+
+#: templates/partials/column_settings.html:33
+msgid "Available Columns"
+msgstr ""
+
+#: templates/partials/column_settings.html:44
+msgid "Apply Changes"
+msgstr ""
 
 #: templates/partials/language_selector.html:3
 msgid "Language"
@@ -575,994 +993,1223 @@ msgstr "语言"
 msgid "Are you sure you want to logout?"
 msgstr "确定要退出登录吗？"
 
-#: templates/pipeline/follow_up_modal.html:5 templates/pipeline/index.html:156
-msgid "Add Follow-up"
-msgstr "添加跟进"
-
-#: templates/pipeline/follow_up_modal.html:13
-msgid "Follow-up History"
-msgstr "跟进历史"
-
-#: templates/pipeline/follow_up_modal.html:20
-msgid "Follow-up Notes"
-msgstr "跟进备注"
-
-#: templates/pipeline/follow_up_modal.html:21
-msgid "Describe what was discussed..."
-msgstr ""
-
-#: templates/pipeline/follow_up_modal.html:24
-msgid "Current Stuckpoint"
-msgstr "当前卡点"
-
-#: templates/pipeline/follow_up_modal.html:25
+#: templates/pipeline/_followup_form.html:12 templates/pipeline/form.html:321
 msgid "What is blocking progress?"
 msgstr "是什么阻碍了进展？"
 
-#: templates/pipeline/follow_up_modal.html:28
-msgid "Next Steps / To-do"
-msgstr "下一步 / 待办事项"
-
-#: templates/pipeline/follow_up_modal.html:29
-msgid "What needs to be done next?"
-msgstr "下一步需要做什么？"
-
-#: templates/pipeline/follow_up_modal.html:32
-msgid "To-do Due Date"
-msgstr "待办截止日期"
-
-#: templates/pipeline/follow_up_modal.html:36 templates/pipeline/form.html:151
+#: templates/pipeline/_followup_form.html:15 templates/pipeline/form.html:280
 msgid "Current Stage"
 msgstr "当前阶段"
 
-#: templates/pipeline/follow_up_modal.html:43
-msgid "Save Follow-up"
-msgstr "保存跟进"
-
-#: templates/pipeline/form.html:10
+#: templates/pipeline/form.html:109
 msgid "Enter deal information and calculate metrics"
 msgstr "输入交易信息并计算指标"
 
-#: templates/pipeline/form.html:57
-msgid "Ownership"
-msgstr "所有权"
+#: templates/pipeline/form.html:116
+msgid "This pipeline opportunity is displayed in read-only mode."
+msgstr "此销售管道以只读模式显示。"
 
-#: templates/pipeline/form.html:73
-msgid "Support Team"
-msgstr "支持团队"
-
-#: templates/pipeline/form.html:81
-msgid "Hold Ctrl/Cmd to select multiple"
-msgstr "按住 Ctrl/Cmd 可多选"
-
-#: templates/pipeline/form.html:94
+#: templates/pipeline/form.html:161
 msgid "Deal Information"
 msgstr "交易信息"
 
-#: templates/pipeline/form.html:99
+#: templates/pipeline/form.html:166
 msgid "Product/Solution"
 msgstr "产品/解决方案"
 
-#: templates/pipeline/form.html:100
+#: templates/pipeline/form.html:167
 msgid "e.g., Cloud Services, Software License, etc."
 msgstr ""
 
-#: templates/pipeline/form.html:103
+#: templates/pipeline/form.html:170
 msgid "MRC (Monthly)"
 msgstr "月循环收入"
 
-#: templates/pipeline/form.html:110
+#: templates/pipeline/form.html:177
 msgid "OTC (One-time)"
 msgstr "一次性费用"
 
-#: templates/pipeline/form.html:117
+#: templates/pipeline/form.html:184
 msgid "Contract Term"
 msgstr "合同期限"
 
-#: templates/pipeline/form.html:120
+#: templates/pipeline/form.html:187
 msgid "Years"
 msgstr "年"
 
-#: templates/pipeline/form.html:124
+#: templates/pipeline/form.html:191
 msgid "GP Margin"
 msgstr "毛利率"
 
-#: templates/pipeline/form.html:131
+#: templates/pipeline/form.html:198
 msgid "TCV (Auto-calculated)"
 msgstr "合同价值（自动计算）"
 
-#: templates/pipeline/form.html:135
-msgid "Gross Profit"
-msgstr "毛利"
-
-#: templates/pipeline/form.html:147
-msgid "Pipeline Stage"
-msgstr "管道阶段"
-
-#: templates/pipeline/form.html:159
-msgid "Deal Level"
-msgstr "交易级别"
-
-#: templates/pipeline/form.html:161 templates/pipeline/index.html:91
-msgid "Stretch"
-msgstr "努力争取"
-
-#: templates/pipeline/form.html:162 templates/pipeline/index.html:90
-msgid "Committed"
-msgstr "确定成交"
-
-#: templates/pipeline/form.html:166
-msgid "Win Probability"
-msgstr "赢单概率"
-
-#: templates/pipeline/form.html:178
+#: templates/pipeline/form.html:211
 msgid "Important Dates"
 msgstr "重要日期"
 
-#: templates/pipeline/form.html:182
-msgid "Est. Signing Date"
-msgstr "预计签约日期"
+#: templates/pipeline/form.html:216
+msgid "Est. Signing"
+msgstr ""
 
-#: templates/pipeline/form.html:186
-msgid "Est. Activation Date"
-msgstr "预计激活日期"
+#: templates/pipeline/form.html:220
+msgid "Est. Activation"
+msgstr ""
 
-#: templates/pipeline/form.html:197
+#: templates/pipeline/form.html:224
+msgid "Award"
+msgstr ""
+
+#: templates/pipeline/form.html:244
+msgid "Ownership"
+msgstr "所有权"
+
+#: templates/pipeline/form.html:260
+msgid "Support Team"
+msgstr "支持团队"
+
+#: templates/pipeline/form.html:268
+msgid "Hold Ctrl/Cmd to select multiple"
+msgstr "按住 Ctrl/Cmd 可多选"
+
+#: templates/pipeline/form.html:276
+msgid "Pipeline Stage"
+msgstr "管道阶段"
+
+#: templates/pipeline/form.html:288
+msgid "Deal Level"
+msgstr "交易级别"
+
+#: templates/pipeline/form.html:290 templates/pipeline/index.html:361
+msgid "Stretch"
+msgstr "努力争取"
+
+#: templates/pipeline/form.html:291 templates/pipeline/index.html:360
+msgid "Committed"
+msgstr "确定成交"
+
+#: templates/pipeline/form.html:295
+msgid "Win Probability"
+msgstr "赢单概率"
+
+#: templates/pipeline/form.html:309 templates/pipeline/form.html:325
 msgid "Comments & Notes"
 msgstr "评论和备注"
 
-#: templates/pipeline/form.html:200
+#: templates/pipeline/form.html:315
+msgid "Enter follow-up records..."
+msgstr ""
+
+#: templates/pipeline/form.html:326
 msgid "Enter any additional notes or comments..."
 msgstr ""
 
-#: templates/pipeline/form.html:211
+#: templates/pipeline/form.html:343
 msgid "Save Pipeline"
 msgstr "保存管道"
 
-#: templates/pipeline/index.html:3 templates/pipeline/index.html:9
+#: templates/pipeline/index.html:5 templates/pipeline/index.html:166
 msgid "Pipeline Management"
 msgstr "管道管理"
 
-#: templates/pipeline/index.html:10
-msgid "Track and manage your sales opportunities"
-msgstr "跟踪和管理销售机会"
-
-#: templates/pipeline/index.html:18
-msgid "Template"
-msgstr "模板"
-
-#: templates/pipeline/index.html:25
+#: templates/pipeline/index.html:188
 msgid "Add Pipeline"
 msgstr "添加管道"
 
-#: templates/pipeline/index.html:35
-msgid "Total Opportunities"
-msgstr "机会总数"
+#: templates/pipeline/index.html:200
+msgid "Total Pipelines"
+msgstr ""
 
-#: templates/pipeline/index.html:51
+#: templates/pipeline/index.html:204
+msgid "Current filtered opportunities"
+msgstr ""
+
+#: templates/pipeline/index.html:218
+msgid "Value across visible deals"
+msgstr ""
+
+#: templates/pipeline/index.html:228
 msgid "Active Deals"
 msgstr "活跃交易"
 
-#: templates/pipeline/index.html:59
+#: templates/pipeline/index.html:232
+msgid "Excluding lost deals on this page"
+msgstr ""
+
+#: templates/pipeline/index.html:242
 msgid "Won Deals"
 msgstr "赢单交易"
 
-#: templates/pipeline/index.html:71
-msgid "Show Lost"
-msgstr "显示输单"
+#: templates/pipeline/index.html:246
+msgid "Won deals on this page"
+msgstr ""
 
-#: templates/leads/index.html:362
-msgid "Show All"
-msgstr "显示全部"
+#: templates/pipeline/index.html:270 templates/pipeline/index.html:392
+msgid "Sign Date"
+msgstr ""
 
-#: templates/pipeline/index.html:73
-msgid "No"
-msgstr "否"
+#: templates/pipeline/index.html:271 templates/pipeline/index.html:274
+#: templates/pipeline/index.html:279 templates/pipeline/index.html:303
+#: templates/pipeline/index.html:306 templates/pipeline/index.html:311
+#: templates/pipeline/index.html:359 templates/sales_activities/index.html:160
+msgid "All"
+msgstr ""
 
-#: templates/pipeline/index.html:74
-msgid "Yes"
-msgstr "是"
+#: templates/pipeline/index.html:282 templates/pipeline/index.html:283
+#: templates/pipeline/index.html:314 templates/pipeline/index.html:315
+msgid "Q1"
+msgstr ""
 
-#: templates/pipeline/index.html:78 templates/pipeline/index.html:117
-msgid "Stage"
-msgstr "阶段"
+#: templates/pipeline/index.html:286 templates/pipeline/index.html:287
+#: templates/pipeline/index.html:318 templates/pipeline/index.html:319
+msgid "Q2"
+msgstr ""
 
-#: templates/pipeline/index.html:80
+#: templates/pipeline/index.html:290 templates/pipeline/index.html:291
+#: templates/pipeline/index.html:322 templates/pipeline/index.html:323
+msgid "Q3"
+msgstr ""
+
+#: templates/pipeline/index.html:294 templates/pipeline/index.html:295
+#: templates/pipeline/index.html:326 templates/pipeline/index.html:327
+msgid "Q4"
+msgstr ""
+
+#: templates/pipeline/index.html:302 templates/pipeline/index.html:393
+msgid "Activate Date"
+msgstr ""
+
+#: templates/pipeline/index.html:336 templates/pipeline/index.html:339
+#: templates/pipeline/index.html:344
 msgid "All Stages"
 msgstr "所有阶段"
 
-#: templates/pipeline/index.html:87 templates/pipeline/index.html:118
+#: templates/pipeline/index.html:357
 msgid "Level"
 msgstr "级别"
 
-#: templates/pipeline/index.html:89
-msgid "All Levels"
-msgstr "所有级别"
+#: templates/pipeline/index.html:402
+msgid "↓"
+msgstr ""
 
-#: templates/pipeline/index.html:97
-msgid "All Users"
-msgstr "所有用户"
+#: templates/pipeline/index.html:405
+msgid "↑"
+msgstr ""
 
-#: templates/pipeline/index.html:115
-msgid "Product"
-msgstr "产品"
+#: templates/pipeline/index.html:427
+#, python-format
+msgid "Filtered %(count)s Opportunities"
+msgstr ""
 
-#: templates/pipeline/index.html:120
-msgid "MRC"
-msgstr "月循环收入"
+#: templates/pipeline/index.html:499
+msgid "Yrs"
+msgstr ""
 
-#: templates/pipeline/index.html:121
-msgid "Win Rate"
-msgstr "赢单率"
-
-#: templates/pipeline/index.html:122
-msgid "Est. Sign"
-msgstr "预计签约"
-
-#: templates/pipeline/index.html:202
+#: templates/pipeline/index.html:652
 msgid "Import Pipeline from Excel"
 msgstr "从 Excel 导入管道"
 
-#: templates/pipeline/index.html:208
+#: templates/pipeline/index.html:658
 msgid "Excel File"
 msgstr "Excel 文件"
 
-#: templates/pipeline/index.html:210
+#: templates/pipeline/index.html:660
 msgid "Please download the template first to ensure correct format"
 msgstr "请先下载模板以确保格式正确"
 
-#: venv/Lib/site-packages/click/_termui_impl.py:613
-#, python-brace-format
-msgid "{editor}: Editing failed"
+#: templates/pipeline/index.html:775
+msgid "Error saving: "
 msgstr ""
 
-#: venv/Lib/site-packages/click/_termui_impl.py:617
-#, python-brace-format
-msgid "{editor}: Editing failed: {e}"
+#: templates/pipeline/index.html:808
+msgid "Full Text"
 msgstr ""
 
-#: venv/Lib/site-packages/click/core.py:1114
-#: venv/Lib/site-packages/click/core.py:1151
-#, python-brace-format
-msgid "{text} {deprecated_message}"
+#: templates/pipeline/index.html:813
+msgid "Close"
 msgstr ""
 
-#: venv/Lib/site-packages/click/core.py:1170
-msgid "Options"
+#: templates/sales_activities/index.html:144
+msgid "Track Customer Visit, DC Site Visit, and Remote Engagement activities"
+msgstr "管理客户拜访、数据中心参观和远程沟通活动"
+
+#: templates/sales_activities/index.html:153
+msgid "Filters"
 msgstr ""
 
-#: venv/Lib/site-packages/click/core.py:1245
-#, python-brace-format
-msgid "Got unexpected extra argument ({args})"
-msgid_plural "Got unexpected extra arguments ({args})"
-msgstr[0] ""
-
-#: venv/Lib/site-packages/click/core.py:1264
-#, python-brace-format
-msgid "DeprecationWarning: The command {name!r} is deprecated.{extra_message}"
+#: templates/sales_activities/index.html:158
+#: templates/sales_activities/index.html:159
+#: templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:377
+msgid "Type"
 msgstr ""
 
-#: venv/Lib/site-packages/click/core.py:1448
-msgid "Aborted!"
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:1822
-msgid "Commands"
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:1853
-msgid "Missing command."
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:1931
-#, python-brace-format
-msgid "No such command {name!r}."
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:2355
-msgid "Value must be an iterable."
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:2378
-#, python-brace-format
-msgid "Takes {nargs} values but 1 was given."
-msgid_plural "Takes {nargs} values but {len} were given."
-msgstr[0] ""
-
-#: venv/Lib/site-packages/click/core.py:2567
-#, python-brace-format
-msgid ""
-"DeprecationWarning: The {param_type} {name!r} is "
-"deprecated.{extra_message}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:3015
-#, python-brace-format
-msgid "env var: {var}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:3018
-#, python-brace-format
-msgid "default: {default}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:3022
-msgid "required"
-msgstr ""
-
-#: venv/Lib/site-packages/click/core.py:3082
-msgid "(dynamic)"
-msgstr ""
-
-#: venv/Lib/site-packages/click/decorators.py:465
-#, python-format
-msgid "%(prog)s, version %(version)s"
-msgstr ""
-
-#: venv/Lib/site-packages/click/decorators.py:522
-msgid "Show the version and exit."
-msgstr ""
-
-#: venv/Lib/site-packages/click/decorators.py:548
-msgid "Show this message and exit."
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:50
-#: venv/Lib/site-packages/click/exceptions.py:89
-#, python-brace-format
-msgid "Error: {message}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:81
-#, python-brace-format
-msgid "Try '{command} {option}' for help."
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:130
-#, python-brace-format
-msgid "Invalid value: {message}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:132
-#, python-brace-format
-msgid "Invalid value for {param_hint}: {message}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:190
-msgid "Missing argument"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:192
-msgid "Missing option"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:194
-msgid "Missing parameter"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:196
-#, python-brace-format
-msgid "Missing {param_type}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:203
-#, python-brace-format
-msgid "Missing parameter: {param_name}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:223
-#, python-brace-format
-msgid "No such option: {name}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:235
-#, python-brace-format
-msgid "Did you mean {possibility}?"
-msgid_plural "(Possible options: {possibilities})"
-msgstr[0] ""
-
-#: venv/Lib/site-packages/click/exceptions.py:282
-msgid "unknown error"
-msgstr ""
-
-#: venv/Lib/site-packages/click/exceptions.py:289
-#, python-brace-format
-msgid "Could not open file {filename!r}: {message}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/formatting.py:156
-msgid "Usage:"
-msgstr ""
-
-#: venv/Lib/site-packages/click/parser.py:199
-#, python-brace-format
-msgid "Argument {name!r} takes {nargs} values."
-msgstr ""
-
-#: venv/Lib/site-packages/click/parser.py:381
-#, python-brace-format
-msgid "Option {name!r} does not take a value."
-msgstr ""
-
-#: venv/Lib/site-packages/click/parser.py:444
-#, python-brace-format
-msgid "Option {name!r} requires an argument."
-msgid_plural "Option {name!r} requires {nargs} arguments."
-msgstr[0] ""
-
-#: venv/Lib/site-packages/click/shell_completion.py:332
-msgid "Shell completion is not supported for Bash versions older than 4.4."
-msgstr ""
-
-#: venv/Lib/site-packages/click/shell_completion.py:339
-msgid "Couldn't detect Bash version, shell completion is not supported."
-msgstr ""
-
-#: venv/Lib/site-packages/click/termui.py:165
-msgid "Repeat for confirmation"
-msgstr ""
-
-#: venv/Lib/site-packages/click/termui.py:181
-msgid "Error: The value you entered was invalid."
-msgstr ""
-
-#: venv/Lib/site-packages/click/termui.py:183
-#, python-brace-format
-msgid "Error: {e.message}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/termui.py:194
-msgid "Error: The two entered values do not match."
-msgstr ""
-
-#: venv/Lib/site-packages/click/termui.py:253
-msgid "Error: invalid input"
-msgstr ""
-
-#: venv/Lib/site-packages/click/termui.py:872
-msgid "Press any key to continue..."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:332
-#, python-brace-format
-msgid ""
-"Choose from:\n"
-"\t{choices}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:369
-#, python-brace-format
-msgid "{value!r} is not {choice}."
-msgid_plural "{value!r} is not one of {choices}."
-msgstr[0] ""
-
-#: venv/Lib/site-packages/click/types.py:460
-#, python-brace-format
-msgid "{value!r} does not match the format {format}."
-msgid_plural "{value!r} does not match the formats {formats}."
-msgstr[0] ""
-
-#: venv/Lib/site-packages/click/types.py:482
-#, python-brace-format
-msgid "{value!r} is not a valid {number_type}."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:538
-#, python-brace-format
-msgid "{value} is not in the range {range}."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:719
-#, python-brace-format
-msgid "{value!r} is not a valid boolean. Recognized values: {states}"
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:747
-#, python-brace-format
-msgid "{value!r} is not a valid UUID."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:937
-msgid "file"
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:939
-msgid "directory"
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:941
-msgid "path"
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:988
-#, python-brace-format
-msgid "{name} {filename!r} does not exist."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:997
-#, python-brace-format
-msgid "{name} {filename!r} is a file."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:1005
-#, python-brace-format
-msgid "{name} {filename!r} is a directory."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:1014
-#, python-brace-format
-msgid "{name} {filename!r} is not readable."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:1023
-#, python-brace-format
-msgid "{name} {filename!r} is not writable."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:1032
-#, python-brace-format
-msgid "{name} {filename!r} is not executable."
-msgstr ""
-
-#: venv/Lib/site-packages/click/types.py:1099
-#, python-brace-format
-msgid "{len_type} values are required, but {len_value} was given."
-msgid_plural "{len_type} values are required, but {len_value} were given."
-msgstr[0] ""
-
-# Activities Module
-msgid "Activities"
-msgstr "活动日志"
-
-msgid "Activity Log"
-msgstr "操作日志"
-
-msgid "Activities Statistics"
-msgstr "活动统计"
-
-msgid "Total Activities"
-msgstr "总活动数"
-
-msgid "User"
-msgstr "用户"
-
-msgid "All Users"
-msgstr "所有用户"
-
-msgid "Action Type"
-msgstr "操作类型"
-
-msgid "All Actions"
-msgstr "所有操作"
-
-msgid "Search"
-msgstr "搜索"
-
-msgid "Clear Filters"
-msgstr "清除筛选"
-
-msgid "Time"
-msgstr "时间"
-
-msgid "Action"
-msgstr "操作"
-
-msgid "Subject"
-msgstr "主题"
-
-msgid "Description"
-msgstr "描述"
-
-msgid "IP Address"
-msgstr "IP地址"
-
-msgid "Today"
-msgstr "今天"
-
-msgid "This Week"
-msgstr "本周"
-
-msgid "This Month"
-msgstr "本月"
-
-msgid "Export"
-msgstr "导出"
-
-msgid "Leads - Imported"
-msgstr "线索 - 导入"
-
-msgid "Leads - Created"
-msgstr "线索 - 创建"
-
-msgid "Leads - Updated"
-msgstr "线索 - 更新"
-
-msgid "Leads - Deleted"
-msgstr "线索 - 删除"
-
-msgid "Pipeline - Created"
-msgstr "商机 - 创建"
-
-msgid "Pipeline - Stage Changed"
-msgstr "商机 - 阶段变更"
-
-msgid "Pipeline - Updated"
-msgstr "商机 - 更新"
-
-msgid "Pipeline - Deleted"
-msgstr "商机 - 删除"
-
-msgid "Task - Created"
-msgstr "任务 - 创建"
-
-msgid "Task - Completed"
-msgstr "任务 - 完成"
-
-msgid "Task - Reopened"
-msgstr "任务 - 重新打开"
-
-msgid "Follow up - Note"
-msgstr "跟进 - 备注"
-
-msgid "Account - Created"
-msgstr "账户 - 创建"
-
-msgid "Leads - Exported"
-msgstr "线索 - 导出"
-
-msgid "Pipeline - Deleted"
-msgstr "商机 - 删除"
-
-msgid "Pipeline - Exported"
-msgstr "商机 - 导出"
-
-msgid "Pipeline - Imported"
-msgstr "商机 - 导入"
-
-msgid "Task - Edited"
-msgstr "任务 - 编辑"
-
-msgid "Task - Deleted"
-msgstr "任务 - 删除"
-
-msgid "Task - Status Changed"
-msgstr "任务 - 状态变更"
-
-msgid "System - Password Changed"
-msgstr "系统 - 密码修改"
-
-msgid "System - Language Changed"
-msgstr "系统 - 语言切换"
-
-msgid "Admin - User Created"
-msgstr "管理员 - 用户创建"
-
-msgid "Admin - User Status Changed"
-msgstr "管理员 - 用户状态变更"
-
-msgid "Filter - Applied"
-msgstr "筛选 - 应用"
-
-msgid "Column - Visibility Changed"
-msgstr "列 - 可见性变更"
-
-msgid "All Subjects"
-msgstr "所有主题"
-
-msgid "Enable Live"
-msgstr "启用实时"
-
-msgid "Disable Live"
-msgstr "禁用实时"
-
-msgid "Live Activities"
-msgstr "实时活动"
-
-msgid "Subject Type"
-msgstr "主题类型"
-
-# Dashboard Metrics
-msgid "Total Leads"
-msgstr "线索总数"
-
-msgid "Qualified Leads"
-msgstr "合格线索"
-
-msgid "Pipeline #"
-msgstr "管道数量"
-
-msgid "Total TCV"
-msgstr "总合同价值"
-
-msgid "Current QTR Revenue"
-msgstr "本季度收入"
-
-msgid "Next QTR Revenue"
-msgstr "下季度收入"
-
-msgid "Current QTR"
-msgstr "本季度"
-
-msgid "Next QTR"
-msgstr "下季度"
-
-msgid "last week"
-msgstr "上周"
-
-msgid "Per-Owner Breakdown"
-msgstr "按负责人分解"
-
-msgid "Filter by Owner"
-msgstr "按负责人筛选"
-
-msgid "Select All"
-msgstr "全选"
-
-msgid "Total"
-msgstr "合计"
-
-# Kanban Board
-msgid "Sales Pipeline Kanban Board"
-msgstr "销售管道看板"
-
-msgid "No deals"
-msgstr "无交易"
-
-msgid "Win"
-msgstr "赢单"
-
-msgid "Incorrect username or password. Please try again."
-msgstr "用户名或密码错误，请重试。"
-
-msgid "Username is not case-sensitive."
-msgstr "用户名不区分大小写。"
-
-#: templates/sales_activities/index.html
-msgid "Remote Engagement"
-msgstr "远程沟通"
-
-#: templates/sales_activities/index.html
+#: templates/sales_activities/index.html:161
+#: templates/sales_activities/index.html:377
 msgid "Customer Visit"
 msgstr "客户拜访"
 
-#: templates/sales_activities/index.html
+#: templates/sales_activities/index.html:162
+#: templates/sales_activities/index.html:377
 msgid "DC Site Visit"
 msgstr "数据中心参观"
 
-#: templates/sales_activities/index.html templates/tasks.html
+#: templates/sales_activities/index.html:163
+#: templates/sales_activities/index.html:377
+#: templates/shared/_followup_activity_fields.html:55
+#: templates/shared/_followup_activity_fields.html:80
+msgid "Remote Engagement"
+msgstr "远程沟通"
+
+#: templates/sales_activities/index.html:167
+msgid "Date Range"
+msgstr ""
+
+#: templates/sales_activities/index.html:172
+msgid "Select start and end date"
+msgstr ""
+
+#: templates/sales_activities/index.html:185
+msgid "Owners Selected"
+msgstr "位负责人已选择"
+
+#: templates/sales_activities/index.html:200
+msgid "Select one or more owners; changes apply automatically."
+msgstr "可勾选一个或多个负责人，选择后自动生效。"
+
+#: templates/sales_activities/index.html:205
+msgid "Calendar dates"
+msgstr ""
+
+#: templates/sales_activities/index.html:210
+msgid "Activities by Owner"
+msgstr ""
+
+#: templates/sales_activities/index.html:211
+msgid ""
+"Due Today and Overdue activities are included in Follow-up Required "
+"totals; detailed reminders remain visible in the activity list."
+msgstr "今日到期和已逾期活动统一计入待跟进汇总；详细提醒仍会显示在活动列表中。"
+
+#: templates/sales_activities/index.html:214
 msgid "Scheduled"
 msgstr "已安排"
 
-#: templates/sales_activities/index.html templates/tasks.html
+#: templates/sales_activities/index.html:214
 msgid "Follow-up Required"
 msgstr "待跟进"
 
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Due Today"
-msgstr "今日到期"
+#: templates/sales_activities/index.html:214
+#: templates/sales_activities/index.html:218
+#: templates/sales_activities/index.html:229
+#: templates/sales_activities/index.html:239
+msgid "Total"
+msgstr "合计"
 
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Cancelled"
-msgstr "已取消"
+#: templates/sales_activities/index.html:220
+#: templates/sales_activities/index.html:244
+msgid "No activities found"
+msgstr ""
 
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Cancelled linked activities retained for history"
-msgstr "保留已取消的关联活动以供历史追溯"
+#: templates/sales_activities/index.html:223
+msgid "Source Type by Owner"
+msgstr ""
 
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Cancelled Tasks"
-msgstr "已取消任务"
+#: templates/sales_activities/index.html:250
+#: templates/sales_activities/index.html:375
+msgid "Add Sales Activity"
+msgstr ""
 
-#: templates/sales_activities/index.html templates/tasks.html
+#: templates/sales_activities/index.html:255
+msgid "Activity Calendar"
+msgstr ""
+
+#: templates/sales_activities/index.html:256
+msgid "Click dates to filter; multiple dates are supported"
+msgstr ""
+
+#: templates/sales_activities/index.html:259
+msgid "Previous Month"
+msgstr ""
+
+#: templates/sales_activities/index.html:261
+msgid "Next Month"
+msgstr ""
+
+#: templates/sales_activities/index.html:264
+msgid "Mon"
+msgstr ""
+
+#: templates/sales_activities/index.html:264
+msgid "Tue"
+msgstr ""
+
+#: templates/sales_activities/index.html:264
+msgid "Wed"
+msgstr ""
+
+#: templates/sales_activities/index.html:264
+msgid "Thu"
+msgstr ""
+
+#: templates/sales_activities/index.html:264
+msgid "Fri"
+msgstr ""
+
+#: templates/sales_activities/index.html:264
+msgid "Sat"
+msgstr ""
+
+#: templates/sales_activities/index.html:264
+msgid "Sun"
+msgstr ""
+
+#: templates/sales_activities/index.html:266
+msgid "Scheduled / completed"
+msgstr ""
+
+#: templates/sales_activities/index.html:266
 msgid "Follow-up Required / Due Today"
 msgstr "待跟进 / 今日到期"
 
-#: templates/sales_activities/index.html
-msgid "Due Today and Overdue activities are included in Follow-up Required totals; detailed reminders remain visible in the activity list."
-msgstr "今日到期和已逾期活动统一计入待跟进汇总；详细提醒仍会显示在活动列表中。"
-
-#: templates/sales_activities/index.html templates/tasks.html
+#: templates/sales_activities/index.html:266
 msgid "Cancelled / past"
 msgstr "已取消 / 已过去"
 
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Edit / Reschedule"
-msgstr "编辑 / 改期"
+#: templates/sales_activities/index.html:271
+msgid "Activity List"
+msgstr ""
 
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Cancel Activity"
-msgstr "取消活动"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Cancellation Reason"
-msgstr "取消原因"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Record why the customer meeting or remote engagement was cancelled"
-msgstr "请记录客户会议或远程沟通取消的原因"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "The activity and linked Task will be marked Cancelled, not deleted."
-msgstr "该活动及其关联任务将标记为已取消，不会被删除。"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Keep Activity"
-msgstr "保留活动"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Confirm Cancellation"
-msgstr "确认取消"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Company and source are fixed to preserve the activity history and linked records."
-msgstr "为保留活动历史和关联记录，公司及来源不可修改。"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Start Date"
-msgstr "开始日期"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "Start Time"
-msgstr "开始时间"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "End Date"
-msgstr "结束日期"
-
-#: templates/sales_activities/index.html templates/tasks.html
-msgid "End Time"
-msgstr "结束时间"
-
-#: templates/tasks.html
-msgid "Open Sales Activity"
-msgstr "打开销售活动"
-
-#: templates/sales_activities/index.html
+#: templates/sales_activities/index.html:271
 #, python-format
 msgid "Showing %(start)s-%(end)s of %(total)s records"
 msgstr "显示第 %(start)s-%(end)s 条，共 %(total)s 条记录"
 
-#: templates/sales_activities/index.html
+#: templates/sales_activities/index.html:271
 msgid "0 records"
 msgstr "0 条记录"
 
-#: templates/sales_activities/index.html
-msgid "Activity List pagination"
-msgstr "活动列表分页"
+#: templates/sales_activities/index.html:274
+msgid "Date"
+msgstr ""
 
-#: templates/sales_activities/index.html
-msgid "Event"
-msgstr "活动"
+#: templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:378
+msgid "Source Type"
+msgstr ""
 
-#: templates/sales_activities/index.html
-msgid "Track Customer Visit, DC Site Visit, and Remote Engagement activities"
-msgstr "管理客户拜访、数据中心参观和远程沟通活动"
-
-#: templates/sales_activities/index.html
-msgid "Owners Selected"
-msgstr "位负责人已选择"
-
-#: templates/sales_activities/index.html
-msgid "Select one or more owners; changes apply automatically."
-msgstr "可勾选一个或多个负责人，选择后自动生效。"
-
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Feedback will also complete the linked Sales Activity."
-msgstr "填写此反馈也会同步完成关联的销售活动。"
-
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
+#: templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:383
+#: templates/sales_activities/index.html:405
 msgid "Address"
 msgstr "地址"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
+#: templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:385
+#: templates/sales_activities/index.html:412
+msgid "Purpose / Project"
+msgstr ""
+
+#: templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:386
+#: templates/sales_activities/index.html:413
+msgid "Expected Result"
+msgstr ""
+
+#: templates/sales_activities/index.html:274
+msgid "Activity Notes"
+msgstr ""
+
+#: templates/sales_activities/index.html:274
+msgid "Completion Feedback"
+msgstr ""
+
+#: templates/sales_activities/index.html:274
+#: templates/sales_activities/index.html:387
+#: templates/sales_activities/index.html:414
+msgid "Remarks"
+msgstr ""
+
+#: templates/sales_activities/index.html:311
+#: templates/sales_activities/index.html:397
+msgid "Edit / Reschedule"
+msgstr "编辑 / 改期"
+
+#: templates/sales_activities/index.html:313
+msgid "Open Task"
+msgstr ""
+
+#: templates/sales_activities/index.html:314
+#: templates/sales_activities/index.html:420
+msgid "Cancel Activity"
+msgstr "取消活动"
+
+#: templates/sales_activities/index.html:315
+msgid "Archive this activity?"
+msgstr ""
+
+#: templates/sales_activities/index.html:318
+msgid "No sales activities found"
+msgstr ""
+
+#: templates/sales_activities/index.html:322
+msgid "Activity List pagination"
+msgstr "活动列表分页"
+
+#: templates/sales_activities/index.html:379
+msgid "Search company..."
+msgstr ""
+
+#: templates/sales_activities/index.html:380
+#: templates/sales_activities/index.html:407
+#: templates/shared/_followup_activity_fields.html:59
 msgid "Activity Date"
 msgstr "活动日期"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Follow-up Notes records a completed Sales Activity. Next Steps / To-do creates a scheduled Sales Activity and a linked Task. Select each Activity Type independently."
-msgstr "Follow-up Notes 用于记录已完成的销售活动；Next Steps / To-do 用于创建计划中的销售活动和关联任务。两部分的活动类型需要分别选择。"
+#: templates/sales_activities/index.html:381
+#: templates/sales_activities/index.html:629
+msgid "Defaults to the current user."
+msgstr ""
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Completed Activity"
-msgstr "已完成活动"
+#: templates/sales_activities/index.html:382
+msgid "Visit Schedule"
+msgstr ""
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
+#: templates/sales_activities/index.html:382
+msgid "Select start and end date/time"
+msgstr ""
+
+#: templates/sales_activities/index.html:382
+#: templates/sales_activities/index.html:711
+#: templates/sales_activities/index.html:723
+msgid "Choose the start date/time, then the end date/time in the same picker."
+msgstr ""
+
+#: templates/sales_activities/index.html:384
+#: templates/sales_activities/index.html:411
+msgid "Contacts"
+msgstr ""
+
+#: templates/sales_activities/index.html:384
+#: templates/sales_activities/index.html:411
+msgid "Contact Information"
+msgstr ""
+
+#: templates/sales_activities/index.html:384
+msgid "Add Contact"
+msgstr ""
+
+#: templates/sales_activities/index.html:388
+msgid "Remote Engagement Follow-up"
+msgstr ""
+
+#: templates/sales_activities/index.html:388
+#: templates/sales_activities/index.html:430
+#: templates/shared/_followup_activity_fields.html:48
+msgid "Follow-up Notes"
+msgstr "跟进备注"
+
+#: templates/sales_activities/index.html:388
+#: templates/sales_activities/index.html:408
+#: templates/sales_activities/index.html:441
+#: templates/shared/_followup_activity_fields.html:68
+#: templates/shared/_followup_activity_fields.html:73
+msgid "Next Steps / To-do"
+msgstr "下一步 / 待办事项"
+
+#: templates/sales_activities/index.html:388
+#: templates/sales_activities/index.html:407
+#: templates/sales_activities/index.html:442
+#: templates/shared/_followup_activity_fields.html:84
+msgid "To-do Due Date"
+msgstr "待办截止日期"
+
+#: templates/sales_activities/index.html:390
+msgid "Save Activity"
+msgstr ""
+
+#: templates/sales_activities/index.html:399
+msgid ""
+"Company and source are fixed to preserve the activity history and linked "
+"records."
+msgstr "为保留活动历史和关联记录，公司及来源不可修改。"
+
+#: templates/sales_activities/index.html:402
+msgid "Start Time"
+msgstr "开始时间"
+
+#: templates/sales_activities/index.html:404
+msgid "End Time"
+msgstr "结束时间"
+
+#: templates/sales_activities/index.html:420
+msgid "Cancellation Reason"
+msgstr "取消原因"
+
+#: templates/sales_activities/index.html:420
+msgid "Record why the customer meeting or remote engagement was cancelled"
+msgstr "请记录客户会议或远程沟通取消的原因"
+
+#: templates/sales_activities/index.html:420
+msgid "The activity and linked Task will be marked Cancelled, not deleted."
+msgstr "该活动及其关联任务将标记为已取消，不会被删除。"
+
+#: templates/sales_activities/index.html:420
+msgid "Keep Activity"
+msgstr "保留活动"
+
+#: templates/sales_activities/index.html:420
+msgid "Confirm Cancellation"
+msgstr "确认取消"
+
+#: templates/sales_activities/index.html:431
+msgid "Enter outcome, customer feedback, and completed work"
+msgstr ""
+
+#: templates/sales_activities/index.html:433
+msgid ""
+"The feedback will be written to Follow-up History. Optional Next Steps / "
+"To-do creates a separate Remote Engagement activity and Task."
+msgstr ""
+
+#: templates/sales_activities/index.html:437
+msgid "Keep Current Stage"
+msgstr ""
+
+#: templates/sales_activities/index.html:446
+msgid "Complete Activity"
+msgstr ""
+
+#: templates/sales_activities/index.html:497
+msgid "Today"
+msgstr "今天"
+
+#: templates/sales_activities/index.html:630
+#: templates/sales_activities/index.html:738
+msgid ""
+"Select a company from the system search results; manual input is not "
+"allowed."
+msgstr ""
+
+#: templates/sales_activities/index.html:630
+#: templates/sales_activities/index.html:738
+msgid "You may select a suggestion or enter a company manually."
+msgstr ""
+
+#: templates/sales_activities/index.html:680
+msgid "Please select both the start and end date/time in Visit Schedule."
+msgstr ""
+
+#: templates/sales_activities/index.html:684
+msgid "Estimated End Time must be later than Estimated Start Time."
+msgstr ""
+
+#: templates/sales_activities/index.html:720
+msgid "The end date/time must be later than the start date/time."
+msgstr ""
+
+#: templates/sales_activities/index.html:744
+msgid "Please select a valid Company from the system search results."
+msgstr ""
+
+#: templates/shared/_followup_activity_fields.html:2
+msgid ""
+"Customer Visit and DC Site Visit are created in Sales Activities. Select "
+"an existing visit below to complete it; new quick entries are Remote "
+"Engagement only."
+msgstr "Customer Visit 和 DC Site Visit 在 Sales Activities 中创建。请在下面选择已有拜访并完成；快速新建活动只允许 Remote Engagement。"
+
+#: templates/shared/_followup_activity_fields.html:7
+msgid "Complete Existing Visit"
+msgstr "完成已有拜访"
+
+#: templates/shared/_followup_activity_fields.html:8
+msgid "Update the original Sales Activity and linked Task"
+msgstr "更新原 Sales Activity 和关联 Task"
+
+#: templates/shared/_followup_activity_fields.html:13
+msgid "Visit to Complete"
+msgstr "要完成的拜访"
+
+#: templates/shared/_followup_activity_fields.html:15
+msgid "Do not complete an existing visit"
+msgstr "不完成已有拜访"
+
+#: templates/shared/_followup_activity_fields.html:25
+msgid ""
+"Choose the visit that was created in Sales Activities. It will not create"
+" a duplicate activity."
+msgstr "请选择在 Sales Activities 中创建的拜访。系统不会重复创建活动。"
+
+#: templates/shared/_followup_activity_fields.html:29
+msgid "No open Customer Visit or DC Site Visit is linked to this record."
+msgstr "当前记录没有关联的未完成 Customer Visit 或 DC Site Visit。"
+
+#: templates/shared/_followup_activity_fields.html:30
+msgid "Create it in Sales Activities"
+msgstr "在 Sales Activities 中创建"
+
+#: templates/shared/_followup_activity_fields.html:34
+msgid "Visit Completion Notes"
+msgstr "拜访完成反馈"
+
+#: templates/shared/_followup_activity_fields.html:35
+msgid "Enter the visit result, customer feedback, and completed work"
+msgstr "填写拜访结果、客户反馈和已完成工作"
+
+#: templates/shared/_followup_activity_fields.html:36
+msgid "Required when a visit is selected."
+msgstr "选择拜访后必须填写。"
+
+#: templates/shared/_followup_activity_fields.html:43
+msgid "Completed Remote Engagement"
+msgstr "已完成的远程沟通"
+
+#: templates/shared/_followup_activity_fields.html:44
 msgid "What already happened"
 msgstr "记录已经发生的情况"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Describe what was discussed and the result..."
-msgstr "说明沟通内容和实际结果……"
+#: templates/shared/_followup_activity_fields.html:49
+msgid "Describe the email, call, online meeting, or result..."
+msgstr "描述邮件、电话、线上会议或沟通结果……"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Follow-up Activity Type"
-msgstr "Follow-up 活动类型"
+#: templates/shared/_followup_activity_fields.html:53
+#: templates/shared/_followup_activity_fields.html:78
+msgid "Activity Type"
+msgstr "活动类型"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Select Activity Type"
-msgstr "请选择活动类型"
+#: templates/shared/_followup_activity_fields.html:69
+msgid "New planned Remote Engagement"
+msgstr "新的远程沟通计划"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Required only when Follow-up Notes is filled."
-msgstr "填写 Follow-up Notes 时必须选择。"
+#: templates/shared/_followup_activity_fields.html:74
+msgid "What needs to be done next?"
+msgstr "下一步需要做什么？"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Actual Start Date"
-msgstr "实际开始日期"
+#: templates/shared/_followup_activity_fields.html:88
+msgid "To schedule a Customer Visit or DC Site Visit, use Sales Activities."
+msgstr "如需安排 Customer Visit 或 DC Site Visit，请使用 Sales Activities。"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Actual Start Time"
-msgstr "实际开始时间"
+#~ msgid "Customer Relationship Management"
+#~ msgstr "客户关系管理"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Actual End Date"
-msgstr "实际结束日期"
+#~ msgid "Total Sales Leads (This Week)"
+#~ msgstr "本周销售线索总数"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Actual End Time"
-msgstr "实际结束时间"
+#~ msgid "Qualified Leads (This Week)"
+#~ msgstr "本周合格线索"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Customer location or Data Center address"
-msgstr "客户地点或数据中心地址"
+#~ msgid "Pipeline Count (This Week)"
+#~ msgstr "本周管道数量"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Planned Activity"
-msgstr "计划活动"
+#~ msgid "Total Contract Value"
+#~ msgstr "总合同价值"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "What needs to happen next"
-msgstr "记录下一步需要完成的事项"
+#~ msgid "Current Qtr Revenue"
+#~ msgstr "本季度收入"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Next Step Activity Type"
-msgstr "Next Step 活动类型"
+#~ msgid "MRC × 3 months"
+#~ msgstr "月循环收入 × 3 个月"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Required only when Next Steps / To-do is filled."
-msgstr "填写 Next Steps / To-do 时必须选择。"
+#~ msgid "Next Qtr Revenue"
+#~ msgstr "下季度收入"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Estimated Start Date"
-msgstr "预计开始日期"
+#~ msgid "Projected"
+#~ msgstr "预计"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Estimated Start Time"
-msgstr "预计开始时间"
+#~ msgid "Per-Owner Breakdown"
+#~ msgstr "按负责人分解"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Estimated End Date"
-msgstr "预计结束日期"
+#~ msgid "Customers"
+#~ msgstr "客户数"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "Estimated End Time"
-msgstr "预计结束时间"
+#~ msgid "Current Qtr Rev"
+#~ msgstr "本季度收入"
 
-#: templates/shared/_followup_activity_fields.html templates/tasks.html
-msgid "The linked Task due date will use the visit end date."
-msgstr "关联任务的到期日将使用 Visit 的结束日期。"
+#~ msgid "Next Qtr Rev"
+#~ msgstr "下季度收入"
 
-#: templates/admin/users.html
-msgid "Read-only Reviewer"
-msgstr "只读审阅者"
+#~ msgid "Details"
+#~ msgstr "详情"
 
-#: templates/base.html
-msgid "Read-only mode: you can view, filter, and export data, but cannot modify business data."
-msgstr "只读模式：您可以查看、筛选和导出数据，但不能修改业务数据。"
+#~ msgid "No pipeline data available"
+#~ msgstr "暂无管道数据"
 
-#: templates/leads/form.html
-msgid "This sales lead is displayed in read-only mode."
-msgstr "此销售线索以只读模式显示。"
+#~ msgid "Weekly Trend"
+#~ msgstr "每周趋势"
 
-#: templates/pipeline/form.html
-msgid "This pipeline opportunity is displayed in read-only mode."
-msgstr "此销售管道以只读模式显示。"
+#~ msgid "Pipeline Stage Distribution"
+#~ msgstr "管道阶段分布"
 
-msgid "View Sales Lead"
-msgstr "查看销售线索"
+#~ msgid "This Week"
+#~ msgstr "本周"
 
-msgid "View Pipeline"
-msgstr "查看销售管道"
+#~ msgid "Last Week"
+#~ msgstr "上周"
 
-msgid "Read-only users cannot modify business data."
-msgstr "只读用户不能修改业务数据。"
+#~ msgid "Won"
+#~ msgstr "已赢单"
+
+#~ msgid "Lost"
+#~ msgstr "已输单"
+
+#~ msgid "Mark Complete"
+#~ msgstr "标记完成"
+
+#~ msgid "Toggle Status"
+#~ msgstr "切换状态"
+
+#~ msgid "Describe the prospect's requirements..."
+#~ msgstr ""
+
+#~ msgid "Filter"
+#~ msgstr "筛选"
+
+#~ msgid "Show Unqualified Leads"
+#~ msgstr "显示不合格线索"
+
+#~ msgid "This action cannot be undone."
+#~ msgstr "此操作无法撤销。"
+
+#~ msgid "Supported formats: .xlsx, .xls"
+#~ msgstr "支持格式: .xlsx, .xls"
+
+#~ msgid "Important:"
+#~ msgstr "重要提示："
+
+#~ msgid "Download the template first and fill in your data"
+#~ msgstr "请先下载模板并填写数据"
+
+#~ msgid "Date format: \"Jan 1, 2024\" or \"2024-01-01\""
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Status must be one of: Qualified, "
+#~ "Waiting for Response, Unqualified, Waiting "
+#~ "to be Contacted"
+#~ msgstr ""
+
+#~ msgid "Source must be one of the predefined options"
+#~ msgstr "来源必须为预定义选项之一"
+
+#~ msgid "Describe what was discussed..."
+#~ msgstr ""
+
+#~ msgid "Est. Signing Date"
+#~ msgstr "预计签约日期"
+
+#~ msgid "Est. Activation Date"
+#~ msgstr "预计激活日期"
+
+#~ msgid "Track and manage your sales opportunities"
+#~ msgstr "跟踪和管理销售机会"
+
+#~ msgid "Template"
+#~ msgstr "模板"
+
+#~ msgid "Total Opportunities"
+#~ msgstr "机会总数"
+
+#~ msgid "Show Lost"
+#~ msgstr "显示输单"
+
+#~ msgid "No"
+#~ msgstr "否"
+
+#~ msgid "Yes"
+#~ msgstr "是"
+
+#~ msgid "All Levels"
+#~ msgstr "所有级别"
+
+#~ msgid "All Users"
+#~ msgstr "所有用户"
+
+#~ msgid "{editor}: Editing failed"
+#~ msgstr ""
+
+#~ msgid "{editor}: Editing failed: {e}"
+#~ msgstr ""
+
+#~ msgid "{text} {deprecated_message}"
+#~ msgstr ""
+
+#~ msgid "Options"
+#~ msgstr ""
+
+#~ msgid "Got unexpected extra argument ({args})"
+#~ msgid_plural "Got unexpected extra arguments ({args})"
+#~ msgstr[0] ""
+
+#~ msgid "DeprecationWarning: The command {name!r} is deprecated.{extra_message}"
+#~ msgstr ""
+
+#~ msgid "Aborted!"
+#~ msgstr ""
+
+#~ msgid "Commands"
+#~ msgstr ""
+
+#~ msgid "Missing command."
+#~ msgstr ""
+
+#~ msgid "No such command {name!r}."
+#~ msgstr ""
+
+#~ msgid "Value must be an iterable."
+#~ msgstr ""
+
+#~ msgid "Takes {nargs} values but 1 was given."
+#~ msgid_plural "Takes {nargs} values but {len} were given."
+#~ msgstr[0] ""
+
+#~ msgid ""
+#~ "DeprecationWarning: The {param_type} {name!r} "
+#~ "is deprecated.{extra_message}"
+#~ msgstr ""
+
+#~ msgid "env var: {var}"
+#~ msgstr ""
+
+#~ msgid "default: {default}"
+#~ msgstr ""
+
+#~ msgid "required"
+#~ msgstr ""
+
+#~ msgid "(dynamic)"
+#~ msgstr ""
+
+#~ msgid "%(prog)s, version %(version)s"
+#~ msgstr ""
+
+#~ msgid "Show the version and exit."
+#~ msgstr ""
+
+#~ msgid "Show this message and exit."
+#~ msgstr ""
+
+#~ msgid "Error: {message}"
+#~ msgstr ""
+
+#~ msgid "Try '{command} {option}' for help."
+#~ msgstr ""
+
+#~ msgid "Invalid value: {message}"
+#~ msgstr ""
+
+#~ msgid "Invalid value for {param_hint}: {message}"
+#~ msgstr ""
+
+#~ msgid "Missing argument"
+#~ msgstr ""
+
+#~ msgid "Missing option"
+#~ msgstr ""
+
+#~ msgid "Missing parameter"
+#~ msgstr ""
+
+#~ msgid "Missing {param_type}"
+#~ msgstr ""
+
+#~ msgid "Missing parameter: {param_name}"
+#~ msgstr ""
+
+#~ msgid "No such option: {name}"
+#~ msgstr ""
+
+#~ msgid "Did you mean {possibility}?"
+#~ msgid_plural "(Possible options: {possibilities})"
+#~ msgstr[0] ""
+
+#~ msgid "unknown error"
+#~ msgstr ""
+
+#~ msgid "Could not open file {filename!r}: {message}"
+#~ msgstr ""
+
+#~ msgid "Usage:"
+#~ msgstr ""
+
+#~ msgid "Argument {name!r} takes {nargs} values."
+#~ msgstr ""
+
+#~ msgid "Option {name!r} does not take a value."
+#~ msgstr ""
+
+#~ msgid "Option {name!r} requires an argument."
+#~ msgid_plural "Option {name!r} requires {nargs} arguments."
+#~ msgstr[0] ""
+
+#~ msgid "Shell completion is not supported for Bash versions older than 4.4."
+#~ msgstr ""
+
+#~ msgid "Couldn't detect Bash version, shell completion is not supported."
+#~ msgstr ""
+
+#~ msgid "Repeat for confirmation"
+#~ msgstr ""
+
+#~ msgid "Error: The value you entered was invalid."
+#~ msgstr ""
+
+#~ msgid "Error: {e.message}"
+#~ msgstr ""
+
+#~ msgid "Error: The two entered values do not match."
+#~ msgstr ""
+
+#~ msgid "Error: invalid input"
+#~ msgstr ""
+
+#~ msgid "Press any key to continue..."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Choose from:\n"
+#~ "\t{choices}"
+#~ msgstr ""
+
+#~ msgid "{value!r} is not {choice}."
+#~ msgid_plural "{value!r} is not one of {choices}."
+#~ msgstr[0] ""
+
+#~ msgid "{value!r} does not match the format {format}."
+#~ msgid_plural "{value!r} does not match the formats {formats}."
+#~ msgstr[0] ""
+
+#~ msgid "{value!r} is not a valid {number_type}."
+#~ msgstr ""
+
+#~ msgid "{value} is not in the range {range}."
+#~ msgstr ""
+
+#~ msgid "{value!r} is not a valid boolean. Recognized values: {states}"
+#~ msgstr ""
+
+#~ msgid "{value!r} is not a valid UUID."
+#~ msgstr ""
+
+#~ msgid "file"
+#~ msgstr ""
+
+#~ msgid "directory"
+#~ msgstr ""
+
+#~ msgid "path"
+#~ msgstr ""
+
+#~ msgid "{name} {filename!r} does not exist."
+#~ msgstr ""
+
+#~ msgid "{name} {filename!r} is a file."
+#~ msgstr ""
+
+#~ msgid "{name} {filename!r} is a directory."
+#~ msgstr ""
+
+#~ msgid "{name} {filename!r} is not readable."
+#~ msgstr ""
+
+#~ msgid "{name} {filename!r} is not writable."
+#~ msgstr ""
+
+#~ msgid "{name} {filename!r} is not executable."
+#~ msgstr ""
+
+#~ msgid "{len_type} values are required, but {len_value} was given."
+#~ msgid_plural "{len_type} values are required, but {len_value} were given."
+#~ msgstr[0] ""
+
+# Activities Module
+#~ msgid "Activities"
+#~ msgstr "活动日志"
+
+#~ msgid "Activity Log"
+#~ msgstr "操作日志"
+
+#~ msgid "Activities Statistics"
+#~ msgstr "活动统计"
+
+#~ msgid "Total Activities"
+#~ msgstr "总活动数"
+
+#~ msgid "All Actions"
+#~ msgstr "所有操作"
+
+#~ msgid "Search"
+#~ msgstr "搜索"
+
+#~ msgid "This Month"
+#~ msgstr "本月"
+
+#~ msgid "Leads - Imported"
+#~ msgstr "线索 - 导入"
+
+#~ msgid "Leads - Created"
+#~ msgstr "线索 - 创建"
+
+#~ msgid "Leads - Updated"
+#~ msgstr "线索 - 更新"
+
+#~ msgid "Leads - Deleted"
+#~ msgstr "线索 - 删除"
+
+#~ msgid "Pipeline - Created"
+#~ msgstr "商机 - 创建"
+
+#~ msgid "Pipeline - Stage Changed"
+#~ msgstr "商机 - 阶段变更"
+
+#~ msgid "Pipeline - Updated"
+#~ msgstr "商机 - 更新"
+
+#~ msgid "Pipeline - Deleted"
+#~ msgstr "商机 - 删除"
+
+#~ msgid "Task - Created"
+#~ msgstr "任务 - 创建"
+
+#~ msgid "Task - Completed"
+#~ msgstr "任务 - 完成"
+
+#~ msgid "Task - Reopened"
+#~ msgstr "任务 - 重新打开"
+
+#~ msgid "Follow up - Note"
+#~ msgstr "跟进 - 备注"
+
+#~ msgid "Account - Created"
+#~ msgstr "账户 - 创建"
+
+#~ msgid "Leads - Exported"
+#~ msgstr "线索 - 导出"
+
+#~ msgid "Pipeline - Exported"
+#~ msgstr "商机 - 导出"
+
+#~ msgid "Pipeline - Imported"
+#~ msgstr "商机 - 导入"
+
+#~ msgid "Task - Edited"
+#~ msgstr "任务 - 编辑"
+
+#~ msgid "Task - Deleted"
+#~ msgstr "任务 - 删除"
+
+#~ msgid "Task - Status Changed"
+#~ msgstr "任务 - 状态变更"
+
+#~ msgid "System - Password Changed"
+#~ msgstr "系统 - 密码修改"
+
+#~ msgid "System - Language Changed"
+#~ msgstr "系统 - 语言切换"
+
+#~ msgid "Admin - User Created"
+#~ msgstr "管理员 - 用户创建"
+
+#~ msgid "Admin - User Status Changed"
+#~ msgstr "管理员 - 用户状态变更"
+
+#~ msgid "Filter - Applied"
+#~ msgstr "筛选 - 应用"
+
+#~ msgid "Column - Visibility Changed"
+#~ msgstr "列 - 可见性变更"
+
+#~ msgid "All Subjects"
+#~ msgstr "所有主题"
+
+#~ msgid "Enable Live"
+#~ msgstr "启用实时"
+
+#~ msgid "Disable Live"
+#~ msgstr "禁用实时"
+
+#~ msgid "Live Activities"
+#~ msgstr "实时活动"
+
+#~ msgid "Subject Type"
+#~ msgstr "主题类型"
+
+#~ msgid "No deals"
+#~ msgstr "无交易"
+
+#~ msgid "Win"
+#~ msgstr "赢单"
+
+#~ msgid "Due Today"
+#~ msgstr "今日到期"
+
+#~ msgid ""
+#~ "Follow-up Notes records a completed "
+#~ "Sales Activity. Next Steps / To-do"
+#~ " creates a scheduled Sales Activity "
+#~ "and a linked Task. Select each "
+#~ "Activity Type independently."
+#~ msgstr ""
+#~ "Follow-up Notes 用于记录已完成的销售活动；Next Steps "
+#~ "/ To-do 用于创建计划中的销售活动和关联任务。两部分的活动类型需要分别选择。"
+
+#~ msgid "Completed Activity"
+#~ msgstr "已完成活动"
+
+#~ msgid "Describe what was discussed and the result..."
+#~ msgstr "说明沟通内容和实际结果……"
+
+#~ msgid "Follow-up Activity Type"
+#~ msgstr "Follow-up 活动类型"
+
+#~ msgid "Select Activity Type"
+#~ msgstr "请选择活动类型"
+
+#~ msgid "Required only when Follow-up Notes is filled."
+#~ msgstr "填写 Follow-up Notes 时必须选择。"
+
+#~ msgid "Actual Start Date"
+#~ msgstr "实际开始日期"
+
+#~ msgid "Actual Start Time"
+#~ msgstr "实际开始时间"
+
+#~ msgid "Actual End Date"
+#~ msgstr "实际结束日期"
+
+#~ msgid "Actual End Time"
+#~ msgstr "实际结束时间"
+
+#~ msgid "Customer location or Data Center address"
+#~ msgstr "客户地点或数据中心地址"
+
+#~ msgid "Planned Activity"
+#~ msgstr "计划活动"
+
+#~ msgid "What needs to happen next"
+#~ msgstr "记录下一步需要完成的事项"
+
+#~ msgid "Next Step Activity Type"
+#~ msgstr "Next Step 活动类型"
+
+#~ msgid "Required only when Next Steps / To-do is filled."
+#~ msgstr "填写 Next Steps / To-do 时必须选择。"
+
+#~ msgid "Estimated Start Date"
+#~ msgstr "预计开始日期"
+
+#~ msgid "Estimated Start Time"
+#~ msgstr "预计开始时间"
+
+#~ msgid "Estimated End Date"
+#~ msgstr "预计结束日期"
+
+#~ msgid "Estimated End Time"
+#~ msgstr "预计结束时间"
+
+#~ msgid "The linked Task due date will use the visit end date."
+#~ msgstr "关联任务的到期日将使用 Visit 的结束日期。"
+
+#~ msgid "Read-only users cannot modify business data."
+#~ msgstr "只读用户不能修改业务数据。"

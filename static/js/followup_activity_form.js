@@ -1,8 +1,6 @@
 (function () {
     'use strict';
 
-    const VISIT_TYPES = ['Customer Visit', 'DC Site Visit'];
-
     function localTodayIso() {
         const now = new Date();
         const offset = now.getTimezoneOffset() * 60000;
@@ -22,23 +20,23 @@
 
         const hasText = text.value.trim().length > 0;
         const selectedType = type.value;
-        const isVisit = VISIT_TYPES.includes(selectedType);
         const isRemote = selectedType === 'Remote Engagement';
         const remoteFields = formRoot.querySelector('[data-activity-fields="' + prefix + '-remote"]');
-        const visitFields = formRoot.querySelector('[data-activity-fields="' + prefix + '-visit"]');
         const requiredMark = type.closest('.col-md-6')?.querySelector('.activity-required-mark');
 
         type.required = hasText;
         if (requiredMark) requiredMark.classList.toggle('d-none', !hasText);
         if (remoteFields) remoteFields.classList.toggle('d-none', !(hasText && isRemote));
-        if (visitFields) visitFields.classList.toggle('d-none', !(hasText && isVisit));
 
         setRequired(formRoot, '[data-activity-fields="' + prefix + '-remote"] input', hasText && isRemote);
-        setRequired(
-            formRoot,
-            '[data-activity-fields="' + prefix + '-visit"] input[type="date"], [data-activity-fields="' + prefix + '-visit"] input[type="time"]',
-            hasText && isVisit
-        );
+    }
+
+    function updateExistingVisit(root) {
+        const select = root.querySelector('[data-existing-visit-select]');
+        const notes = root.querySelector('[data-existing-visit-notes]');
+        if (!select || !notes) return;
+        notes.required = Boolean(select.value);
+        notes.closest('.card')?.classList.toggle('border-danger', Boolean(select.value) && !notes.value.trim());
     }
 
     window.initializeFollowupActivityForms = function (container) {
@@ -56,6 +54,7 @@
             if (root.dataset.followupActivityInitialized === 'true') {
                 updateSection(root, 'followup');
                 updateSection(root, 'todo');
+                updateExistingVisit(root);
                 return;
             }
             root.dataset.followupActivityInitialized = 'true';
@@ -66,6 +65,11 @@
                 if (type) type.addEventListener('change', function () { updateSection(root, prefix); });
                 updateSection(root, prefix);
             });
+            const visitSelect = root.querySelector('[data-existing-visit-select]');
+            const visitNotes = root.querySelector('[data-existing-visit-notes]');
+            if (visitSelect) visitSelect.addEventListener('change', function () { updateExistingVisit(root); });
+            if (visitNotes) visitNotes.addEventListener('input', function () { updateExistingVisit(root); });
+            updateExistingVisit(root);
         });
     };
 

@@ -455,7 +455,7 @@
                 <td style="min-width: 200px;">
                     <div class="d-flex gap-2 align-items-center">
                         {% if can_write_business_data %}
-                        <button type="button" class="btn btn-sm btn-success" title="{{ _('Follow-up') }}" data-bs-toggle="modal" data-bs-target="#leadFollowupModal" data-followup-url="{{ url_for('leads.add_lead_followup', lead_id=lead.id) }}" data-company="{{ (lead.company or lead.name)|e }}" data-history="{{ (lead.follow_up or '')|e }}"><i class="bi bi-chat-dots"></i></button>
+                        <button type="button" class="btn btn-sm btn-success" title="{{ _('Follow-up') }}" data-bs-toggle="modal" data-bs-target="#leadFollowupModal" data-followup-url="{{ url_for('leads.add_lead_followup', lead_id=lead.id) }}" data-followup-data-url="{{ url_for('leads.get_lead_followup_data', lead_id=lead.id) }}" data-company="{{ (lead.company or lead.name)|e }}"><i class="bi bi-chat-dots"></i></button>
                         {% endif %}
                         <a href="{{ url_for('leads.edit', lead_id=lead.id) }}" 
                            class="btn btn-sm btn-primary" 
@@ -533,11 +533,8 @@
                     <h5 class="modal-title">{{ _('Add Follow-up') }} - <span id="leadFollowupCompany"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <label class="form-label">{{ _('Follow-up History') }}</label>
-                    <textarea id="leadFollowupHistory" class="form-control bg-light mb-3" rows="6" readonly style="max-height: 240px; overflow-y: auto; resize: vertical;"></textarea>
-                    {% include 'shared/_followup_activity_fields.html' %}
-                    <div class="lead-followup-error text-danger small mt-2"></div>
+                <div class="modal-body" id="leadFollowupModalContent">
+                    <div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">{{ _('Loading...') }}</p></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
@@ -701,12 +698,23 @@ document.addEventListener('DOMContentLoaded', function() {
         followupModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const form = document.getElementById('leadFollowupForm');
+            const content = document.getElementById('leadFollowupModalContent');
             form.action = button.dataset.followupUrl;
             form.reset();
-            setTimeout(function() { window.initializeFollowupActivityForms(form); }, 0);
-            form.querySelector('.lead-followup-error').textContent = '';
             document.getElementById('leadFollowupCompany').textContent = button.dataset.company || '';
-            document.getElementById('leadFollowupHistory').value = button.dataset.history || '';
+            content.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">{{ _('Loading...') }}</p></div>';
+            fetch(button.dataset.followupDataUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error('Unable to load follow-up data');
+                    return response.text();
+                })
+                .then(html => {
+                    content.innerHTML = html;
+                    window.initializeFollowupActivityForms(content);
+                })
+                .catch(() => {
+                    content.innerHTML = '<div class="alert alert-danger">{{ _('Error loading data') }}</div>';
+                });
         });
     }
     document.querySelectorAll('.lead-followup-form').forEach(function(form) {
