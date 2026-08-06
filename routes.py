@@ -49,6 +49,20 @@ from sales_activity_service import (
 main_bp = Blueprint('main', __name__)
 
 
+def _ensure_qualified_lead_pipeline(lead, status=None):
+    """Create the linked Pipeline exactly once when a Lead is Qualified."""
+    if (status or lead.leads_status) != 'Qualified':
+        return None
+    if lead.pipeline:
+        return lead.pipeline
+
+    db.session.flush()
+    pipeline = lead.convert_to_pipeline()
+    db.session.add(pipeline)
+    db.session.flush()
+    return pipeline
+
+
 def _followup_targets(lead=None, pipeline=None):
     """Return each linked Lead/Pipeline once for synchronized history updates."""
     if lead and lead.pipeline and not lead.pipeline.is_deleted:
@@ -1129,12 +1143,13 @@ def add():
                 leads_status=request.form.get('leads_status', 'Waiting to be Contacted'),
                 source=request.form.get('source'),
                 event=request.form.get('event'),
-                owner_id=request.form.get('owner_id'),
+                owner_id=request.form.get('owner_id') or current_user.id,
                 note=request.form.get('note'),
                 date_added=validate_date(request.form.get('date_added')) or date.today()
             )
             
             db.session.add(lead)
+            _ensure_qualified_lead_pipeline(lead)
             db.session.commit()
             
             # Log the activity
@@ -1196,9 +1211,8 @@ def edit(lead_id):
                 lead.date_added = date_added
             
             # Check if status changed to Qualified
-            if lead.leads_status == 'Qualified' and not lead.pipeline:
-                pipeline = lead.convert_to_pipeline()
-                db.session.add(pipeline)
+            if lead.leads_status == 'Qualified':
+                _ensure_qualified_lead_pipeline(lead)
             
             new_values = {
                 'name': lead.name,
@@ -1305,9 +1319,8 @@ def quick_update(lead_id):
         if field == 'leads_status' and value == 'Qualified' and lead.leads_status != 'Qualified':
             print(f"[LEAD STATUS CHANGE] Lead {lead.id} ({lead.name}): {lead.leads_status} -> Qualified")
             # Auto-convert to pipeline
-            if not lead.pipeline:
-                pipeline = lead.convert_to_pipeline()
-                db.session.add(pipeline)
+            pipeline = _ensure_qualified_lead_pipeline(lead, status=cleaned_value)
+            if pipeline:
                 print(f"[LEAD STATUS CHANGE] Auto-converted lead {lead.id} to pipeline")
         
         # Set the cleaned value
@@ -1644,35 +1657,32 @@ def import_data():
         imported_owner_ids = set()
         with disable_metrics_events():
             for row in valid_rows:
-                try:
-                    # Find owner by username
-                    owner = None
-                    if row.get('owner'):
-                        owner = User.query.filter_by(username=row.get('owner')).first()
-                    
-                    lead = SalesLead(
-                        name=row.get('name') or None,
-                        company=row.get('company') or None,
-                        industry=row.get('industry') or None,
-                        position=row.get('position') or None,
-                        email=row.get('email') or None,
-                        mobile_number=row.get('mobile_number') or None,
-                        requirements=row.get('requirements') or None,
-                        leads_status=row.get('leads_status', 'Waiting to be Contacted'),
-                        source=row.get('source') or None,
-                        event=row.get('event') or None,
-                        date_added=row.get('date_added') or date.today(),
-                        owner_id=owner.id if owner else current_user.id,
-                        note=row.get('note') or None
-                    )
-                    
-                    db.session.add(lead)
-                    if lead.owner_id:
-                        imported_owner_ids.add(lead.owner_id)
-                    imported_count += 1
-                    
-                except Exception as e:
-                    flash(f"Error importing row: {str(e)}", 'danger')
+                # Find owner by username
+                owner = None
+                if row.get('owner'):
+                    owner = User.query.filter_by(username=row.get('owner')).first()
+
+                lead = SalesLead(
+                    name=row.get('name') or None,
+                    company=row.get('company') or None,
+                    industry=row.get('industry') or None,
+                    position=row.get('position') or None,
+                    email=row.get('email') or None,
+                    mobile_number=row.get('mobile_number') or None,
+                    requirements=row.get('requirements') or None,
+                    leads_status=row.get('leads_status', 'Waiting to be Contacted'),
+                    source=row.get('source') or None,
+                    event=row.get('event') or None,
+                    date_added=row.get('date_added') or date.today(),
+                    owner_id=owner.id if owner else current_user.id,
+                    note=row.get('note') or None
+                )
+
+                db.session.add(lead)
+                _ensure_qualified_lead_pipeline(lead)
+                if lead.owner_id:
+                    imported_owner_ids.add(lead.owner_id)
+                imported_count += 1
             
             db.session.commit()
         
@@ -1683,6 +1693,7 @@ def import_data():
         flash(f'Successfully imported {imported_count} Sales Leads!', 'success')
         
     except Exception as e:
+        db.session.rollback()
         flash(f'Error importing file: {str(e)}', 'danger')
     
     return redirect(url_for('leads.index'))
@@ -3058,20 +3069,17 @@ def api_quick_update(lead_id):
         # Handle status changes - log to pipeline comments
         if field == 'leads_status' and cleaned_value == 'Qualified' and lead.leads_status != 'Qualified':
             # Get or create pipeline
-            if not lead.pipeline:
-                pipeline = lead.convert_to_pipeline()
-                db.session.add(pipeline)
-                db.session.flush()  # Get pipeline ID
+            pipeline = _ensure_qualified_lead_pipeline(lead, status=cleaned_value)
             
             # Add status change log to pipeline comments
             username = current_user.username if current_user.is_authenticated else 'Unknown'
             today = date.today().strftime('%Y-%m-%d')
             
-            if lead.pipeline:
-                old_comment = lead.pipeline.comments or ''
+            if pipeline:
+                old_comment = pipeline.comments or ''
                 status_action = cleaned_value
                 new_comment = f"{old_comment}\n{today}, {username} {status_action}".strip()
-                lead.pipeline.comments = new_comment
+                pipeline.comments = new_comment
         
         old_value = getattr(lead, field, None)
         setattr(lead, field, cleaned_value)

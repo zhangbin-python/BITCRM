@@ -89,7 +89,7 @@
                 <li>少量字段变化可用 Quick Edit；多个关联字段需要一起检查时使用完整编辑页面。</li>
                 <li>已经发生的活动写入 Follow-up Notes，并单独选择 Customer Visit、DC Site Visit 或 Remote Engagement。Visit 需要填写实际开始和结束时间，Remote Engagement 使用 Activity Date。</li>
                 <li>未来要完成的事情写入 Next Steps / To-do，并再次独立选择活动类型（可以与 Follow-up 不同）。Remote Engagement 填到期日；Visit 填预计开始和结束时间，系统按结束日期创建关联 Task。</li>
-                <li>Lead 更新为 <strong>Qualified</strong> 后，系统会按规则创建或关联对应的 Pipeline。</li>
+                <li>无论通过手工新增、Excel 导入、Quick Edit 还是完整编辑页面，只要 Lead 保存为 <strong>Qualified</strong>，系统就会立即创建或关联对应的 Pipeline。</li>
             </ul>
 
             <h3>3.2 查找和检查 Leads</h3>
@@ -103,7 +103,7 @@
             <h3>3.3 导入、导出和归档</h3>
             <ul>
                 <li>批量导入前先下载当前 Import Template，不要修改必填表头。</li>
-                <li>导入后检查 Owner、状态、来源以及是否产生重复公司。</li>
+                <li>导入后检查 Owner、状态、来源以及是否产生重复公司；所有导入时已经是 Qualified 的 Lead 都会立即转入 Pipeline。</li>
                 <li>Export 适合离线检查，但不能代替在 CRM 中维护正式数据。</li>
                 <li>Delete 会将 Lead 从正常列表归档并保留审计快照，不是无痕彻底删除。</li>
             </ul>

@@ -1,6 +1,9 @@
 import os
 import tempfile
 import unittest
+from io import BytesIO
+
+from openpyxl import Workbook
 
 from app import create_app
 from extensions import db
@@ -90,6 +93,59 @@ class LeadQuickUpdateTests(unittest.TestCase):
         self.assertEqual(lead.leads_status, 'Qualified')
         self.assertIsNotNone(lead.pipeline)
         self.assertEqual(lead.pipeline.stage, '2) Lead Qualified')
+        self.assertEqual(Pipeline.query.count(), 1)
+
+    def test_manually_added_qualified_lead_immediately_creates_pipeline(self):
+        response = self.client.post(
+            '/leads/add',
+            data={
+                'name': 'Manual Qualified Contact',
+                'company': 'Manual Qualified Co',
+                'requirements': 'Managed cloud service',
+                'leads_status': 'Qualified',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        lead = SalesLead.query.filter_by(name='Manual Qualified Contact').one()
+        self.assertIsNotNone(lead.pipeline)
+        self.assertEqual(lead.pipeline.sales_lead_id, lead.id)
+        self.assertEqual(lead.pipeline.stage, '2) Lead Qualified')
+        self.assertEqual(lead.pipeline.product, 'Managed cloud service')
+        self.assertEqual(lead.pipeline.owner_id, self.admin_id)
+        self.assertEqual(Pipeline.query.count(), 1)
+
+    def test_imported_qualified_lead_immediately_creates_pipeline(self):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.append(['Name', 'Company', 'Requirements', 'Leads Status', 'Owner'])
+        worksheet.append([
+            'Imported Qualified Contact', 'Imported Qualified Co',
+            'Data Center service', 'qualified', 'Admin',
+        ])
+        worksheet.append([
+            'Imported Waiting Contact', 'Imported Waiting Co',
+            'Network service', 'Waiting to be Contacted', 'Admin',
+        ])
+        stream = BytesIO()
+        workbook.save(stream)
+        stream.seek(0)
+
+        response = self.client.post(
+            '/leads/import',
+            data={'file': (stream, 'qualified_leads.xlsx')},
+            content_type='multipart/form-data',
+        )
+
+        self.assertEqual(response.status_code, 302)
+        qualified = SalesLead.query.filter_by(name='Imported Qualified Contact').one()
+        waiting = SalesLead.query.filter_by(name='Imported Waiting Contact').one()
+        self.assertEqual(qualified.leads_status, 'Qualified')
+        self.assertIsNotNone(qualified.pipeline)
+        self.assertEqual(qualified.pipeline.sales_lead_id, qualified.id)
+        self.assertEqual(qualified.pipeline.stage, '2) Lead Qualified')
+        self.assertEqual(qualified.pipeline.product, 'Data Center service')
+        self.assertIsNone(waiting.pipeline)
         self.assertEqual(Pipeline.query.count(), 1)
 
 

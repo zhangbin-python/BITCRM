@@ -278,6 +278,10 @@ def validate_sales_lead_import(row):
     # Validate email
     if row.get('email') and not validate_email(row.get('email')):
         errors.append(f"Invalid email format '{row.get('email')}'")
+
+    requirements = row.get('requirements')
+    if requirements and len(str(requirements).strip()) > 200:
+        errors.append('Requirements must be 200 characters or fewer')
     
     return errors
 
